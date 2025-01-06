@@ -1,0 +1,55 @@
+swagger: '2.0'
+info: 
+  title: Inride API Documentation
+  description: API documentation Inride. Authentications are handle with cookies set from the server.
+  version: 1.0
+  contact: 
+    email: successakinyemi365@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://apache.org/'
+host: eduafric.onrender.com
+basePath: /               
+schemes:
+  - https
+
+paths:
+  /:
+    get:
+      summary: Home GET request
+      description: The first request to check server
+      responses:
+        200:
+          description: Success
+
+  /api/student/verifyStudentDetails:
+    post:
+      summary: Verify Student signup details
+      description: verify student signup details
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+              - password
+              - confirmPassword
+              - phoneNumber
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+              confirmPassword:
+                type: string
+              phoneNumber:
+                type: string
+      responses:
+        200: 
+          description: details verified successful
+        400:
+          description: User error
+        500: 
+          description: Server error
