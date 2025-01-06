@@ -2,6 +2,7 @@ import { sendResponse } from "../middlewares/utils.js"
 import DriverModel from "../model/Driver.js"
 import OtpModel from "../model/Otp.js"
 import PassengerModel from "../model/Passenger.js"
+import RefreshTokenModel from "../model/RefreshToken.js"
 
 export async function verifyOtp(req, res) {
     const { otp } = req.body
@@ -31,5 +32,23 @@ export async function verifyOtp(req, res) {
     } catch (error) {
         console.log('UNABLE TO VERIFY OTP', error)
         return sendResponse(res, 500, false, 'Unable to verify otp code')
+    }
+}
+
+//SIGNOUT
+export async function signout(req, res) {
+    const { passengerId } = req.user
+    try {
+        const getRefreshTokenToken = await RefreshTokenModel.findOneAndDelete({ accountId: passengerId })
+        if(getRefreshTokenToken){
+            const deleteToken = await RefreshTokenModel.findOneAndDelete({ accountId: passengerId })
+        }
+        res.clearCookie(`inrideaccesstoken`)
+        res.clearCookie(`inrideaccessid`)
+
+        return sendResponse(res, 200, true, 'Signout success')
+    } catch (error) {
+        console.log('UNABLE TO SIGNOUT PASSENGER', error)
+        return sendResponse(res, 500, false, 'Unable to process signout')
     }
 }

@@ -32,7 +32,7 @@ export async function registerNumber(req, res) {
             })
             console.log('SMS BODY', sendOtpCode)
         
-            return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber}`)
+            return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber}, Code: ${otpCode}`)
         }
 
 
@@ -320,24 +320,6 @@ export async function verifyToken(req, res) {
     } catch (error) {
         console.log('UNABLE TO VERIFY TOKEN', error)   
         return sendResponse(res, 500, false, 'Unable to verify token')
-    }
-}
-
-//SIGNOUT
-export async function signout(req, res) {
-    const { passengerId } = req.user
-    try {
-        const getRefreshTokenToken = await RefreshTokenModel.findOneAndDelete({ accountId: passengerId })
-        if(getRefreshTokenToken){
-            const deleteToken = await RefreshTokenModel.findOneAndDelete({ accountId: passengerId })
-        }
-        res.clearCookie(`inrideaccesstoken`)
-        res.clearCookie(`inrideaccessid`)
-
-        return sendResponse(res, 200, true, 'Signout success')
-    } catch (error) {
-        console.log('UNABLE TO SIGNOUT PASSENGER', error)
-        return sendResponse(res, 500, false, 'Unable to process signout')
     }
 }
 

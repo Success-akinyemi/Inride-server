@@ -1,31 +1,130 @@
 swagger: '2.0'
-info: 
+info:
   title: Inride API Documentation
-  description: API documentation Inride. Authentications are handle with cookies set from the server.
+  description: API documentation Inride. Authentications are handled with cookies set from the server.
   version: 1.0
-  contact: 
+  contact:
     email: successakinyemi365@gmail.com
   license:
     name: Apache 2.0
     url: 'http://apache.org/'
-host: eduafric.onrender.com
-basePath: /               
+host: inride-server.onrender.com
+basePath: /
 schemes:
   - https
+
+tags:
+  - name: General
+    description: General
+  - name: Auth
+    description: Endpoints for authentication
+  - name: Passenger
+    description: Endpoints for passenger registration and management
 
 paths:
   /:
     get:
+      tags:
+        - General
       summary: Home GET request
       description: The first request to check server
       responses:
         200:
           description: Success
 
-  /api/student/verifyStudentDetails:
+  /api/auth/verifyOtp:
     post:
-      summary: Verify Student signup details
-      description: verify student signup details
+      tags:
+        - Auth
+      summary: Verify OTP
+      description: Verify OTP sent to user
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - otp
+            properties:
+              otp:
+                type: string
+      responses:
+        200:
+          description: OTP Verified
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/auth/signout:
+    post:
+      tags:
+        - Auth
+      summary: Signout a user
+      description: This endpoint signout a user
+      responses:
+        200:
+          description:  successful
+        500:
+          description: Server error
+
+  /api/passenger/auth/registerNumber:
+    post:
+      tags:
+        - Passenger
+      summary: Register Mobile Number of user
+      description: This endpoint registers the mobile number of a new passenger user. Mobile number is required in international format (e.g., +Signout a user will be sent via SMS.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - mobileNumber
+            properties:
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: Verification OTP sent
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/passenger/auth/resendOtp:
+    post:
+      tags:
+        - Passenger
+      summary: Resend OTP to user Mobile Number
+      description: This endpoint resends the otp to the user mobile number of a passenger user. Mobile number is required in international format (e.g., +2349012345678). OTP will be sent via SMS.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - mobileNumber
+            properties:
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: Verification OTP sent
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/passenger/auth/registerUser:
+    post:
+      tags:
+        - Passenger
+      summary: Register user account
+      description: This endpoint completes registration on user account. images are required in jpeg or png formats. accepted values for idCardType - 'driverLicense', 'internationalPassport' or 'voterCard'. on successful request cookies is be set and sent to client from server
       parameters:
         - name: body
           in: body
@@ -34,22 +133,100 @@ paths:
             type: object
             required:
               - email
-              - password
-              - confirmPassword
-              - phoneNumber
+              - firstName
+              - lastName
+              - mobileNumber
+              - idCardType
+              - idCardImgFront
+              - idCardImgBack
+              - profileImg
             properties:
               email:
                 type: string
-              password:
+              firstName:
                 type: string
-              confirmPassword:
+              lastName:
                 type: string
-              phoneNumber:
+              mobileNumber:
                 type: string
+              idCardType: 
+                type: string
+              ssn:
+                type: string
+              idCardImgFront:
+                type: file
+              idCardImgBack:
+                type: file
+              profileImg:
+                type: file
       responses:
-        200: 
-          description: details verified successful
+        200:
+          description: User data sent - successful
         400:
           description: User error
-        500: 
+        500:
+          description: Server error
+
+  /api/passenger/auth/signin:
+    post:
+      tags:
+        - Passenger
+      summary: Signin passeger
+      description: This endpoint sigin in a user to their account after which an OTP is sent as an email to the mobile number after a successfull signin
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - mobileNumber
+            properties:
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: Verification account OTP sent
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/passenger/auth/verifyLoginOtp:
+    post:
+      tags:
+        - Passenger
+      summary: Verify Login Otp
+      description: This endpoint verifies the otp sent to the user after the attempt to login. after a successful sigin cookies is been set and sent from the server to the client
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - otp
+            properties:
+              otp:
+                type: string
+      responses:
+        201:
+          description: userData - successful
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/passenger/auth/verifyToken:
+    post:
+      tags:
+        - Passenger
+      summary: Verify Login Otp
+      description: This endpoint verifies wheather a passenger is still authenticated or not
+      responses:
+        200:
+          description: userData - successful
+        403:
+          description: UnAuthenicated
+        500:
           description: Server error

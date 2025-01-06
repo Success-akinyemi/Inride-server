@@ -10,8 +10,6 @@ router.post('/registerUser', uploadImages, controllers.registerUser)
 router.post('/signin', controllers.signin)
 router.post('/verifyLoginOtp', controllers.verifyLoginOtp)
 router.post('/verifyToken', controllers.verifyToken)
-router.post('/signout', controllers.signout)
-
 
 
 router.post('/del', controllers.del)

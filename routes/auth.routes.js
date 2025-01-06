@@ -4,6 +4,8 @@ const router = express.Router()
 
 //POST
 router.post('/verifyOtp', controllers.verifyOtp)
+router.post('/signout', controllers.signout)
+
 
 
 //GET
