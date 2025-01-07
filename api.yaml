@@ -18,8 +18,10 @@ tags:
     description: General
   - name: Auth
     description: Endpoints for authentication
-  - name: Passenger
-    description: Endpoints for passenger registration and management
+  - name: Passenger Auth
+    description: Endpoints for passenger registration Authentication
+  - name: Driver Auth
+    description: Endpoints for driver registration Authentication
 
 paths:
   /:
@@ -69,12 +71,14 @@ paths:
         500:
           description: Server error
 
+#PASSENGER
+
   /api/passenger/auth/registerNumber:
     post:
       tags:
-        - Passenger
+        - Passenger Auth
       summary: Register Mobile Number of user
-      description: This endpoint registers the mobile number of a new passenger user. Mobile number is required in international format (e.g., +Signout a user will be sent via SMS.
+      description: This endpoint registers the mobile number of a new passenger user. Mobile number is required in international format (e.g., +2349012345678 an OTP will be sent via SMS).
       parameters:
         - name: body
           in: body
@@ -97,7 +101,7 @@ paths:
   /api/passenger/auth/resendOtp:
     post:
       tags:
-        - Passenger
+        - Passenger Auth
       summary: Resend OTP to user Mobile Number
       description: This endpoint resends the otp to the user mobile number of a passenger user. Mobile number is required in international format (e.g., +2349012345678). OTP will be sent via SMS.
       parameters:
@@ -122,43 +126,52 @@ paths:
   /api/passenger/auth/registerUser:
     post:
       tags:
-        - Passenger
+        - Passenger Auth
       summary: Register user account
-      description: This endpoint completes registration on user account. images are required in jpeg or png formats. accepted values for idCardType - 'driverLicense', 'internationalPassport' or 'voterCard'. on successful request cookies is be set and sent to client from server
+      description: Completes registration for a passenger user account.
+      consumes:
+        - multipart/form-data
       parameters:
-        - name: body
-          in: body
+        - name: email
+          in: formData
           required: true
-          schema:
-            type: object
-            required:
-              - email
-              - firstName
-              - lastName
-              - mobileNumber
-              - idCardType
-              - idCardImgFront
-              - idCardImgBack
-              - profileImg
-            properties:
-              email:
-                type: string
-              firstName:
-                type: string
-              lastName:
-                type: string
-              mobileNumber:
-                type: string
-              idCardType: 
-                type: string
-              ssn:
-                type: string
-              idCardImgFront:
-                type: file
-              idCardImgBack:
-                type: file
-              profileImg:
-                type: file
+          type: string
+        - name: ssn
+          in: formData
+          required: false
+          type: string
+        - name: firstName
+          in: formData
+          required: true
+          type: string
+        - name: lastName
+          in: formData
+          required: true
+          type: string
+        - name: mobileNumber
+          in: formData
+          required: true
+          type: string
+        - name: idCardType
+          in: formData
+          required: true
+          type: string
+          enum:
+            - driverLicense
+            - internationalPassport
+            - voterCard
+        - name: idCardImgFront
+          in: formData
+          required: true
+          type: file
+        - name: idCardImgBack
+          in: formData
+          required: true
+          type: file
+        - name: profileImg
+          in: formData
+          required: true
+          type: file
       responses:
         200:
           description: User data sent - successful
@@ -170,7 +183,7 @@ paths:
   /api/passenger/auth/signin:
     post:
       tags:
-        - Passenger
+        - Passenger Auth
       summary: Signin passeger
       description: This endpoint sigin in a user to their account after which an OTP is sent as an email to the mobile number after a successfull signin
       parameters:
@@ -195,7 +208,7 @@ paths:
   /api/passenger/auth/verifyLoginOtp:
     post:
       tags:
-        - Passenger
+        - Passenger Auth
       summary: Verify Login Otp
       description: This endpoint verifies the otp sent to the user after the attempt to login. after a successful sigin cookies is been set and sent from the server to the client
       parameters:
@@ -220,9 +233,278 @@ paths:
   /api/passenger/auth/verifyToken:
     post:
       tags:
-        - Passenger
-      summary: Verify Login Otp
+        - Passenger Auth
+      summary: Verify passenger authentication
       description: This endpoint verifies wheather a passenger is still authenticated or not
+      responses:
+        200:
+          description: userData - successful
+        403:
+          description: UnAuthenicated
+        500:
+          description: Server error
+
+#DRIVER
+
+  /api/driver/auth/registerWithPassengerAccount:
+    post:
+      tags:
+        - Driver Auth
+      summary: Register New Driver from Passenger account
+      description: This endpoint registers a new  driver using their passenger acocunt. the accountId is required, this accountId would be sent via cookies if the accountId is invalid the user would be required to login to their passenger account and have a valid accountId saved in cookies to proceed.
+      responses:
+        201:
+          description: Driver Account created - successful
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/completeDriverRegistration:
+    post:
+      tags:
+        - Driver Auth
+      summary: Complete Driver Registration
+      description: Completes registration for a driver account. carDetails object values include - '{registrationNumber, year, model, color, noOfSeats, carImg}'
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: operatingCity
+          in: formData
+          required: true
+          type: string
+        - name: ssn
+          in: formData
+          required: false
+          type: string
+        - name: mobileNumber
+          in: formData
+          required: false
+          type: string
+        - name: carDetails
+          in: formData
+          required: true
+          type: object
+          required:
+            - registrationNumber
+            - year
+          properties:
+            registrationNumber:
+              type: string
+            year:
+              type: string
+            model:
+              type: string
+            color:
+              type: string
+            noOfSeats:
+              type: string
+            carImg:
+              type: string
+        - name: pricePerKm
+          in: formData
+          required: true
+          type: number
+        - name: driverLincenseImgFront
+          in: formData
+          required: true
+          type: file
+        - name: driverLincenseImgBack
+          in: formData
+          required: true
+          type: file
+        - name: profileImg
+          in: formData
+          required: true
+          type: file
+      responses:
+        201:
+          description: Account created successfully
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/registerNewDriver:
+    post:
+      tags:
+        - Driver Auth
+      summary: Register Mobile Number of driver
+      description: This endpoint registers the mobile number of a new driver user. Mobile number is required in international format (e.g., +2349012345678 an Otp will be sent via SMS).
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - mobileNumber
+            properties:
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: Verification OTP sent
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/resendOtp:
+    post:
+      tags:
+        - Driver Auth
+      summary: Resend OTP to driver Mobile Number
+      description: This endpoint resends the otp to the driver mobile number. Mobile number is required in international format (e.g., +2349012345678). OTP will be sent via SMS.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - mobileNumber
+            properties:
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: Verification OTP sent
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/completeNewDriverRegistration:
+    post:
+      tags:
+        - Driver Auth
+      summary: Complete new Driver Registration
+      description: Completes registration for a new driver account. carDetails object include- '{registrationNumber, year, model, color, noOfSeats, carImg}'
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: operatingCity
+          in: formData
+          required: true
+          type: string
+        - name: carDetails
+          in: formData
+          required: true
+          type: object
+          properties:
+            registrationNumber:
+              type: string
+            year:
+              type: string
+            model:
+              type: string
+            color:
+              type: string
+            noOfSeats:
+              type: string
+            carImg:
+              type: string
+        - name: pricePerKm
+          in: formData
+          required: true
+          type: number
+        - name: driverLincenseImgFront
+          in: formData
+          required: true
+          type: file
+        - name: driverLincenseImgBack
+          in: formData
+          required: true
+          type: file
+        - name: profileImg
+          in: formData
+          required: true
+          type: file
+        - name: mobileNumber
+          in: formData
+          required: true
+          type: string
+        - name: email
+          in: formData
+          required: true
+          type: string
+        - name: firstName
+          in: formData
+          required: true
+          type: string
+        - name: lastName
+          in: formData
+          required: true
+          type: string
+        - name: ssn
+          in: formData
+          required: false
+          type: string
+      responses:
+        201:
+          description: Account created successfully
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/signin:
+    post:
+      tags:
+        - Driver Auth
+      summary: Signin driver
+      description: This endpoint sigin in a driver to their account after which an OTP is sent as an email to the mobile number after a successfull signin
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - mobileNumber
+            properties:
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: Verification account OTP sent
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/verifyLoginOtp:
+    post:
+      tags:
+        - Driver Auth
+      summary: Verify Login Otp
+      description: This endpoint verifies the otp sent to the driver after the attempt to login. after a successful sigin cookies is been set and sent from the server to the client
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - otp
+            properties:
+              otp:
+                type: string
+      responses:
+        201:
+          description: userData - successful
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/verifyToken:
+    post:
+      tags:
+        - Driver Auth
+      summary: Verify driver authentication
+      description: This endpoint verifies wheather a driver is still authenticated or not, e.g can be used in splash screen while loading
       responses:
         200:
           description: userData - successful

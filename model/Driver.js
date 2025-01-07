@@ -24,8 +24,50 @@ const DriverSchema = new mongoose.Schema({
         type: String,
         default: 'driver'
     },
+    totalRides: {
+        type: Number
+    },
+    cancelRides: {
+        type: Number
+    },
+    earnings: {
+        type: Number
+    },
+    opreatingCity:{
+        type: String
+    },
+    status: {
+        type: String,
+        default: 'offline',
+        enum: [ 'online', 'offline', 'busy']
+    },
+    pricePerKm: {
+        type: Number
+    },
 
     password: {
+        type: String
+    },
+    ssn:{
+        type: String
+    },
+    idCardImgFront: {
+        type: String
+    },
+    idCardImgBack: {
+        type: String
+    },
+    profileImg: {
+        type: String
+    },
+    idCardType: {
+        type: String,
+        enum: ['driverLicense', 'internationalPassport', 'voterCard']
+    },
+    driverLincenseImgFront: {
+        type: String
+    },
+    driverLincenseImgBack: {
         type: String
     },
     verified: {
@@ -34,10 +76,7 @@ const DriverSchema = new mongoose.Schema({
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
-    refreshToken: {
-        type: String,
-        expires: 30 * 24 * 60 * 60 // 30 days
-    }
+
 },
 { timestamps: true }
 )

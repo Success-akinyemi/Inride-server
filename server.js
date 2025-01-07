@@ -1,50 +1,42 @@
-import express from 'express'
-import { config } from 'dotenv'
+import express from 'express';
+import { config } from 'dotenv';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import http from 'http'; 
+import http from 'http';
 import { Server } from 'socket.io';
-config()
 
+config();
+import PassengerAuthRoute from './routes/PassengerAuth.routes.js';
+import DriverAuthRoute from './routes/driverAuth.routes.js';
 
-import PassengerAuthRoute from './routes/PassengerAuth.routes.js'
-import authRoute from './routes/auth.routes.js'
+import authRoute from './routes/auth.routes.js';
+import driverRoutes from './routes/driver.routes.js';
+import './connection/db.js';
 
+import * as driverController from './controllers/driver.controllers.js';
+import * as passengerController from './controllers/passenger.controllers.js';
+import { AuthenticateDriverSocket, AuthenticatePassengerSocket } from './middlewares/auth.js'; 
 
-const app = express()
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: [process.env.CLIENT_URL, process.env.ADMIN_URL, process.env.SERVER_URL, '*'],
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
 
-// CORS setup
-const allowedOrigins = [
-    process.env.CLIENT_URL,
-    process.env.ADMIN_URL,
-    process.env.SERVER_URL,
-    '*',
-];
-
+app.use(cors({
+  origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
+  credentials: true,
+}));
 app.use(cookieParser());
 app.use(express.json());
-
-app.use(express.urlencoded({ extended: true })); // Parses URL-encoded data
-
-// Set up bodyParser to parse incoming requests
+app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-
-const corsOptions = {
-    origin: function (origin, callback) {
-        console.log('URL ORIGIN', origin);
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS', 'ORIGIN>', origin));
-        }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-};
-app.use(cors(corsOptions));
 
 //DOCs
 import swaggerUI from 'swagger-ui-express';
@@ -52,39 +44,51 @@ import YAML from 'yamljs';
 const swaggerJSDocs = YAML.load('./api.yaml');
 app.use('/api-doc', swaggerUI.serve, swaggerUI.setup(swaggerJSDocs));
 
-// Import DB connection
-import './connection/db.js';
-
-const server = http.createServer(app); 
-const io = new Server(server, {
-    cors: {
-        origin: function (origin, callback) {
-            console.log('URL ORIGIN', origin);
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS', 'ORIGIN>', origin));
-            }
-        },
-        methods: ["GET", "POST"],
-        credentials: true
-    }
-});
-
 // Routes
-app.get('/', (req, res) => {
-    res.status(200).json('Home GET Request');
+app.use('/api/auth', authRoute);
+app.use('/api/passenger/auth', PassengerAuthRoute);
+app.use('/api/driver/auth', DriverAuthRoute);
+
+app.use('/api/driver', driverRoutes);
+
+// Namespaces for Driver and Passenger
+const driverNamespace = io.of('/driver');
+const passengerNamespace = io.of('/passenger');
+
+// Apply socket-specific authentication middleware for Driver
+driverNamespace.use(AuthenticateDriverSocket);
+driverNamespace.on('connection', (socket) => {
+  console.log('Driver connected:', socket.id);
+
+  socket.on('updateLocation', (data) => driverController.updateLocation({ ...data, socket }));
+  socket.on('goOnline', ({ driverId }) => driverController.goOnline({ driverId, socket }));
+  socket.on('goOffline', ({ driverId }) => driverController.goOffline({ driverId, socket }));
+  socket.on('rideAccepted', ({ driverId, rideId }) => driverController.rideAccepted({ driverId, rideId, socket }));
+  socket.on('rideCancel', ({ driverId, rideId }) => driverController.rideCancel({ driverId, rideId, socket }));
+  socket.on('rideComplete', ({ driverId, rideId }) => driverController.rideComplete({ driverId, rideId, socket }));
+  socket.on('getNearbyDrivers', (data) => driverController.getNearByDrivers({ ...data, socket }));
+
+  socket.on('disconnect', () => {
+    console.log('Driver disconnected:', socket.id);
+  });
 });
 
+// Apply socket-specific authentication middleware for Passenger
+passengerNamespace.use(AuthenticatePassengerSocket);
+passengerNamespace.on('connection', (socket) => {
+  console.log('Passenger connected:', socket.id);
+  
+  socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ ...data, socket }));
+  socket.on('requestRide', (data) => passengerController.requestRide({ ...data, socket }));
+  socket.on('cancelRide', (data) => passengerController.cancelRide({ ...data, socket }));
+  socket.on('trackRide', (data) => passengerController.trackRide({ ...data, socket }));
 
-//ROUTES
-app.use('/api/auth', authRoute)
-//PASSENGER
-app.use('/api/passenger/auth', PassengerAuthRoute)
+  socket.on('disconnect', () => {
+    console.log('Passenger disconnected:', socket.id);
+  });
+});
 
-
-// Start server with socket
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
-    console.log(`Server running on port http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

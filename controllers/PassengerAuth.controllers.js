@@ -26,7 +26,7 @@ export async function registerNumber(req, res) {
             })
 
             const sendOtpCode = await twilioClient.messages.create({
-                body: `Your Inride Otp code is: ${otpCode}`,
+                body: `Your RideFuzz Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
                 to: `${mobileNumber}`,
             })
@@ -58,9 +58,6 @@ export async function resendOtp(req, res) {
         console.log('OTP CODE', otpCode)
         
         if(otpCode){
-            const newUser = await PassengerModel.create({
-                mobileNumber: mobileNumber
-            })
 
             const sendOtpCode = await twilioClient.messages.create({
                 body: `Your Inride Otp code is: ${otpCode}`,
@@ -111,8 +108,15 @@ export async function registerUser(req, res) {
 
     try {
         const newPassenger = await PassengerModel.findOne({ mobileNumber })
+        if(!newPassenger){
+            return sendResponse(res, 403, false, 'No Account found')
+        }
         if(!newPassenger?.verified){
             return sendResponse(res, 403, false, 'Mobile number not verified')
+        }
+        const emailExist = await PassengerModel.findOne({ email })
+        if(emailExist){
+            return sendResponse(res, 400, false, 'Email Already exist')
         }
         const idVerification = await verifyID(idCardImgFront[0], idCardImgBack[0]);
         if (!idVerification.success) {
@@ -133,7 +137,7 @@ export async function registerUser(req, res) {
         const profileImgUrl = await uploadFile(profileImg[0], 'passenger-profile-image');
 
         const passengerId = await generateUniqueCode(8)
-        console.log('PASSENGER ID', `IN${passengerId}PA`)
+        console.log('PASSENGER ID', `RF${passengerId}PA`)
 
 
         newPassenger.firstName = firstName
@@ -144,7 +148,7 @@ export async function registerUser(req, res) {
         newPassenger.idCardImgFront = idCardImgFrontUrl,
         newPassenger.idCardImgBack = idCardImgBackUrl,
         newPassenger.profileImg = profileImgUrl,
-        newPassenger.idCardType = idCardType
+        newPassenger.idCardType = idVerification.cardType
         await newPassenger.save()
 
         //console.log('new passenger', newPassenger)
@@ -171,7 +175,7 @@ export async function registerUser(req, res) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
 
-        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, ...userData } = newPassenger._doc;
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, _id, ...userData } = newPassenger._doc;
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.error('UNABLE TO REGISTER USER:', error);
@@ -196,7 +200,7 @@ export async function signin(req, res) {
         
         if(otpCode){
             const sendOtpCode = await twilioClient.messages.create({
-                body: `Your Inride login Otp code is: ${otpCode}`,
+                body: `Your RideFuzz login Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
                 to: `${mobileNumber}`,
             })
@@ -228,6 +232,8 @@ export async function verifyLoginOtp(req, res) {
             return sendResponse(res, 404, false, 'Account does not exist')
         }
 
+        const deleteOtp = await OtpModel.findByIdAndDelete({ _id: getOtp._id })
+
         // Generate Tokens
         const accessToken = getPassenger.getAccessToken()
         const refreshToken = getPassenger.getRefreshToken()
@@ -253,7 +259,7 @@ export async function verifyLoginOtp(req, res) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
 
-        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, ...userData } = getPassenger._doc;
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, _id, ...userData } = getPassenger._doc;
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.log('UNABLE TO VERIFY LOGIN OTP', error)
@@ -323,7 +329,7 @@ export async function verifyToken(req, res) {
     }
 }
 
-
+/** 
 export async function del(req, res) {
     try {
         const deletepas = await PassengerModel.deleteMany() 
@@ -332,3 +338,4 @@ export async function del(req, res) {
         console.log('object', error)
     }
 }
+ */

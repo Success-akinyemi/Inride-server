@@ -30,6 +30,9 @@ const PassengerSchema = new mongoose.Schema({
     accountImg: {
         type: String
     },
+    rides: {
+        type: Array
+    },
 
     password: {
         type: String
@@ -56,10 +59,6 @@ const PassengerSchema = new mongoose.Schema({
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
-    refreshToken: {
-        type: String,
-        expires: 30 * 24 * 60 * 60 // 30 days
-    }
 },
 { timestamps: true }
 )
