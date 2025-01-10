@@ -21,8 +21,13 @@ export async function registerNumber(req, res) {
         console.log('OTP CODE', otpCode)
         
         if(otpCode){
+            const passengerId = await generateUniqueCode(8)
+            console.log('PASSENGER ID', `RF${passengerId}PA`)
+            const newPassengerId = `RF${passengerId}PA`
+    
             const newUser = await PassengerModel.create({
-                mobileNumber: mobileNumber
+                mobileNumber: mobileNumber,
+                passengerId: newPassengerId
             })
 
             const sendOtpCode = await twilioClient.messages.create({
@@ -86,11 +91,13 @@ export async function registerUser(req, res) {
     if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
     if (!firstName) return sendResponse(res, 400, false, `Provide a first name`);
     if (!lastName) return sendResponse(res, 400, false, `Provide a last name`);
+    if (!ssn) return sendResponse(res, 400, false, `Provide a social security number`);
     if (!["driverLicense", "internationalPassport", "voterCard"].includes(idCardType)) {
         return sendResponse(res, 400, false, `ID card type must be: Driver License, International Passport, or Voter's Card`);
     }
     
     const { idCardImgFront, idCardImgBack, profileImg } = req.files;
+    //console.log('idCardImgFront', idCardImgBack, idCardImgFront)
     if (!idCardImgFront || !idCardImgFront[0]) return sendResponse(res, 400, false, `Provide the front image of your ID card`);
     if (!idCardImgBack || !idCardImgBack[0]) return sendResponse(res, 400, false, `Provide the back image of your ID card`);
     if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
@@ -118,13 +125,14 @@ export async function registerUser(req, res) {
         if(emailExist){
             return sendResponse(res, 400, false, 'Email Already exist')
         }
-        const idVerification = await verifyID(idCardImgFront[0], idCardImgBack[0]);
+        //console.log('idCardImgFront', idCardImgBack, idCardImgFront)
+        const idVerification = await verifyID(req.files.idCardImgFront[0], req.files.idCardImgBack[0]);
         if (!idVerification.success) {
             return sendResponse(res, 400, false, `Invalid ID card Image. Provide a Valid ID Card Image`);
         }
 
         const idPhotoBuffer = idVerification.photo;
-        const profilePhotoBuffer = profileImg[0].buffer;
+        const profilePhotoBuffer = req.files.profileImg[0].buffer;
         const faceMatchResult = await matchFace(idPhotoBuffer, profilePhotoBuffer);
         if (!faceMatchResult.success) {
             return sendResponse(res, 400, false, `Face matching failed. Ensure your selfie matches your ID photo`);
@@ -132,9 +140,9 @@ export async function registerUser(req, res) {
 
         // Upload images and get URLs
         const folder = 'passenger-id-cards';
-        const idCardImgFrontUrl = await uploadFile(idCardImgFront[0], folder);
-        const idCardImgBackUrl = await uploadFile(idCardImgBack[0], folder);
-        const profileImgUrl = await uploadFile(profileImg[0], 'passenger-profile-image');
+        const idCardImgFrontUrl = await uploadFile(req.files.idCardImgFront[0], folder);
+        const idCardImgBackUrl = await uploadFile(req.files.idCardImgBack[0], folder);
+        const profileImgUrl = await uploadFile(req.files.profileImg[0], 'passenger-profile-image');
 
         const passengerId = await generateUniqueCode(8)
         console.log('PASSENGER ID', `RF${passengerId}PA`)
@@ -144,7 +152,7 @@ export async function registerUser(req, res) {
         newPassenger.lastName = lastName
         newPassenger.email = email
         newPassenger.passengerId = `IN${passengerId}PA`,
-        newPassenger.ssn = ssn
+        newPassenger.ssn = req.body.ssn
         newPassenger.idCardImgFront = idCardImgFrontUrl,
         newPassenger.idCardImgBack = idCardImgBackUrl,
         newPassenger.profileImg = profileImgUrl,
@@ -330,6 +338,7 @@ export async function verifyToken(req, res) {
 }
 
 /** 
+ */
 export async function del(req, res) {
     try {
         const deletepas = await PassengerModel.deleteMany() 
@@ -338,4 +347,3 @@ export async function del(req, res) {
         console.log('object', error)
     }
 }
- */

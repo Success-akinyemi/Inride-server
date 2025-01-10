@@ -78,6 +78,7 @@ export async function matchFace(idPhotoBuffer, selfieBuffer) {
         const result = await rekognition.compareFaces(params).promise();
 
         if (result.FaceMatches && result.FaceMatches.length > 0) {
+            console.log('FACE MATCHED')
             return { success: true, similarity: result.FaceMatches[0].Similarity };
         } else {
             console.log('FACE DID NOT MATCH')

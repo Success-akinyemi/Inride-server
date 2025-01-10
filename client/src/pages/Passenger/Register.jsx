@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Register() {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -44,12 +46,14 @@ function Register() {
     try {
       const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/passenger/auth/registerUser`, {
         method: 'POST',
+        credentials: 'include',
         body: form,
       });
 
       const result = await response.json();
       if (response.ok) {
         alert(`Success: ${result?.data}`);
+        navigate('/passenger/requestRide')
       } else {
         alert(`Error: ${result.data}`);
       }
@@ -117,15 +121,15 @@ function Register() {
       </div>
       <div>
         <label>ID Card Front Image:</label>
-        <input type="file" name="idCardImgFront" onChange={(e) => handleFileChange(e, 'idCardImgFront')} required />
+        <input type="file" name="idCardImgFront" onChange={(e) => handleFileChange(e, 'idCardImgFront')} />
       </div>
       <div>
         <label>ID Card Back Image:</label>
-        <input type="file" name="idCardImgBack" onChange={(e) => handleFileChange(e, 'idCardImgBack')} required />
+        <input type="file" name="idCardImgBack" onChange={(e) => handleFileChange(e, 'idCardImgBack')} />
       </div>
       <div>
         <label>Profile Image:</label>
-        <input type="file" name="profileImg" onChange={(e) => handleFileChange(e, 'profileImg')} required />
+        <input type="file" name="profileImg" onChange={(e) => handleFileChange(e, 'profileImg')} />
       </div>
       <button type="submit">Register</button>
     </form>

@@ -7,17 +7,50 @@ const RideSchema = new mongoose.Schema({
     },
     driverId: {
         type: String,
-        required: [ true, 'Driver Id is required']
+        //required: [ true, 'Driver Id is required']
     },
     rideId: {
         type: String,
-        required: [ true, 'Ride Id is required'],
-        unique: [ true, 'Ride Id must be unique']
+        required: [true, 'Ride Id is required'],
+        unique: [true, 'Ride Id must be unique']
     },
     from: {
-        type: String
+        type: String,
+        required: [true, 'Starting point is required']
     },
-    to: {
+    fromCoordinates: {
+        type: {
+          type: String,
+          enum: ['Point'],
+          default: 'Point'
+        },
+        coordinates: {
+          type: [Number],
+          required: true
+        }
+    },
+    to: [
+        {
+            place: {
+                type: String
+            },
+            locationCoordinates: {
+                type: {
+                  type: String,
+                  enum: ['Point'],
+                  default: 'Point'
+                },
+                coordinates: {
+                  type: [Number],
+                  required: true
+                }
+            }
+        }
+    ],
+    pickupPoint: {
+        type: String,
+    },
+    kmDistance: {
         type: String
     },
     charge: {
@@ -33,8 +66,12 @@ const RideSchema = new mongoose.Schema({
         type: String,
         default: 'Initiated',
         enum: ['Initiated', 'Active', 'Complete', 'Canceled']
+    },
+    paid: {
+        type: Boolean,
+        default: false
     }
-})
+});
 
-const RideModel = mongoose.model('ride', RideSchema)
-export default RideModel
+const RideModel = mongoose.model('ride', RideSchema);
+export default RideModel;

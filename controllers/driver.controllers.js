@@ -113,8 +113,8 @@ export async function rideComplete({ driverId, rideId, socket, res }) {
 }
 
 // GET NEARBY DRIVERS
-export async function getNearByDrivers({ longitude, latitude, socket }) {
-  const radiusInKm = 5;
+export async function getNearByDrivers({ longitude, latitude, radius, socket }) {
+  const radiusInKm = radius || 5;
   try {
     const drivers = await DriverLocationModel.find({
       isActive: true,

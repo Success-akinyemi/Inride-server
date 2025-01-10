@@ -51,11 +51,11 @@ const PassengerSchema = new mongoose.Schema({
     },
     idCardType: {
         type: String,
-        enum: ['driverLicense', 'internationalPassport', 'voterCard']
+        //enum: ['driverLicense', 'internationalPassport', 'voterCard']
     },
     verified: {
         type: Boolean,
-        default: false
+        default: true
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,

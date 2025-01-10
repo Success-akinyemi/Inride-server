@@ -130,145 +130,119 @@ export const AuthenticateDriver = async (req, res, next) => {
 };
 
 export const AuthenticatePassengerSocket = async (socket, next) => {
-    const accessToken = socket.handshake.cookies?.inrideaccesstoken;
-    const accountId = socket.handshake.cookies?.inrideaccessid;
-
     try {
+        const cookies = socket.handshake.headers.cookie || '';  // Safeguard for missing cookies
+        if (!cookies) {
+            console.log('No cookies received');
+            return next(new Error('No cookies provided'));
+        }
+
+        const parseCookies = (cookieString) => {
+            return cookieString.split(';').reduce((acc, cookie) => {
+                const [key, value] = cookie.trim().split('=');
+                acc[key] = decodeURIComponent(value);
+                return acc;
+            }, {});
+        };
+
+        const cookieObj = parseCookies(cookies);
+        const accessToken = cookieObj['inrideaccesstoken'];
+        const accountId = cookieObj['inrideaccessid'];
+
+        //console.log('Cookies:', cookies);
+        console.log('AccessToken:', accessToken, 'AccountId:', accountId);
+
         if (accessToken) {
             try {
-                // Verify the access token
                 const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
-                let user;
+                console.log('Decoded token:', decoded);
 
-                // If the account type is 'driver', fetch the driver data
                 if (decoded.accountType === 'passenger') {
-                    user = await PassengerModel.findOne({ passengerId: decoded.id });
-                }
-
-                // If user not found, reject connection
-                if (!user) {
-                    return next(new Error('User not found'));
-                }
-
-                // If refresh token does not exist, reject connection
-                if (!user.refreshToken) {
-                    return next(new Error('Unauthenticated'));
-                }
-
-                socket.user = user; // Attach the user to the socket object
-                return next(); // Proceed with the connection
-            } catch (error) {
-                if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
-                    // If the token expired or is invalid, check refresh token
-                    if (accountId) {
-                        let user = await PassengerModel.findOne({ passengerId: accountId });
-                        const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
-
-                        if (user && refreshTokenExist) {
-                            // Generate a new access token
-                            const newAccessToken = user.getAccessToken();
-
-                            // Emit the new token to the client (if needed, can send via a custom event)
-                            socket.emit('tokenRefreshed', { accessToken: newAccessToken });
-
-                            // Attach user to the socket
-                            socket.user = user;
-
-                            // Continue the connection
-                            return next();
-                        }
+                    const user = await PassengerModel.findOne({ passengerId: decoded.id });
+                    if (user && user.refreshToken) {
+                        socket.user = user;
+                        return next();
                     }
-                    return next(new Error('Unauthenticated'));
                 }
+                return next(new Error('Invalid access token'));
+            } catch (error) {
+                console.error('Token verification error:', error);
+                return next(new Error('Token expired or invalid'));
             }
-        } else if (accountId) {
-            // If no token in handshake, check for accountId and refresh token
+        }
+
+        if (accountId) {
             const user = await PassengerModel.findOne({ passengerId: accountId });
             const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
-
             if (user && refreshTokenExist) {
-                const newAccessToken = user.getAccessToken();
-                socket.emit('tokenRefreshed', { accessToken: newAccessToken });
                 socket.user = user;
+                socket.emit('tokenRefreshed', { accessToken: user.getAccessToken() });
                 return next();
             }
         }
 
         return next(new Error('Unauthenticated'));
     } catch (error) {
-        console.error('Authentication error in socket:', error);
+        console.error('Authentication error:', error);
         return next(new Error('Server error during authentication'));
     }
 };
 
 export const AuthenticateDriverSocket = async (socket, next) => {
-    const accessToken = socket.handshake.cookies?.inrideaccesstoken;
-    const accountId = socket.handshake.cookies?.inrideaccessid;
-
     try {
+        const cookies = socket.handshake.headers.cookie || '';  // Safeguard for missing cookies
+        if (!cookies) {
+            console.log('No cookies received');
+            return next(new Error('No cookies provided'));
+        }
+
+        const parseCookies = (cookieString) => {
+            return cookieString.split(';').reduce((acc, cookie) => {
+                const [key, value] = cookie.trim().split('=');
+                acc[key] = decodeURIComponent(value);
+                return acc;
+            }, {});
+        };
+
+        const cookieObj = parseCookies(cookies);
+        const accessToken = cookieObj['inrideaccesstoken'];
+        const accountId = cookieObj['inrideaccessid'];
+
+        //console.log('Cookies:', cookies);
+        console.log('AccessToken:', accessToken, 'AccountId:', accountId);
+
         if (accessToken) {
             try {
-                // Verify the access token
                 const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
-                let user;
+                console.log('Decoded token:', decoded);
 
-                // If the account type is 'driver', fetch the driver data
                 if (decoded.accountType === 'driver') {
-                    user = await DriverModel.findOne({ driverId: decoded.id });
-                }
-
-                // If user not found, reject connection
-                if (!user) {
-                    return next(new Error('User not found'));
-                }
-
-                // If refresh token does not exist, reject connection
-                if (!user.refreshToken) {
-                    return next(new Error('Unauthenticated'));
-                }
-
-                socket.user = user; // Attach the user to the socket object
-                return next(); // Proceed with the connection
-            } catch (error) {
-                if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
-                    // If the token expired or is invalid, check refresh token
-                    if (accountId) {
-                        let user = await DriverModel.findOne({ driverId: accountId });
-                        const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
-
-                        if (user && refreshTokenExist) {
-                            // Generate a new access token
-                            const newAccessToken = user.getAccessToken();
-
-                            // Emit the new token to the client (if needed, can send via a custom event)
-                            socket.emit('tokenRefreshed', { accessToken: newAccessToken });
-
-                            // Attach user to the socket
-                            socket.user = user;
-
-                            // Continue the connection
-                            return next();
-                        }
+                    const user = await DriverModel.findOne({ passengerId: decoded.id });
+                    if (user && user.refreshToken) {
+                        socket.user = user;
+                        return next();
                     }
-                    return next(new Error('Unauthenticated'));
                 }
+                return next(new Error('Invalid access token'));
+            } catch (error) {
+                console.error('Token verification error:', error);
+                return next(new Error('Token expired or invalid'));
             }
-        } else if (accountId) {
-            // If no token in handshake, check for accountId and refresh token
-            const user = await DriverModel.findOne({ driverId: accountId });
-            const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
+        }
 
+        if (accountId) {
+            const user = await DriverModel.findOne({ passengerId: accountId });
+            const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
             if (user && refreshTokenExist) {
-                const newAccessToken = user.getAccessToken();
-                socket.emit('tokenRefreshed', { accessToken: newAccessToken });
                 socket.user = user;
+                socket.emit('tokenRefreshed', { accessToken: user.getAccessToken() });
                 return next();
             }
         }
 
         return next(new Error('Unauthenticated'));
     } catch (error) {
-        console.error('Authentication error in socket:', error);
+        console.error('Authentication error:', error);
         return next(new Error('Server error during authentication'));
     }
 };

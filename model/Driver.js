@@ -62,7 +62,7 @@ const DriverSchema = new mongoose.Schema({
     },
     idCardType: {
         type: String,
-        enum: ['driverLicense', 'internationalPassport', 'voterCard']
+        //enum: ['driverLicense', 'internationalPassport', 'voterCard']
     },
     driverLincenseImgFront: {
         type: String

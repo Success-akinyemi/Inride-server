@@ -93,14 +93,14 @@ export async function completeDriverRegistration(req, res) {
         }
 
         //VERIFY DRIVER LINCENSE
-        const driverLincenseVerification = await verifyDriverLicense(driverLincenseImgFront[0], driverLincenseImgBack[0]);
+        const driverLincenseVerification = await verifyDriverLicense(req.files.driverLincenseImgFront[0], req.files.driverLincenseImgBack[0]);
         if (!driverLincenseVerification.success) {
             return sendResponse(res, 400, false, `Invalid Driver Lincense card Image. Provide a Valid driver Lincense Card Image`);
         }
 
         //VERIFY FACE
         const idPhotoBuffer = driverLincenseVerification.photo;
-        const profilePhotoBuffer = profileImg[0].buffer;
+        const profilePhotoBuffer = req.files.profileImg[0].buffer;
         const faceMatchResult = await matchFace(idPhotoBuffer, profilePhotoBuffer);
         if (!faceMatchResult.success) {
             return sendResponse(res, 400, false, `Face matching failed. Ensure your selfie matches your ID photo`);
@@ -108,9 +108,9 @@ export async function completeDriverRegistration(req, res) {
 
         // Upload images and get URLs
         const folder = 'driver-id-cards';
-        const driverLincenseImgFrontUrl = await uploadFile(driverLincenseImgFront[0], folder);
-        const driverLicenseImgBackUrl = await uploadFile(driverLincenseImgBack[0], folder);
-        const profileImgUrl = await uploadFile(profileImg[0], 'driver-profile-image');
+        const driverLincenseImgFrontUrl = await uploadFile(req.files.driverLincenseImgFront[0], folder);
+        const driverLicenseImgBackUrl = await uploadFile(req.files.driverLincenseImgBack[0], folder);
+        const profileImgUrl = await uploadFile(req.files.profileImg[0], 'driver-profile-image');
         
 
         driver.opreatingCity = opreatingCity
@@ -183,10 +183,14 @@ export async function registerNewDriver(req, res) {
 
         const otpCode = await generateOtp(mobileNumber, 4, 'driver' )
         console.log('OTP CODE', otpCode)
+
+        const driverId = await generateUniqueCode(8)
+        console.log('DRIVER ID', `RF${driverId}DR`)
         
         if(otpCode){
             const newUser = await DriverModel.create({
-                mobileNumber: mobileNumber
+                mobileNumber: mobileNumber,
+                driverId: `RF${driverId}DR`
             })
 
             const sendOtpCode = await twilioClient.messages.create({
@@ -250,6 +254,7 @@ export async function completeNewDriverRegistration(req, res) {
     if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
     if (!firstName) return sendResponse(res, 400, false, `Provide a first name`);
     if (!lastName) return sendResponse(res, 400, false, `Provide a last name`);
+    if (!ssn) return sendResponse(res, 400, false, `Provide a social security number`);
     if(!opreatingCity){
         return sendResponse(res, 400, false, 'Opreating city is required')
     }
@@ -287,14 +292,14 @@ export async function completeNewDriverRegistration(req, res) {
         }
 
         //VERIFY DRIVER LINCENSE
-        const driverLincenseVerification = await verifyDriverLicense(driverLincenseImgFront[0], driverLincenseImgBack[0]);
+        const driverLincenseVerification = await verifyDriverLicense(req.files.driverLincenseImgFront[0], req.files.driverLincenseImgBack[0]);
         if (!driverLincenseVerification.success) {
             return sendResponse(res, 400, false, `Invalid Driver Lincense card Image. Provide a Valid driver Lincense Card Image`);
         }
 
         //VERIFY FACE
         const idPhotoBuffer = driverLincenseVerification.photo;
-        const profilePhotoBuffer = profileImg[0].buffer;
+        const profilePhotoBuffer = req.files.profileImg[0].buffer;
         const faceMatchResult = await matchFace(idPhotoBuffer, profilePhotoBuffer);
         if (!faceMatchResult.success) {
             return sendResponse(res, 400, false, `Face matching failed. Ensure your selfie matches your ID photo`);
@@ -302,9 +307,9 @@ export async function completeNewDriverRegistration(req, res) {
 
         // Upload images and get URLs
         const folder = 'driver-id-cards';
-        const driverLincenseImgFrontUrl = await uploadFile(driverLincenseImgFront[0], folder);
-        const driverLicenseImgBackUrl = await uploadFile(driverLincenseImgBack[0], folder);
-        const profileImgUrl = await uploadFile(profileImg[0], 'driver-profile-image');
+        const driverLincenseImgFrontUrl = await uploadFile(req.files.driverLincenseImgFront[0], folder);
+        const driverLicenseImgBackUrl = await uploadFile(req.files.driverLincenseImgBack[0], folder);
+        const profileImgUrl = await uploadFile(req.files.profileImg[0], 'driver-profile-image');
                 
         const driverId = await generateUniqueCode(8)
         console.log('DRIVER ID', `RF${driverId}DR`)
@@ -312,7 +317,7 @@ export async function completeNewDriverRegistration(req, res) {
         newDriver.firstName = firstName
         newDriver.lastName = lastName
         newDriver.email = email
-        newDriver.ssn = ssn
+        newDriver.ssn = req.body.ssn
         newDriver.opreatingCity = opreatingCity
         newDriver.driverLincenseImgFront = driverLincenseImgFrontUrl
         newDriver.driverLincenseImgBack = driverLicenseImgBackUrl,
