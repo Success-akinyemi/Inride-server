@@ -529,3 +529,15 @@ export async function verifyToken(req, res) {
         return sendResponse(res, 500, false, 'Unable to verify token')
     }
 }
+
+
+/** 
+ */
+export async function del(req, res) {
+    try {
+        const deletepas = await DriverModel.deleteMany() 
+        res.status(200).json({ success: true})
+    } catch (error) {
+        console.log('object', error)
+    }
+}

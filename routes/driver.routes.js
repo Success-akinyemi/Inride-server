@@ -9,4 +9,8 @@ router.post('/goOnline', AuthenticateDriver, controllers.goOnline);
 router.post('/goOffline', AuthenticateDriver, controllers.goOffline);
 router.post('/rideAccepted', AuthenticateDriver, controllers.rideAccepted);
 
+
+router.post('/del', AuthenticateDriver, controllers.del);
+
+
 export default router;

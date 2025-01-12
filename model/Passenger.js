@@ -55,7 +55,7 @@ const PassengerSchema = new mongoose.Schema({
     },
     verified: {
         type: Boolean,
-        default: true
+        default: false
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
