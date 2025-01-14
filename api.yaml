@@ -343,7 +343,7 @@ paths:
       tags:
         - Driver Auth
       summary: Complete Driver Registration
-      description: Completes registration for a driver account. carDetails object values include - '{registrationNumber, year, model, color, noOfSeats, carImg}'
+      description: Completes registration for a driver account. carDetails object values include - '{registrationNumber, year, model, color, noOfSeats, carImg}'. coordinates of the driver location is also required as an array [longitude, latitude] longitude first for GeoJSON
       consumes:
         - multipart/form-data
       parameters:
@@ -395,6 +395,18 @@ paths:
           in: formData
           required: true
           type: file
+        - name: coordinates
+          in: formData
+          required: true
+          type: array
+          required:
+            - longitude
+            - latitude
+          properties:
+            - longitude:
+              type: number
+            - latitude:
+              type: number
       responses:
         201:
           description: Account created successfully
@@ -511,7 +523,7 @@ paths:
       tags:
         - Driver Auth
       summary: Complete new Driver Registration
-      description: Completes registration for a new driver account. carDetails object include- '{registrationNumber, year, model, color, noOfSeats, carImg}'
+      description: Completes registration for a new driver account. carDetails object include- '{registrationNumber, year, model, color, noOfSeats, carImg}'. coordinates of the driver location is also required as an array [longitude, latitude] longitude first for GeoJSON
       consumes:
         - multipart/form-data
       parameters:
@@ -572,6 +584,18 @@ paths:
           in: formData
           required: false
           type: string
+        - name: coordinates
+          in: formData
+          required: true
+          type: array
+          required:
+            - longitude
+            - latitude
+          properties:
+            - longitude:
+              type: number
+            - latitude:
+              type: number
       responses:
         201:
           description: Account created successfully

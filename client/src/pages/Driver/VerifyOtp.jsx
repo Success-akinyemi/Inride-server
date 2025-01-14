@@ -38,29 +38,55 @@ function DriverVerifyOtp() {
     }
   };
   
+
   const handleVerifyLoginOtp = async (e) => {
     e.preventDefault();
   
+    const getUserLocation = () => {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject('Geolocation is not supported by your browser.');
+        } else {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords;
+              const location = {
+                type: 'Point',
+                coordinates: [longitude, latitude]  // GeoJSON format: [longitude, latitude]
+              };
+              resolve(location);
+            },
+            (error) => {
+              reject('Location access is required for this action.');
+            }
+          );
+        }
+      });
+    };
+  
     try {
-      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/passenger/auth/verifyLoginOtp`, {
+      const location = await getUserLocation();
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/driver/auth/verifyLoginOtp`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',  // Set content type for JSON
         },
-        body: JSON.stringify({ otp: formData.otp }),  // Send data as JSON
+        body: JSON.stringify({
+          otp: formData.otp,
+          location: location,  // Attach location to the request
+        }),
       });
   
       const result = await response.json();
       if (response.ok) {
         alert(`Success: ${result?.data}`);
-        navigate('/passenger/requestRide');
+        navigate('/driver/home');
       } else {
         alert(`Error: ${result?.data || 'Failed to sign in'}`);
       }
     } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred while signing in.');
+      alert(error || 'An error occurred while retrieving location.');
     }
   };
   

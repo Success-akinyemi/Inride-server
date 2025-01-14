@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const DriverLocationSchema = new mongoose.Schema({
   driverId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     required: true,
     unique: true
   },
@@ -17,7 +17,7 @@ const DriverLocationSchema = new mongoose.Schema({
     },
     coordinates: {
       type: [Number],
-      required: true
+      //required: true
     }
   },
   isActive: {

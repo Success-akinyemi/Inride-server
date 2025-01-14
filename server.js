@@ -60,9 +60,9 @@ driverNamespace.use(AuthenticateDriverSocket);
 driverNamespace.on('connection', (socket) => {
   console.log('Driver connected:', socket.id);
 
-  socket.on('updateLocation', (data) => driverController.updateLocation({ ...data, socket }));
-  socket.on('goOnline', ({ driverId }) => driverController.goOnline({ driverId, socket }));
-  socket.on('goOffline', ({ driverId }) => driverController.goOffline({ driverId, socket }));
+  socket.on('updateLocation', (data) => driverController.updateLocation({ data, socket }));
+  socket.on('goOnline', ({ data }) => driverController.goOnline({ data, socket }));
+  socket.on('goOffline', ({ data }) => driverController.goOffline({ data, socket }));
   socket.on('rideAccepted', ({ driverId, rideId }) => driverController.rideAccepted({ driverId, rideId, socket }));
   socket.on('rideCancel', ({ driverId, rideId }) => driverController.rideCancel({ driverId, rideId, socket }));
   socket.on('rideComplete', ({ driverId, rideId }) => driverController.rideComplete({ driverId, rideId, socket }));

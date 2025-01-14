@@ -18,6 +18,8 @@ router.post('/verifyToken', controllers.verifyToken)
 
 
 router.post('/del', controllers.del)
+router.post('/createnew', controllers.createnew)
+
 
 
 //GET

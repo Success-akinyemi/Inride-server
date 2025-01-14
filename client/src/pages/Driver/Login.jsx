@@ -16,7 +16,7 @@ function DriverLogin() {
     e.preventDefault();
   
     try {
-      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/passenger/auth/signin`, {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/driver/auth/signin`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -28,7 +28,7 @@ function DriverLogin() {
       const result = await response.json();
       if (response.ok) {
         alert(`Success: ${result?.data}`);
-        navigate('/passenger/verifyOtp');
+        navigate('/driver/verifyOtp');
       } else {
         alert(`Error: ${result?.data || 'Failed to sign in'}`);
       }

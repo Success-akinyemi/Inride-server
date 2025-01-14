@@ -51,12 +51,15 @@ export async function registerWithPassengerAccount(req, res) {
 
 //Complete registration for driver who created account with passenger account
 export async function completeDriverRegistration(req, res) {
-    const {ssn, opreatingCity, carDetails, mobileNumber, pricePerKm } = req.body
+    const {ssn, opreatingCity, carDetails, mobileNumber, pricePerKm, coordinates } = req.body
     const accountId = req.cookies.inrideaccessid;
 
     if(!opreatingCity){
         return sendResponse(res, 400, false, 'Opreating city is required')
     }
+    if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
+        if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
+    
 
     const { driverLincenseImgFront, driverLincenseImgBack, profileImg } = req.files;
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
@@ -133,6 +136,7 @@ export async function completeDriverRegistration(req, res) {
         const newDriverLocation = await DriverLocationModel.create({
             driverId: driver?.driverId,
             name: `${driver?.firstName} ${driver?.lastName}`,
+            location: { type: 'Point', coordinates: coordinates },  //longitude first for GeoJSON
             isActive: true,
             status: 'online'
         })
@@ -279,7 +283,7 @@ export async function verifySSN(req, res) {
         if(findSSN){
             return sendResponse(res, 400, false, 'SSN already exist')   
         }
-        
+
         return sendResponse(res, 200, true, 'SSN Verified')
     } catch (error) {
         console.log('UNABLE TO VERIFY SSN OF DRIVER')
@@ -289,7 +293,7 @@ export async function verifySSN(req, res) {
 
 //Complete new driver registration
 export async function completeNewDriverRegistration(req, res) {
-    const { mobileNumber, email, firstName, lastName, opreatingCity, ssn, carDetails, pricePerKm} = req.body
+    const { mobileNumber, email, firstName, lastName, opreatingCity, ssn, carDetails, pricePerKm, coordinates} = req.body
     
     // Validate required fields
     if (!email) return sendResponse(res, 400, false, `Provide an email address`);
@@ -301,6 +305,8 @@ export async function completeNewDriverRegistration(req, res) {
     if(!opreatingCity){
         return sendResponse(res, 400, false, 'Opreating city is required')
     }
+    if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
+    if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
 
     const { driverLincenseImgFront, driverLincenseImgBack, profileImg } = req.files;
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
@@ -384,6 +390,7 @@ export async function completeNewDriverRegistration(req, res) {
         const newDriverLocation = await DriverLocationModel.create({
             driverId: newDriver?.driverId,
             name: `${newDriver?.firstName} ${newDriver?.lastName}`,
+            location: { type: 'Point', coordinates: coordinates },  //longitude first for GeoJSON
             isActive: true,
             status: 'online'
         })
@@ -432,8 +439,28 @@ export async function signin(req, res) {
         if(!numberExist){
             return sendResponse(res, 404, false, 'Mobile number does not exist')
         }
+        if(!numberExist.verified){
+            return sendResponse(res, 403, false, 'Unverified account')
+        }
 
         //check
+        if(
+            !numberExist?.email || 
+            numberExist?.email === '' ||
+            !numberExist?.firstName ||
+            numberExist?.firstName === '' ||
+            !numberExist?.lastName ||
+            numberExist?.lastName === '' ||
+            !numberExist?.ssn ||
+            !numberExist?.profileImg ||
+            !numberExist?.idCardImgFront ||
+            !numberExist?.idCardImgBack ||
+            !numberExist?.opreatingCity ||
+            !numberExist?.driverLincenseImgFront ||
+            !numberExist?.driverLincenseImgBack
+        ){
+            return sendResponse(res, 403, false, 'register driver information')
+        }
 
         const otpCode = await generateOtp(mobileNumber, 4, 'driver' )
         console.log('OTP CODE', otpCode)
@@ -458,12 +485,14 @@ export async function signin(req, res) {
 
 //VERIFY LOGIN OTP
 export async function verifyLoginOtp(req, res) {
-    const { otp } = req.body
+    const { otp, location } = req.body
+
     if(!otp){
         return sendResponse(res, 400, false, 'Otp is required')
     }
     try {
-        const getOtp = await OtpModel.findOne({ otp })
+        const getOtp = await OtpModel.findOne({ otp: otp })
+        console.log('object', otp, getOtp)
         if(!getOtp){
             return sendResponse(res, 404, false, 'Invalid Otp Code')
         }
@@ -475,9 +504,10 @@ export async function verifyLoginOtp(req, res) {
         const deleteOtp = await OtpModel.findByIdAndDelete({ _id: getOtp._id })
         getDriver.status = 'online'
         await getDriver.save()
-        const getDriverLocation = DriverLocationModel.findOne({ driverId: getDriver?.driverId })
+        const getDriverLocation = await DriverLocationModel.findOne({ driverId: getDriver?.driverId })
         getDriverLocation.status = 'online'
         getDriverLocation.isActive = true
+        getDriverLocation.location = location
         await getDriverLocation.save()
 
         // Generate Tokens
@@ -584,5 +614,48 @@ export async function del(req, res) {
         res.status(200).json({ success: true})
     } catch (error) {
         console.log('object', error)
+    }
+}
+
+export async function createnew(req, res) {
+    try {
+        const driverId = await generateUniqueCode(8)
+        console.log('DRIVER ID', `RF${driverId}DR`)
+
+        const data = {
+            mobileNumber: '+2349059309831',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'johndoe@gmail.com',
+            opreatingCity: 'Lagos',
+            pricePerKm: 500,
+            ssn: '123456789',
+            idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            idCardType: 'Driver Lincense',
+            driverLincenseImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            driverLincenseImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            verified: true,
+            driverId: `RF${driverId}DR`
+        }
+
+        const newUser = await DriverModel.create(data)
+
+        const newDriverLocation = await DriverLocationModel.create({
+            driverId: newUser?.driverId,
+            name: `${newUser?.firstName} ${newUser?.lastName}`,
+            location: {
+                "type": "Point",
+                "coordinates": [
+                    3.3792057,
+                    6.5243793
+                ]
+            }
+        })
+        console.log('NEW DRIVER LOCATION', newDriverLocation)
+        return sendResponse(res, 201, true, newUser, 'DRIVER CREATED')
+    } catch (error) {
+        console.log('ERROR', error)
     }
 }

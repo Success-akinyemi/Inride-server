@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
 
 const socket = io('http://localhost:10000/passenger', {
-    transports: ['websocket'],
-    withCredentials: true,  // Match server CORS credentials
-  });
+  transports: ['websocket'],
+  withCredentials: true,  // Match server CORS credentials
+});
+
 const RequestRide = () => {
   const [rideDetails, setRideDetails] = useState({
     from: '',
@@ -14,15 +15,37 @@ const RequestRide = () => {
     pickupPoint: '', 
   });
   const [responseMessage, setResponseMessage] = useState('');
+  const [userLocation, setUserLocation] = useState({ type: 'Point', coordinates: [] });
 
   useEffect(() => {
-    // Listen for requestRide event from the server
+    // Get user location when component loads
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const locationData = {
+            type: 'Point',
+            coordinates: [longitude, latitude]  // longitude first for GeoJSON format
+          };
+          setUserLocation(locationData);
+          console.log('User Location:', locationData);  
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        }
+      );
+    } else {
+      console.error('Geolocation is not supported by this browser.');
+    }
+  }, []);
+
+  useEffect(() => {
+    // Listen for server events
     socket.on('requestRide', (data) => {
       setResponseMessage(data.message);
       console.log('Ride Requested Response:', data);
     });
 
-    // Listen for error event from the server
     socket.on('error', (data) => {
       setResponseMessage(data.message);
       console.error('Error:', data);
@@ -44,7 +67,11 @@ const RequestRide = () => {
       setResponseMessage('Please provide all required details.');
       return;
     }
-    socket.emit('requestRide', rideDetails);
+    const requestData = {
+      ...rideDetails,
+      location: userLocation,  // Include user coordinates
+    };
+    socket.emit('requestRide', requestData);
   };
 
   return (

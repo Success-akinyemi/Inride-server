@@ -4,16 +4,19 @@ import DriverLocationModel from "../model/DriverLocation.js";
 import RideModel from "../model/Rides.js";
 
 // UPDATE DRIVER LOCATION
-export async function updateLocation({ driverId, longitude, latitude, socket, res }) {
+export async function updateLocation({ data, socket, res }) {
+  const { driverId } = socket.user;
+
   try {
-    await DriverLocationModel.updateOne(
+    const updateLoc = await DriverLocationModel.updateOne(
       { driverId },
       {
-        location: { type: 'Point', coordinates: [longitude, latitude] },
+        location: data,
         isActive: true,
       },
       { upsert: true }
     );
+
 
     if (res) return sendResponse(res, 200, true, 'Location Updated');
     if (socket) socket.emit('locationUpdated', { success: true, message: 'Location Updated' });
@@ -25,12 +28,24 @@ export async function updateLocation({ driverId, longitude, latitude, socket, re
 }
 
 // GO ONLINE
-export async function goOnline({ driverId, socket, res }) {
-  try {
-    await DriverLocationModel.updateOne({ driverId }, { isActive: true, status: 'online' });
-    const driver = await DriverModel.updateOne({ driverId }, { status: 'online' });
+export async function goOnline({ data, socket, res }) {
+  const { driverId } = socket.user;
 
-    const message = `Driver ${driver?.firstName} ${driver?.lastName} is online`;
+  try {
+    const driverLoc = await DriverLocationModel.findOne({ driverId })
+    if(driverLoc){
+      driverLoc.isActive = true
+      driverLoc.status = 'online'
+      await driverLoc.save()
+    }
+    const driverStats = await DriverModel.findOne({ driverId })
+    if(driverStats){
+      driverStats.status = 'online'
+      await driverStats.save()
+    }
+
+    console.log('DRIVER UPDATED', driverStats?.status, driverId);
+    const message = `Driver ${driverStats?.firstName} ${driverStats?.lastName} is online`;
     if (res) return sendResponse(res, 200, true, message);
     if (socket) socket.emit('statusUpdated', { success: true, message });
   } catch (error) {
@@ -42,12 +57,23 @@ export async function goOnline({ driverId, socket, res }) {
 }
 
 // GO OFFLINE
-export async function goOffline({ driverId, socket, res }) {
-  try {
-    await DriverLocationModel.updateOne({ driverId }, { isActive: false, status: 'offline' });
-    const driver = await DriverModel.updateOne({ driverId }, { status: 'offline' });
+export async function goOffline({ data, socket, res }) {
+  const { driverId } = socket.user;
 
-    const message = `Driver ${driver?.firstName} ${driver?.lastName} is offline`;
+  try {
+    const driverLoc = await DriverLocationModel.findOne({ driverId })
+    if(driverLoc){
+      driverLoc.isActive = false
+      driverLoc.status = 'offline'
+      await driverLoc.save()
+    }
+    const driverStats = await DriverModel.findOne({ driverId })
+    if(driverStats){
+      driverStats.status = 'offline'
+      await driverStats.save()
+    }
+    console.log('DRIVER UPDATED', driverStats?.status, driverId);
+    const message = `Driver ${driverStats?.firstName} ${driverStats?.lastName} is offline`;
     if (res) return sendResponse(res, 200, true, message);
     if (socket) socket.emit('statusUpdated', { success: true, message });
   } catch (error) {

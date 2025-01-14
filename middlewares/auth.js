@@ -189,6 +189,7 @@ export const AuthenticatePassengerSocket = async (socket, next) => {
 };
 
 export const AuthenticateDriverSocket = async (socket, next) => {
+    console.log('Authenticating driver socket:', socket.id)
     try {
         const cookies = socket.handshake.headers.cookie || '';  // Safeguard for missing cookies
         if (!cookies) {
@@ -217,7 +218,7 @@ export const AuthenticateDriverSocket = async (socket, next) => {
                 console.log('Decoded token:', decoded);
 
                 if (decoded.accountType === 'driver') {
-                    const user = await DriverModel.findOne({ passengerId: decoded.id });
+                    const user = await DriverModel.findOne({ driverId: decoded.id });
                     if (user && user.refreshToken) {
                         socket.user = user;
                         return next();
@@ -231,7 +232,7 @@ export const AuthenticateDriverSocket = async (socket, next) => {
         }
 
         if (accountId) {
-            const user = await DriverModel.findOne({ passengerId: accountId });
+            const user = await DriverModel.findOne({ driverId: accountId });
             const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
             if (user && refreshTokenExist) {
                 socket.user = user;

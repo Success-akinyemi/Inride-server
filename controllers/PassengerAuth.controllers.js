@@ -71,7 +71,7 @@ export async function resendOtp(req, res) {
             })
             console.log('SMS BODY', sendOtpCode?.body)
         
-            return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}`, `${mobileNumber}`)
+            return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}`, `${mobileNumber} Code: ${otpCode}`)
         }
 
 
@@ -244,6 +244,9 @@ export async function signin(req, res) {
         if(!numberExist){
             return sendResponse(res, 400, false, 'Mobile number does not exist')
         }
+        if(!numberExist.verified){
+            return sendResponse(res, 403, false, 'Unverified account')
+        }
 
         //check if user register data already exist
         if(
@@ -258,7 +261,7 @@ export async function signin(req, res) {
             !numberExist?.idCardImgFront ||
             !numberExist?.idCardImgBack
         ){
-            return sendResponse(res, 403, false, 'register user data')
+            return sendResponse(res, 403, false, 'register passenger information')
         }
         const otpCode = await generateOtp(mobileNumber, 4, 'passenger' )
         console.log('OTP CODE', otpCode)
