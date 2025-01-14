@@ -91,6 +91,9 @@ export async function verifyPersonalDetails(req, res) {
         if(!findUser){
             return sendResponse(res, 404, false, 'Mobile number does not exist' )
         }
+        if(!findUser?.verified){
+            return sendResponse(res, 403, false, 'Account not verified')
+        }
 
         const findUserEmail = await PassengerModel.findOne({ email })
         if(findUserEmail) return sendResponse(res, 404, false, 'Email already exist')
@@ -105,8 +108,14 @@ export async function verifyPersonalDetails(req, res) {
 //verify ssn
 export async function verifySSN(req, res) {
     const { ssn } = req.body
+    if(!ssn){
+        return sendResponse(res, 400, false, 'Provide a social security number')
+    }
     try {
-        
+        const findSSN = await PassengerModel.findOne({ ssn })
+        if(findSSN){
+            return sendResponse(res, 400, false, 'SSN already exist')   
+        }
         return sendResponse(res, 200, true, 'SSN Verified')
     } catch (error) {
         console.log('UNABLE TO VERIFY SSN')

@@ -244,6 +244,49 @@ export async function resendOtp(req, res) {
     }
 }
 
+//verify email and mobile number
+export async function verifyPersonalDetails(req, res) {
+    const { email, mobileNumber  } = req.body
+    if(!email) return sendResponse(res, 400, false, 'Provide an Email address')
+    if(!mobileNumber) return sendResponse(res, 400, false, 'Provide a mobile number')
+    try {
+        const findDriver = await DriverModel.findOne({ mobileNumber })
+        if(!findDriver){
+            return sendResponse(res, 404, false, 'Mobile number does not exist' )
+        }
+        if(!findDriver?.verified){
+            return sendResponse(res, 403, false, 'Account not verified')
+        }
+
+        const findUserEmail = await DriverModel.findOne({ email })
+        if(findUserEmail) return sendResponse(res, 404, false, 'Email already exist')
+        
+        return sendResponse(res, 200, true, 'Successful')
+    } catch (error) {
+        console.log('UNABLE TO VERIFY USER')
+        return sendResponse(res, 500, false, 'Unable to verify user data')
+    }
+}
+
+//verify ssn
+export async function verifySSN(req, res) {
+    const { ssn } = req.body
+    if(!ssn){
+        return sendResponse(res, 400, false, 'Provide a social security number')
+    }
+    try {
+        const findSSN = await DriverModel.findOne({ ssn })
+        if(findSSN){
+            return sendResponse(res, 400, false, 'SSN already exist')   
+        }
+        
+        return sendResponse(res, 200, true, 'SSN Verified')
+    } catch (error) {
+        console.log('UNABLE TO VERIFY SSN OF DRIVER')
+        return sendResponse(res, 500, false, 'Unable to verify driver SSN')
+    }
+}
+
 //Complete new driver registration
 export async function completeNewDriverRegistration(req, res) {
     const { mobileNumber, email, firstName, lastName, opreatingCity, ssn, carDetails, pricePerKm} = req.body

@@ -71,7 +71,7 @@ paths:
         500:
           description: Server error
 
-#PASSENGER
+#PASSENGER AUTH
 
   /api/passenger/auth/registerNumber:
     post:
@@ -322,7 +322,7 @@ paths:
         500:
           description: Server error
 
-#DRIVER
+#DRIVER AUTH
 
   /api/driver/auth/registerWithPassengerAccount:
     post:
@@ -448,6 +448,59 @@ paths:
       responses:
         201:
           description: Verification OTP sent
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/verifyPersonalDetails:
+    post:
+      tags:
+        - Driver Auth
+      summary: Verify if email does not exist and account is valid
+      description: This endpoint verifies email does not exist and a valid mobile number.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+              - mobileNumber
+            properties:
+              email:
+                type: string
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: Successful
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/verifySSN:
+    post:
+      tags:
+        - Driver Auth
+      summary: Verify driver ssn
+      description: This endpoint verifies the ssn of a driver user.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - ssn
+            properties:
+              ssn:
+                type: string
+      responses:
+        201:
+          description: Successful
         400:
           description: User error
         500:

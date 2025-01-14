@@ -8,6 +8,8 @@ router.post('/registerWithPassengerAccount', controllers.registerWithPassengerAc
 router.post('/completeDriverRegistration', uploadImages, controllers.completeDriverRegistration)
 router.post('/registerNewDriver', controllers.registerNewDriver)
 router.post('/resendOtp', controllers.resendOtp)
+router.post('/verifyPersonalDetails', controllers.verifyPersonalDetails)
+router.post('/verifySSN', controllers.verifySSN)
 router.post('/completeNewDriverRegistration', uploadImages, controllers.completeNewDriverRegistration)
 
 router.post('/signin', controllers.signin)
