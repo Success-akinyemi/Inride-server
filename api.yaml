@@ -123,6 +123,84 @@ paths:
         500:
           description: Server error
 
+  /api/passenger/auth/verifyPersonalDetails:
+    post:
+      tags:
+        - Passenger Auth
+      summary: Verify email does not exist
+      description: This endpoint verifies email does not exist and a valid mobile number.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+              - mobileNumber
+            properties:
+              email:
+                type: string
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: Successful
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/passenger/auth/verifySSN:
+    post:
+      tags:
+        - Passenger Auth
+      summary: Verify user ssn
+      description: This endpoint verifies the ssn of a passenger user.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - ssn
+            properties:
+              ssn:
+                type: string
+      responses:
+        201:
+          description: Successful
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/passenger/auth/resendOtp:
+    post:
+      tags:
+        - Passenger Auth
+      summary: Resend OTP to user Mobile Number
+      description: This endpoint resends the otp to the user mobile number of a passenger user. Mobile number is required in international format (e.g., +2349012345678). OTP will be sent via SMS.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - mobileNumber
+            properties:
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: Verification OTP sent
+        400:
+          description: User error
+        500:
+          description: Server error
+
   /api/passenger/auth/registerUser:
     post:
       tags:

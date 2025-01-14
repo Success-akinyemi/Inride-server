@@ -387,8 +387,10 @@ export async function signin(req, res) {
     try { 
         const numberExist = await DriverModel.findOne({ mobileNumber: mobileNumber })
         if(!numberExist){
-            return sendResponse(res, 400, false, 'Mobile number does not exist')
+            return sendResponse(res, 404, false, 'Mobile number does not exist')
         }
+
+        //check
 
         const otpCode = await generateOtp(mobileNumber, 4, 'driver' )
         console.log('OTP CODE', otpCode)

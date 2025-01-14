@@ -81,6 +81,39 @@ export async function resendOtp(req, res) {
     }
 }
 
+//verify email and mobile number
+export async function verifyPersonalDetails(req, res) {
+    const { email, mobileNumber  } = req.body
+    if(!email) return sendResponse(res, 400, false, 'Provide an Email address')
+    if(!mobileNumber) return sendResponse(res, 400, false, 'Provide a mobile number')
+    try {
+        const findUser = await PassengerModel.findOne({ mobileNumber })
+        if(!findUser){
+            return sendResponse(res, 404, false, 'Mobile number does not exist' )
+        }
+
+        const findUserEmail = await PassengerModel.findOne({ email })
+        if(findUserEmail) return sendResponse(res, 404, false, 'Email already exist')
+        
+        return sendResponse(res, 200, true, 'Successful')
+    } catch (error) {
+        console.log('UNABLE TO VERIFY USER')
+        return sendResponse(res, 500, false, 'Unable to verify user data')
+    }
+}
+
+//verify ssn
+export async function verifySSN(req, res) {
+    const { ssn } = req.body
+    try {
+        
+        return sendResponse(res, 200, true, 'SSN Verified')
+    } catch (error) {
+        console.log('UNABLE TO VERIFY SSN')
+        return sendResponse(res, 500, false, 'Unable to verify SSN')
+    }
+}
+
 //REGISTER DETAILS
 export async function registerUser(req, res) {
     const { email, firstName, lastName, ssn, idCardType, mobileNumber } = req.body;
@@ -203,6 +236,21 @@ export async function signin(req, res) {
             return sendResponse(res, 400, false, 'Mobile number does not exist')
         }
 
+        //check if user register data already exist
+        if(
+            !numberExist?.email || 
+            numberExist?.email === '' ||
+            !numberExist?.firstName ||
+            numberExist?.firstName === '' ||
+            !numberExist?.lastName ||
+            numberExist?.lastName === '' ||
+            !numberExist?.ssn ||
+            !numberExist?.profileImg ||
+            !numberExist?.idCardImgFront ||
+            !numberExist?.idCardImgBack
+        ){
+            return sendResponse(res, 403, false, 'register user data')
+        }
         const otpCode = await generateOtp(mobileNumber, 4, 'passenger' )
         console.log('OTP CODE', otpCode)
         
