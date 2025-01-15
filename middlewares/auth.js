@@ -150,7 +150,7 @@ export const AuthenticatePassengerSocket = async (socket, next) => {
         const accountId = cookieObj['inrideaccessid'];
 
         //console.log('Cookies:', cookies);
-        console.log('AccessToken:', accessToken, 'AccountId:', accountId);
+        console.log('PASSENGER','AccessToken:', accessToken, 'AccountId:', accountId);
 
         if (accessToken) {
             try {
@@ -159,7 +159,8 @@ export const AuthenticatePassengerSocket = async (socket, next) => {
 
                 if (decoded.accountType === 'passenger') {
                     const user = await PassengerModel.findOne({ passengerId: decoded.id });
-                    if (user && user.refreshToken) {
+                    const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: decoded.id });
+                    if (user && refreshTokenExist) {
                         socket.user = user;
                         return next();
                     }
@@ -181,6 +182,7 @@ export const AuthenticatePassengerSocket = async (socket, next) => {
             }
         }
 
+        console.log('Unauthenticated');
         return next(new Error('Unauthenticated'));
     } catch (error) {
         console.error('Authentication error:', error);
@@ -219,7 +221,8 @@ export const AuthenticateDriverSocket = async (socket, next) => {
 
                 if (decoded.accountType === 'driver') {
                     const user = await DriverModel.findOne({ driverId: decoded.id });
-                    if (user && user.refreshToken) {
+                    const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: decoded.id });
+                    if (user && refreshTokenExist) {
                         socket.user = user;
                         return next();
                     }

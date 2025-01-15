@@ -22,6 +22,10 @@ tags:
     description: Endpoints for passenger registration Authentication
   - name: Driver Auth
     description: Endpoints for driver registration Authentication
+  - name: Passenger
+    description: Endpoints for passenger
+  - name: Driver
+    description: Endpoints for driver
 
 paths:
   /:
@@ -665,5 +669,112 @@ paths:
           description: userData - successful
         403:
           description: UnAuthenicated
+        500:
+          description: Server error
+
+
+#PASSENGER
+
+  /passenger/getNearByDrivers:
+    post:
+      tags:
+        - Passenger
+      summary: get Location of drivers around a passenger - socket.io request -  socket.emit('getNearbyDrivers', data); socket.on('nearbyDrivers', serverResponse)
+      description: This endpoint get the near by drivers around a passenger location. The passenger location is required as an array [longitude, latitude] longitude first for GeoJSON
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - type
+              - coordinates
+            properties:
+              type:
+                radius: number
+              location:
+                type: array
+                required:
+                  - longitude
+                  - latitude
+                properties:
+                  - longitude:
+                    type: number
+                  - latitude:
+                    type: number
+      responses:
+        201:
+          description: Drivers locations
+        400:
+          description: User error
+        500:
+          description: Server error
+
+
+#DRIVER
+
+  /driver/updateLocation:
+    post:
+      tags:
+        - Driver
+      summary: Update the current driver location - socket.io request - socket.emit('updateLocation', locationData); socket.on('locationUpdated')
+      description: This endpoint update the driver locations for passenger to see e.g can be send every 5 seconds for high accuracy. 
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - type
+              - coordinates
+            properties:
+              type:
+                type: string
+                value: Point
+              coordinates:
+                type: array
+                required:
+                  - longitude
+                  - latitude
+                properties:
+                  - longitude:
+                    type: number
+                  - latitude:
+                    type: number
+      responses:
+        201:
+          description: Location updated
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/goOnline:
+    post:
+      tags:
+        - Driver
+      summary: Update driver online status - socket.io request - socket.emit('goOnline', data) socket.on('statusUpdated', serverResponse)
+      description: This endpoint update the driver online status to true for passenger to see
+      responses:
+        201:
+          description: Drive online
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/goOffline:
+    post:
+      tags:
+        - Driver
+      summary: Update driver online status - socket.io request - socket.emit('goOffline', data) socket.on('statusUpdated', serverResponse)
+      description: This endpoint update the driver online status to false for passenger
+      responses:
+        201:
+          description: Drive offline
+        400:
+          description: User error
         500:
           description: Server error

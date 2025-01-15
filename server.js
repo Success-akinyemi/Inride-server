@@ -78,8 +78,8 @@ passengerNamespace.use(AuthenticatePassengerSocket);
 passengerNamespace.on('connection', (socket) => {
   console.log('Passenger connected:', socket.id);
   
-  socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ ...data, socket }));
-  socket.on('requestRide', (data) => passengerController.requestRide({ ...data, socket }));
+  socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ data, socket }));
+  socket.on('requestRide', (data) => passengerController.requestRide({ data, socket }));
   socket.on('cancelRide', (data) => passengerController.cancelRide({ ...data, socket }));
   socket.on('trackRide', (data) => passengerController.trackRide({ ...data, socket }));
 

@@ -292,6 +292,7 @@ export async function verifyLoginOtp(req, res) {
     }
     try {
         const getOtp = await OtpModel.findOne({ otp })
+        console.log('object data', otp, getOtp)
         if(!getOtp){
             return sendResponse(res, 404, false, 'Invalid Otp Code')
         }

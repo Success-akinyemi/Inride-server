@@ -14,6 +14,14 @@ const RideSchema = new mongoose.Schema({
         required: [true, 'Ride Id is required'],
         unique: [true, 'Ride Id must be unique']
     },
+    noOffPassengers: {
+        type: Number,
+        default: 1
+    },
+    personnalRide: {
+        type: Boolean,
+        default: true
+    },
     from: {
         type: String,
         required: [true, 'Starting point is required']

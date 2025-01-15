@@ -119,7 +119,7 @@ DriverSchema.methods.matchAdminPassword = async function(password) {
 }
 
 DriverSchema.methods.getAccessToken = function(){
-    return jsonwebtoken.sign({ id: this.passengerId, accountType: this?.accountType }, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRE})
+    return jsonwebtoken.sign({ id: this.driverId, accountType: this?.accountType }, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRE})
 }
 
 DriverSchema.methods.getRefreshToken = function(){

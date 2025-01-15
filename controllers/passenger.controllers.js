@@ -3,26 +3,33 @@ import DriverLocationModel from "../model/DriverLocation.js";
 import RideModel from "../model/Rides.js";
 
 // GET NEARBY DRIVERS
-export async function getNearByDrivers({ longitude, latitude, radius, socket }) {
-    const radiusInKm = radius || 5;
-    try {
-      const drivers = await DriverLocationModel.find({
-        isActive: true,
-        status: 'online',
-        location: {
-          $geoWithin: {
-            $centerSphere: [[longitude, latitude], radiusInKm / 6378.1],
-          },
-        },
-      });
+export async function getNearByDrivers({ data, socket }) {
+  const { location, radius } = data; // Ensure radius defaults to 5 km
+  //const radiusInKm = radius || 5;
+  const radiusInKm =  1000;
   
-      if (socket) socket.emit('nearbyDrivers', { success: true, drivers });
-      return drivers;
-    } catch (error) {
-      console.log('ERROR FETCHING NEARBY DRIVERS', error);
-      if (socket) socket.emit('error', { success: false, message: 'Error fetching nearby drivers' });
-    }
+  console.log('Coordinates:', location , radius);
+  const [ longitude, latitude ] = location;
+
+  try {
+    const drivers = await DriverLocationModel.find({
+      isActive: true,
+      status: 'online',
+      location: {
+        $geoWithin: {
+          $centerSphere: [[longitude, latitude], radiusInKm / 6378.1], // Converting km to radians
+        },
+      },
+    }).select(`-_id`);
+
+    if (socket) socket.emit('nearbyDrivers', { success: true, drivers });
+    return drivers;
+  } catch (error) {
+    console.log('ERROR FETCHING NEARBY DRIVERS', error);
+    if (socket) socket.emit('error', { success: false, message: 'Error fetching nearby drivers' });
   }
+}
+
 
 // REQUEST RIDE
 export async function requestRide({ socket, pickupPoint, fromLongitude, fromLatitude, from, to, res }) {

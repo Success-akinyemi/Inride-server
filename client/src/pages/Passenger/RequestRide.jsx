@@ -3,32 +3,30 @@ import io from 'socket.io-client';
 
 const socket = io('http://localhost:10000/passenger', {
   transports: ['websocket'],
-  withCredentials: true,  // Match server CORS credentials
+  withCredentials: true,
 });
 
 const RequestRide = () => {
   const [rideDetails, setRideDetails] = useState({
-    from: '',
-    to: [],
-    fromLatitude: '',
-    fromLongitude: '',
-    pickupPoint: '', 
+    pickupLocation: '',
+    to: '',
+    passengerId: '',
   });
   const [responseMessage, setResponseMessage] = useState('');
   const [userLocation, setUserLocation] = useState({ type: 'Point', coordinates: [] });
 
   useEffect(() => {
-    // Get user location when component loads
+    // Fetch user location when the component loads
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           const locationData = {
             type: 'Point',
-            coordinates: [longitude, latitude]  // longitude first for GeoJSON format
+            coordinates: [longitude, latitude], // longitude first for GeoJSON format
           };
           setUserLocation(locationData);
-          console.log('User Location:', locationData);  
+          console.log('User Location:', locationData);
         },
         (error) => {
           console.error('Error getting location:', error);
@@ -40,19 +38,31 @@ const RequestRide = () => {
   }, []);
 
   useEffect(() => {
-    // Listen for server events
-    socket.on('requestRide', (data) => {
-      setResponseMessage(data.message);
-      console.log('Ride Requested Response:', data);
+    // Emit a request for nearby drivers when coordinates are available
+    if (userLocation.coordinates.length > 0) {
+      const data = {
+        location: userLocation.coordinates,
+        radius: 5, // Desired radius (e.g., 5 km)
+      };
+      console.log('Requesting nearby drivers with data:', data);
+      socket.emit('getNearbyDrivers', data);
+    }
+  }, [userLocation]);
+
+  useEffect(() => {
+    // Listen for server responses
+    socket.on('nearbyDrivers', (data) => {
+      setResponseMessage(data.success ? `Drivers found: ${data.drivers.length}` : 'No drivers found');
+      console.log('Nearby Drivers:', data);
     });
 
     socket.on('error', (data) => {
-      setResponseMessage(data.message);
+      setResponseMessage(data.message || 'Error fetching nearby drivers.');
       console.error('Error:', data);
     });
 
     return () => {
-      socket.off('requestRide');
+      socket.off('nearbyDrivers');
       socket.off('error');
     };
   }, []);
@@ -60,18 +70,6 @@ const RequestRide = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setRideDetails((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleRequestRide = () => {
-    if (!rideDetails.pickupLocation || !rideDetails.destination) {
-      setResponseMessage('Please provide all required details.');
-      return;
-    }
-    const requestData = {
-      ...rideDetails,
-      location: userLocation,  // Include user coordinates
-    };
-    socket.emit('requestRide', requestData);
   };
 
   return (
@@ -92,8 +90,8 @@ const RequestRide = () => {
           Destination:
           <input
             type="text"
-            name="destination"
-            value={rideDetails.destination}
+            name="to"
+            value={rideDetails.to}
             onChange={handleInputChange}
           />
         </label>
@@ -108,9 +106,6 @@ const RequestRide = () => {
           />
         </label>
         <br />
-        <button type="button" onClick={handleRequestRide}>
-          Request Ride
-        </button>
       </form>
       {responseMessage && <p>{responseMessage}</p>}
     </div>
