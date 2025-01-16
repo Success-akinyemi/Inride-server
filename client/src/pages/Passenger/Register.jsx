@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Register() {
@@ -8,7 +8,8 @@ function Register() {
     lastName: '',
     email: '',
     idCardType: '',
-    ssn: ''
+    ssn: '',
+    mobileNumber: '+2349059309831',
   });
   const [idCardImgFront, setIdCardFrontImg] = useState(null);
   const [idCardImgBack, setIdCardBackImg] = useState(null);
@@ -63,6 +64,9 @@ function Register() {
     }
   };
 
+  useEffect(() => {
+    console.log('REGISTER USER DATA', formData)
+  }, [formData])
   return (
     <form onSubmit={handleSubmit} encType="multipart/form-data">
       <div>

@@ -11,12 +11,14 @@ import RefreshTokenModel from "../model/RefreshToken.js";
 
 //Register user passenger account - use id from cookie to get user
 export async function registerWithPassengerAccount(req, res) {
+    const { mobileNumber } = req.body
+
     const accountId = req.cookies.inrideaccessid;
-    if(!accountId){
-        return sendResponse(res, 400, false, 'Please Login in to perform this action')
+    if(!mobileNumber){
+        return sendResponse(res, 400, false, 'Please provide your passenger mobile number to perform this action')
     }
     try {
-        const getPassenger = await PassengerModel.findOne({ passengerId: accountId })
+        const getPassenger = await PassengerModel.findOne({ mobileNumber: mobileNumber })
         if(!getPassenger){
             return sendResponse(res, 404, false, 'Account does not exist' )
         }
@@ -26,26 +28,62 @@ export async function registerWithPassengerAccount(req, res) {
             return sendResponse(res, 400, false, 'Driver account already exist' )
         }
 
-        const driverId = await generateUniqueCode(8)
-        console.log('DRIVER ID', `RF${driverId}DR`)
+        const otpCode = await generateOtp(mobileNumber, 4, 'driver' )
+        console.log('PASSENGER TO DRIVER OTP CODE', otpCode)
 
-        const newDriver = await DriverModel.create({
-            mobileNumber: getPassenger?.mobileNumber,
-            firstName: getPassenger?.firstName,
-            lastName: getPassenger?.lastName,
-            email: getPassenger?.email,
-            driverId: `RF${driverId}DR`,
-            idCardImgFront: getPassenger?.idCardImgFront,
-            idCardImgBack: getPassenger?.idCardImgBack,
-            profileImg: getPassenger?.profileImg,
-            idCardType: getPassenger?.idCardType,
-            verified: true
-        })
+        if(otpCode){
+            const sendOtpCode = await twilioClient.messages.create({
+                body: `Your RideFuzz Otp code is: ${otpCode}`,
+                from: `${process.env.TWILIO_PHONE_NUMBER}`,
+                to: `${mobileNumber}`,
+            })
+            console.log('SMS BODY', sendOtpCode)
+        
+            return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber}, Code: ${otpCode}`)
+        }
 
-        return sendResponse(res, 201, true, 'Driver Account created Successful', newDriver?.mobileNumber)
+        return sendResponse(res, 500, false, 'Unable to register driver account')
+
     } catch (error) {
         console.log('UNABLE TO REGISTER DRIVER ACCOUNT', error)
         return sendResponse(res, 500, )
+    }
+}
+
+export async function verifyPassengerToDriverAccountOtp(req, res) {
+    const { otp } = req.body
+    try {
+        const getOtp = await OtpModel.findOne({ otp: otp })
+        console.log('object', otp, getOtp)
+        if(!getOtp){
+            const getUser = await PassengerModel.findOne({ mobileNumber: getOtp?.mobileNumber })
+            if(!getUser){
+                return sendResponse(res, 404, false, 'Account does not exist')
+            }
+
+            const driverId = await generateUniqueCode(8)
+            console.log('DRIVER ID', `RF${driverId}DR`)
+            const newDriver = await DriverModel.create({
+                mobileNumber: getUser?.mobileNumber,
+                firstName: getUser?.firstName,
+                lastName: getUser?.lastName,
+                email: getUser?.email,
+                driverId: `RF${driverId}DR`,
+                idCardImgFront: getUser?.idCardImgFront,
+                idCardImgBack: getUser?.idCardImgBack,
+                profileImg: getUser?.profileImg,
+                idCardType: getUser?.idCardType,
+                verified: true
+            })    
+
+            const deleteOtp = await OtpModel.findByIdAndDelete({ _id: getOtp._id })
+            return sendResponse(res, 200, true, 'Account verified')
+        }
+
+        return sendResponse(res, 500, false, 'Unable to verify OTP')
+    } catch (error) {
+        console.log('UNABLE TO VERIFY OTP', error)
+        return sendResponse(res, 500, false, 'Unable to verify OTP')
     }
 }
 

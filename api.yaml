@@ -333,7 +333,43 @@ paths:
       tags:
         - Driver Auth
       summary: Register New Driver from Passenger account
-      description: This endpoint registers a new  driver using their passenger acocunt. the accountId is required, this accountId would be sent via cookies if the accountId is invalid the user would be required to login to their passenger account and have a valid accountId saved in cookies to proceed.
+      description: This endpoint registers a new  driver using their passenger acocunt. the mobile number of the passenger account is required.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - mobileNumber
+            properties:
+              mobileNumber:
+                type: string
+      responses:
+        201:
+          description: successful - otp sent
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/auth/verifyPassengerToDriverAccountOtp:
+    post:
+      tags:
+        - Driver Auth
+      summary: Verify OTP sent to passenger mobile number
+      description: This endpoint verifies the otp sent to the passenger mobile number after the attempt to register as a driver.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - otp
+            properties:
+              otp:
+                type: string
       responses:
         201:
           description: Driver Account created - successful
@@ -351,7 +387,7 @@ paths:
       consumes:
         - multipart/form-data
       parameters:
-        - name: operatingCity
+        - name: opreatingCity
           in: formData
           required: true
           type: string
@@ -531,7 +567,7 @@ paths:
       consumes:
         - multipart/form-data
       parameters:
-        - name: operatingCity
+        - name: opreatingCity
           in: formData
           required: true
           type: string

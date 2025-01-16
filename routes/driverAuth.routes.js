@@ -5,6 +5,7 @@ const router = express.Router()
 
 //POST
 router.post('/registerWithPassengerAccount', controllers.registerWithPassengerAccount)
+router.post('/verifyPassengerToDriverAccountOtp', controllers.verifyPassengerToDriverAccountOtp)
 router.post('/completeDriverRegistration', uploadImages, controllers.completeDriverRegistration)
 router.post('/registerNewDriver', controllers.registerNewDriver)
 router.post('/resendOtp', controllers.resendOtp)
