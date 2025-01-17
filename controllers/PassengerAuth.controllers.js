@@ -158,6 +158,7 @@ export async function registerUser(req, res) {
 
     try {
         const newPassenger = await PassengerModel.findOne({ mobileNumber })
+        console.log('object', newPassenger)
         if(!newPassenger){
             return sendResponse(res, 403, false, 'No Account found')
         }
