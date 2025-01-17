@@ -81,6 +81,7 @@ const RequestRide = () => {
     });
 
     socket.emit('rideRequested', (data) => {
+      alert(data)
       console.log('RIDE REQUESTED SUCCESS', data)
       setResponseMessage(data.success ? 'Ride request successful!' : 'Error requesting ride');
     });

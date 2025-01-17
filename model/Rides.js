@@ -88,7 +88,7 @@ const RideSchema = new mongoose.Schema({
     status: {
         type: String,
         default: 'Initiated',
-        enum: ['Pending', 'Initiated', 'Active', 'Complete', 'Canceled']
+        enum: ['Pending', 'Initiated', 'Requested', 'Active', 'Complete', 'Canceled']
     },
     paid: {
         type: Boolean,

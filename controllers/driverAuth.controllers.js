@@ -580,6 +580,7 @@ export async function verifyLoginOtp(req, res) {
 
         const deleteOtp = await OtpModel.findByIdAndDelete({ _id: getOtp._id })
         getDriver.status = 'online'
+        getDriver.otpCode = ''
         await getDriver.save()
         const getDriverLocation = await DriverLocationModel.findOne({ driverId: getDriver?.driverId })
         getDriverLocation.status = 'online'
@@ -700,7 +701,7 @@ export async function createnew(req, res) {
         console.log('DRIVER ID', `RF${driverId}DR`)
 
         const data = {
-            mobileNumber: '+2349059309871',
+            mobileNumber: '+234805930983',
             firstName: 'Johnson',
             lastName: 'man',
             email: 'johndoe@gmail.com',
@@ -723,22 +724,22 @@ export async function createnew(req, res) {
             driverId: newUser?.driverId,
             cars: [
                 {
-                    registrationNumber: '12345',
+                    registrationNumber: '5555',
                     year: '2025',
-                    model: 'Toyota',
+                    model: 'Hyundai',
                     color: 'Black',
                     noOfSeats: '6',
                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
-                    active: false
+                    active: true
                 },
                 {
-                    registrationNumber: '12346',
+                    registrationNumber: '3333',
                     year: '2025',
                     model: 'Benz',
                     color: 'Black',
                     noOfSeats: '4',
                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
-                    active: true
+                    active: false
                 }
             ]
         }

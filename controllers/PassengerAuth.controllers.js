@@ -165,6 +165,8 @@ export async function registerUser(req, res) {
         if(!newPassenger?.verified){
             return sendResponse(res, 403, false, 'Mobile number not verified')
         }
+        /**\
+         * 
         if(!newPassenger?.otpCode){
             console.log('OTP NOT FOUND IN PASSENGER DATA')
             return sendResponse(res, 403, false, 'Not Allowed')
@@ -179,6 +181,7 @@ export async function registerUser(req, res) {
             console.log('INVALID OTP ACCOUNT TYPE: PASSENGER')
             return sendResponse(res, 403, false, 'Not Allowed')
         }
+         */
 
         const emailExist = await PassengerModel.findOne({ email })
         if(emailExist){
@@ -220,7 +223,7 @@ export async function registerUser(req, res) {
         await newPassenger.save()
 
         //delete otp code from otp model
-        const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
+        //const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
 
         //console.log('new passenger', newPassenger)
 
@@ -322,6 +325,8 @@ export async function verifyLoginOtp(req, res) {
         if(!getPassenger){
             return sendResponse(res, 404, false, 'Account does not exist')
         }
+        getPassenger.otpCode = ''
+        await getPassenger.save()
 
         const deleteOtp = await OtpModel.findByIdAndDelete({ _id: getOtp._id })
 

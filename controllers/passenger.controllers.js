@@ -2,6 +2,7 @@ import { generateUniqueCode } from "../middlewares/utils.js";
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js";
 import DriverLocationModel from "../model/DriverLocation.js";
+import PendingRideRequestModel from "../model/PendingRideRequest.js";
 import RideModel from "../model/Rides.js";
 import { Client } from '@googlemaps/google-maps-services-js';
 
@@ -181,12 +182,33 @@ export async function requestRide({ socket, data, res }) {
 //REQUEST DRIVER
 export async function requestDriver({ data, socket, res }) {
   const { driverId, rideId } = data
+  const { passengerId } = socket.user
   try {
     //find ride
     //ensure passenger id matches passenger id on ride
     //make request to driver
     console.log('object', driverId, rideId)
-    
+    const findRide = await RideModel.findOne({ rideId })
+    if(!findRide){
+      const message = 'Ride with this Id does not exist';
+      if (res) return sendResponse(res, 200, false, message);
+      if (socket) socket.emit('driverRequested', { success: false, message });
+    }
+
+    if(findRide?.passengerId !== passengerId ){
+      const message = 'Passenger only allowed to request your ride';
+      if (res) return sendResponse(res, 200, false, message);
+      if (socket) socket.emit('driverRequested', { success: false, message });
+    }
+
+    const newRideRequest = PendingRideRequestModel.create({
+      rideId: findRide?.rideId,
+      driverId: driverId
+    })
+
+    findRide.status = 'Requested'
+    await findRide.save()
+
     const message = 'Request sent to driver waiting for driver response';
     if (res) return sendResponse(res, 200, true, message);
     if (socket) socket.emit('driverRequested', { success: true, message });

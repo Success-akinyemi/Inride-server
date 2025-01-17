@@ -10,8 +10,11 @@ const RideTransactionSchema = new mongoose.Schema({
     amount: {
         type: Number
     },
+    payableAmount: {
+        type: Number
+    },
     status: {
-        type: String
+        type: String,
     }
 
 },

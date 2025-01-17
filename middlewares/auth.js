@@ -175,6 +175,7 @@ export const AuthenticatePassengerSocket = async (socket, next) => {
         if (accountId) {
             const user = await PassengerModel.findOne({ passengerId: accountId });
             const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
+            //console.log('USER', user, refreshTokenExist)
             if (user && refreshTokenExist) {
                 socket.user = user;
                 socket.emit('tokenRefreshed', { accessToken: user.getAccessToken() });
