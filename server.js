@@ -66,7 +66,7 @@ driverNamespace.on('connection', (socket) => {
   socket.on('rideAccepted', ({ driverId, rideId }) => driverController.rideAccepted({ driverId, rideId, socket }));
   socket.on('rideCancel', ({ driverId, rideId }) => driverController.rideCancel({ driverId, rideId, socket }));
   socket.on('rideComplete', ({ driverId, rideId }) => driverController.rideComplete({ driverId, rideId, socket }));
-  socket.on('getNearbyDrivers', (data) => driverController.getNearByDrivers({ ...data, socket }));
+  socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ data, socket }));
 
   socket.on('disconnect', () => {
     console.log('Driver disconnected:', socket.id);
@@ -80,6 +80,8 @@ passengerNamespace.on('connection', (socket) => {
   
   socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ data, socket }));
   socket.on('requestRide', (data) => passengerController.requestRide({ data, socket }));
+  socket.on('requestDriver', (data) => passengerController.requestDriver({ data, socket }));
+
   socket.on('cancelRide', (data) => passengerController.cancelRide({ ...data, socket }));
   socket.on('trackRide', (data) => passengerController.trackRide({ ...data, socket }));
 

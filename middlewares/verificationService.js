@@ -8,6 +8,7 @@ AWS.config.update({
     region: 'us-east-1'
 });
 
+//AWS.config.correctClockSkew = true; 
 const rekognition = new AWS.Rekognition();
 
 export async function verifyID(frontFile, backFile) {

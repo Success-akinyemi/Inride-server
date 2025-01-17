@@ -36,6 +36,16 @@ const DriverSchema = new mongoose.Schema({
     earnings: {
         type: Number
     },
+    ratings: [
+        {
+            number: {
+                type: Number
+            },
+            passengerId: {
+                type: String
+            }
+        }
+    ],
     opreatingCity:{
         type: String
     },
@@ -76,6 +86,9 @@ const DriverSchema = new mongoose.Schema({
     verified: {
         type: Boolean,
         default: false
+    },
+    otpCode: {
+        type: String
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,

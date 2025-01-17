@@ -28,8 +28,12 @@ const CarDetailSchema = new mongoose.Schema({
                 type: Number,
                 required: [ true, 'Number of seats is required' ]
             },
-            carImg: {
+            carImgUrl: {
                 type: String,
+            },
+            active: {
+                type: Boolean,
+                default: false
             }
         }
     ]

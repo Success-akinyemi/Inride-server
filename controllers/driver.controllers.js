@@ -1,4 +1,5 @@
 import { sendResponse } from "../middlewares/utils.js";
+import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js";
 import DriverLocationModel from "../model/DriverLocation.js";
 import RideModel from "../model/Rides.js";
@@ -23,7 +24,7 @@ export async function updateLocation({ data, socket, res }) {
   } catch (error) {
     console.log('UNABLE TO PROCESS DRIVER LOCATION', error);
     if (res) return sendResponse(res, 500, false, 'Unable to update location');
-    if (socket) socket.emit('error', { success: false, message: 'Unable to update location' });
+    if (socket) socket.emit('locationUpdated', { success: false, message: 'Unable to update location' });
   }
 }
 
@@ -52,7 +53,7 @@ export async function goOnline({ data, socket, res }) {
     console.log('UNABLE TO MAKE DRIVER STATUS ONLINE', error);
     const message = 'Error updating online status';
     if (res) return sendResponse(res, 500, false, message);
-    if (socket) socket.emit('error', { success: false, message });
+    if (socket) socket.emit('statusUpdated', { success: false, message });
   }
 }
 
@@ -80,7 +81,7 @@ export async function goOffline({ data, socket, res }) {
     console.log('UNABLE TO MAKE DRIVER STATUS OFFLINE', error);
     const message = 'Error updating offline status';
     if (res) return sendResponse(res, 500, false, message);
-    if (socket) socket.emit('error', { success: false, message });
+    if (socket) socket.emit('statusUpdated', { success: false, message });
   }
 }
 
@@ -116,7 +117,7 @@ export async function rideCancel({ driverId, rideId, socket, res }) {
     console.log('ERROR CANCELING RIDE', error);
     const message = 'Error canceling ride';
     if (res) return sendResponse(res, 500, false, message);
-    if (socket) socket.emit('error', { success: false, message });
+    if (socket) socket.emit('rideStatusUpdated', { success: false, message });
   }
 }
 
@@ -134,28 +135,76 @@ export async function rideComplete({ driverId, rideId, socket, res }) {
     console.log('ERROR COMPLETING RIDE', error);
     const message = 'Error completing ride';
     if (res) return sendResponse(res, 500, false, message);
-    if (socket) socket.emit('error', { success: false, message });
+    if (socket) socket.emit('rideStatusUpdated', { success: false, message });
   }
 }
 
 // GET NEARBY DRIVERS
-export async function getNearByDrivers({ longitude, latitude, radius, socket }) {
-  const radiusInKm = radius || 5;
+export async function getNearByDrivers({ data, socket }) {
+  const { location, radius } = data; // Ensure radius defaults to 5 km
+  //const radiusInKm = radius || 5;
+  const radiusInKm =  1000;
+  
+  console.log('Coordinates:', location , radius);
+  const [ longitude, latitude ] = location;
+
   try {
     const drivers = await DriverLocationModel.find({
       isActive: true,
       status: 'online',
       location: {
         $geoWithin: {
-          $centerSphere: [[longitude, latitude], radiusInKm / 6378.1],
+          $centerSphere: [[longitude, latitude], radiusInKm / 6378.1], // Converting km to radians
         },
       },
-    });
+    }).select(`-_id`);
 
     if (socket) socket.emit('nearbyDrivers', { success: true, drivers });
     return drivers;
   } catch (error) {
     console.log('ERROR FETCHING NEARBY DRIVERS', error);
-    if (socket) socket.emit('error', { success: false, message: 'Error fetching nearby drivers' });
+    if (socket) socket.emit('nearbyDrivers', { success: false, message: 'Error fetching nearby drivers' });
+  }
+}
+
+//ACTIVATE CARS
+export async function activateCar(req, res) {
+  const { _id } = req.body;  // Car's unique ID (or registration number, etc.)
+  const { driverId } = req.user;  // Driver's ID from user info
+
+  try {
+    // Find the driver's car details
+    const findCars = await CarDetailModel.findOne({ driverId });
+
+    // Check if the driver has any cars
+    if (!findCars) {
+      return sendResponse(res, 404, false, 'Cars not found for this driver');
+    }
+
+    // Find the car that needs to be activated
+    const carToActivate = findCars.cars.find(car => car._id.toString() === _id);
+
+    // Check if the car exists
+    if (!carToActivate) {
+      return sendResponse(res, 404, false, 'Car not found');
+    }
+
+    // Deactivate any currently active car
+    findCars.cars.forEach(car => {
+      if (car.active) {
+        car.active = false;  // Deactivate the currently active car
+      }
+    });
+
+    // Activate the selected car
+    carToActivate.active = true;
+
+    // Save the updated car details
+    await findCars.save();
+
+    return sendResponse(res, 200, true, 'Car activated successfully');
+  } catch (error) {
+    console.log('UNABLE TO MAKE CAR ACTIVE', error);
+    return sendResponse(res, 500, false, 'Unable to make car active');
   }
 }

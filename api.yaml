@@ -22,11 +22,15 @@ tags:
     description: Endpoints for passenger registration Authentication
   - name: Driver Auth
     description: Endpoints for driver registration Authentication
-  - name: Passenger
-    description: Endpoints for passenger
-  - name: Driver
-    description: Endpoints for driver
-
+  - name: Passenger Socket.io Request
+    description: Endpoints for passenger Socket.io Request
+  - name: Driver Socket.io Request
+    description: Endpoints for driver Socket.io Request
+  - name: Passenger 
+    description: Endpoints for passenger 
+  - name: Driver 
+    description: Endpoints for driver 
+  
 paths:
   /:
     get:
@@ -709,12 +713,12 @@ paths:
           description: Server error
 
 
-#PASSENGER
+#PASSENGER SOCKET.IO REQUEST
 
   /passenger/getNearByDrivers:
     post:
       tags:
-        - Passenger
+        - Passenger Socket.io Request
       summary: get Location of drivers around a passenger - socket.io request -  socket.emit('getNearbyDrivers', data); socket.on('nearbyDrivers', serverResponse)
       description: This endpoint get the near by drivers around a passenger location. The passenger location is required as an array [longitude, latitude] longitude first for GeoJSON
       parameters:
@@ -748,12 +752,12 @@ paths:
           description: Server error
 
 
-#DRIVER
+#DRIVER SOCKET.IO REQUEST
 
   /driver/updateLocation:
     post:
       tags:
-        - Driver
+        - Driver Socket.io Request
       summary: Update the current driver location - socket.io request - socket.emit('updateLocation', locationData); socket.on('locationUpdated')
       description: This endpoint update the driver locations for passenger to see e.g can be send every 5 seconds for high accuracy. 
       parameters:
@@ -790,7 +794,7 @@ paths:
   /driver/goOnline:
     post:
       tags:
-        - Driver
+        - Driver Socket.io Request
       summary: Update driver online status - socket.io request - socket.emit('goOnline', data) socket.on('statusUpdated', serverResponse)
       description: This endpoint update the driver online status to true for passenger to see
       responses:
@@ -804,12 +808,38 @@ paths:
   /driver/goOffline:
     post:
       tags:
-        - Driver
+        - Driver Socket.io Request
       summary: Update driver online status - socket.io request - socket.emit('goOffline', data) socket.on('statusUpdated', serverResponse)
       description: This endpoint update the driver online status to false for passenger
       responses:
         201:
           description: Drive offline
+        400:
+          description: User error
+        500:
+          description: Server error
+
+#DRIVER
+  /driver/activateCar:
+    post:
+      tags:
+        - Driver 
+      summary: Update the  driver active car
+      description: This endpoint update the driver active car to be used for the day
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - _id
+            properties:
+              _id:
+                type: string
+      responses:
+        201:
+          description: Car activated successfully
         400:
           description: User error
         500:

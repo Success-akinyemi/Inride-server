@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const RideSchema = new mongoose.Schema({
-    userId: {
+    passengerId: {
         type: String,
         required: [true, 'User id is required']
     },
@@ -26,6 +26,10 @@ const RideSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Starting point is required']
     },
+    fromId: {
+        type: String,
+        required: [true, 'Starting point place Id is required']
+    },
     fromCoordinates: {
         type: {
           type: String,
@@ -40,7 +44,10 @@ const RideSchema = new mongoose.Schema({
     to: [
         {
             place: {
-                type: String
+                type: String //Name of places
+            },
+            placeId: {
+                type: String // Id of place
             },
             locationCoordinates: {
                 type: {
@@ -73,7 +80,7 @@ const RideSchema = new mongoose.Schema({
     status: {
         type: String,
         default: 'Initiated',
-        enum: ['Initiated', 'Active', 'Complete', 'Canceled']
+        enum: ['Pending', 'Initiated', 'Active', 'Complete', 'Canceled']
     },
     paid: {
         type: Boolean,

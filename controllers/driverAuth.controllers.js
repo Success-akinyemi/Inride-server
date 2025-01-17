@@ -73,10 +73,10 @@ export async function verifyPassengerToDriverAccountOtp(req, res) {
                 idCardImgBack: getUser?.idCardImgBack,
                 profileImg: getUser?.profileImg,
                 idCardType: getUser?.idCardType,
-                verified: true
+                verified: true,
+                otpCode: getOtp?.otp
             })    
 
-            const deleteOtp = await OtpModel.findByIdAndDelete({ _id: getOtp._id })
             return sendResponse(res, 200, true, 'Account verified')
         }
 
@@ -90,16 +90,17 @@ export async function verifyPassengerToDriverAccountOtp(req, res) {
 //Complete registration for driver who created account with passenger account
 export async function completeDriverRegistration(req, res) {
     const {ssn, opreatingCity, carDetails, mobileNumber, pricePerKm, coordinates } = req.body
-    const accountId = req.cookies.inrideaccessid;
+    //const accountId = req.cookies.inrideaccessid;
 
     if(!opreatingCity){
         return sendResponse(res, 400, false, 'Opreating city is required')
     }
     if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
-        if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
+    const coords = JSON.parse(req.body.coordinates)
+    if(coords?.length < 2 || coords?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
     
 
-    const { driverLincenseImgFront, driverLincenseImgBack, profileImg } = req.files;
+    const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg } = req.files;
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
     if (!driverLincenseImgBack || !driverLincenseImgBack[0]) return sendResponse(res, 400, false, `Provide a valid photo of the back image of driver lincense`);
     if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
@@ -118,7 +119,7 @@ export async function completeDriverRegistration(req, res) {
     if(!carDetails || carDetails?.length < 1){
         return sendResponse(res, 400, false, 'Car Details is required')
     }
-    const {registrationNumber, year, model, color, noOfSeats, carImg} = carDetails
+    const {registrationNumber, year, model, color, noOfSeats } = carDetails
     if(!registrationNumber || !year || !model || !color || !noOfSeats){
         return sendResponse(res, 400, false, 'Car registration number, year, model, color, no of seats are required')
     }
@@ -126,11 +127,22 @@ export async function completeDriverRegistration(req, res) {
         let driver
         if(mobileNumber){
             driver = await DriverModel.findOne({ mobileNumber })
-        } else {
-            driver = await DriverModel.findOne({ driverId: accountId })
         }
         if(!driver){
             return sendResponse(res, 404, false, 'Account not found')
+        }
+        if(!driver?.otpCode){
+            console.log('OTP NOT FOUND IN DRIVER DATA')
+            return sendResponse(res, 403, false, 'Not Allowed')
+        }
+        const verifyOtp = await OtpModel.findOne({ otp: driver?.otpCode })
+        if(!verifyOtp){
+            console.log('OTP NOT FOUND IN OTP MODEL FOR DRIVER')
+            return sendResponse(res, 403, false, 'Not Allowed')
+        }
+        if(verifyOtp?.accountType !== 'driver'){
+            console.log('INVALID OTP ACCOUNT TYPE')
+            return sendResponse(res, 403, false, 'Not Allowed')
         }
 
         //VERIFY DRIVER LINCENSE
@@ -152,6 +164,10 @@ export async function completeDriverRegistration(req, res) {
         const driverLincenseImgFrontUrl = await uploadFile(req.files.driverLincenseImgFront[0], folder);
         const driverLicenseImgBackUrl = await uploadFile(req.files.driverLincenseImgBack[0], folder);
         const profileImgUrl = await uploadFile(req.files.profileImg[0], 'driver-profile-image');
+        let carImgUrl = ''
+        if(carImg){
+            carImgUrl = await uploadFile(req.files.carImg[0], 'driver-profile-image');
+        }
         
 
         driver.opreatingCity = opreatingCity
@@ -161,10 +177,11 @@ export async function completeDriverRegistration(req, res) {
         driver.profileImg = profileImgUrl
         driver.pricePerKm = pricePerKm,
         driver.status = 'online'
+        driver.otpCode = ''
 
         await driver.save()
 
-        const carData = {registrationNumber, year, model, color, noOfSeats, carImg}
+        const carData = {registrationNumber, year, model, color, noOfSeats, carImgUrl, active: true }
         const newCarDetails = await CarDetailModel.create({
             driverId: driver?.driverId
         })
@@ -178,6 +195,8 @@ export async function completeDriverRegistration(req, res) {
             isActive: true,
             status: 'online'
         })
+
+        const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
 
         // Generate Tokens
         const accessToken = driver.getAccessToken()
@@ -346,7 +365,7 @@ export async function completeNewDriverRegistration(req, res) {
     if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
     if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
 
-    const { driverLincenseImgFront, driverLincenseImgBack, profileImg } = req.files;
+    const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg } = req.files;
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
     if (!driverLincenseImgBack || !driverLincenseImgBack[0]) return sendResponse(res, 400, false, `Provide a valid photo of the back image of driver lincense`);
     if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
@@ -365,7 +384,7 @@ export async function completeNewDriverRegistration(req, res) {
     if(!carDetails || carDetails?.length < 1){
         return sendResponse(res, 400, false, 'Car Details is required')
     }
-    const {registrationNumber, year, model, color, noOfSeats, carImg} = carDetails
+    const {registrationNumber, year, model, color, noOfSeats } = carDetails
     if(!registrationNumber || !year || !model || !color || !noOfSeats){
         return sendResponse(res, 400, false, 'Car registration number, year, model, color, no of seats are required')
     }
@@ -376,6 +395,19 @@ export async function completeNewDriverRegistration(req, res) {
         }
         if(!newDriver?.verified){
             return sendResponse(res, 403, false, 'Mobile number not verified')
+        }
+        if(!newDriver?.otpCode){
+            console.log('OTP NOT FOUND IN DRIVER DATA')
+            return sendResponse(res, 403, false, 'Not Allowed')
+        }
+        const verifyOtp = await OtpModel.findOne({ otp: newDriver?.otpCode })
+        if(!verifyOtp){
+            console.log('OTP NOT FOUND IN OTP MODEL FOR DRIVER')
+            return sendResponse(res, 403, false, 'Not Allowed')
+        }
+        if(verifyOtp?.accountType !== 'driver'){
+            console.log('INVALID OTP ACCOUNT TYPE')
+            return sendResponse(res, 403, false, 'Not Allowed')
         }
 
         //VERIFY DRIVER LINCENSE
@@ -397,6 +429,10 @@ export async function completeNewDriverRegistration(req, res) {
         const driverLincenseImgFrontUrl = await uploadFile(req.files.driverLincenseImgFront[0], folder);
         const driverLicenseImgBackUrl = await uploadFile(req.files.driverLincenseImgBack[0], folder);
         const profileImgUrl = await uploadFile(req.files.profileImg[0], 'driver-profile-image');
+        let carImgUrl = ''
+        if(carImg){
+            carImgUrl = await uploadFile(req.files.carImg[0], 'driver-car-image');
+        }
                 
         const driverId = await generateUniqueCode(8)
         console.log('DRIVER ID', `RF${driverId}DR`)
@@ -415,10 +451,11 @@ export async function completeNewDriverRegistration(req, res) {
         newDriver.idCardType = 'Driver\'s License',
         newDriver.pricePerKm = pricePerKm,
         newDriver.status = 'online'
+        newDriver.otpCode = ''
 
         await newDriver.save()
 
-        const carData = {registrationNumber, year, model, color, noOfSeats, carImg}
+        const carData = {registrationNumber, year, model, color, noOfSeats, carImgUrl, active: true }
         const newCarDetails = await CarDetailModel.create({
             driverId: newDriver?.driverId
         })
@@ -432,6 +469,8 @@ export async function completeNewDriverRegistration(req, res) {
             isActive: true,
             status: 'online'
         })
+
+        const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
 
         // Generate Tokens
         const accessToken = newDriver.getAccessToken()
@@ -661,12 +700,12 @@ export async function createnew(req, res) {
         console.log('DRIVER ID', `RF${driverId}DR`)
 
         const data = {
-            mobileNumber: '+2349059309831',
-            firstName: 'John',
-            lastName: 'Doe',
+            mobileNumber: '+2349059309871',
+            firstName: 'Johnson',
+            lastName: 'man',
             email: 'johndoe@gmail.com',
             opreatingCity: 'Lagos',
-            pricePerKm: 500,
+            pricePerKm: 600,
             ssn: '123456789',
             idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
@@ -675,11 +714,35 @@ export async function createnew(req, res) {
             driverLincenseImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             driverLincenseImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             verified: true,
-            driverId: `RF${driverId}DR`
+            driverId: `RF${driverId}DR`,
+            status: 'online'
         }
 
         const newUser = await DriverModel.create(data)
-
+        const carDetails = {
+            driverId: newUser?.driverId,
+            cars: [
+                {
+                    registrationNumber: '12345',
+                    year: '2025',
+                    model: 'Toyota',
+                    color: 'Black',
+                    noOfSeats: '6',
+                    carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
+                    active: false
+                },
+                {
+                    registrationNumber: '12346',
+                    year: '2025',
+                    model: 'Benz',
+                    color: 'Black',
+                    noOfSeats: '4',
+                    carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
+                    active: true
+                }
+            ]
+        }
+        const newCar = await CarDetailModel.create(carDetails)
         const newDriverLocation = await DriverLocationModel.create({
             driverId: newUser?.driverId,
             name: `${newUser?.firstName} ${newUser?.lastName}`,
@@ -689,7 +752,9 @@ export async function createnew(req, res) {
                     3.3792057,
                     6.5243793
                 ]
-            }
+            },
+            isActive: true,
+            status: 'online'
         })
         console.log('NEW DRIVER LOCATION', newDriverLocation)
         return sendResponse(res, 201, true, newUser, 'DRIVER CREATED')

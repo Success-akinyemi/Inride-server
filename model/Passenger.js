@@ -57,6 +57,9 @@ const PassengerSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    otpCode: {
+        type: String
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
 },

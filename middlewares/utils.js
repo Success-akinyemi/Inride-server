@@ -10,7 +10,9 @@ const s3 = new AWS.S3({
     region: process.env.AWS_REGION,
     useAccelerateEndpoint: true,
   });
+  //AWS.config.correctClockSkew = true; 
   const bucketName = process.env.AWS_BUCKET_NAME;
+
 
   //UPLOAD FILE TO S3
   export async function uploadFile(file, folder) {
@@ -33,6 +35,7 @@ const s3 = new AWS.S3({
       const data = await s3.upload(params).promise();
       return data.Location; // Returns the full URL of the uploaded file
     } catch (error) {
+      console.log('FILE UPLOAD ERROR', error)
       throw new Error(`File upload failed: ${error.message}`);
     }
   }

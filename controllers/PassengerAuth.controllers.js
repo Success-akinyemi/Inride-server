@@ -126,7 +126,6 @@ export async function verifySSN(req, res) {
 //REGISTER DETAILS
 export async function registerUser(req, res) {
     const { email, firstName, lastName, ssn, idCardType, mobileNumber } = req.body;
-
     // Validate required fields
     if (!email) return sendResponse(res, 400, false, `Provide an email address`);
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -163,6 +162,20 @@ export async function registerUser(req, res) {
         if(!newPassenger?.verified){
             return sendResponse(res, 403, false, 'Mobile number not verified')
         }
+        if(!newPassenger?.otpCode){
+            console.log('OTP NOT FOUND IN PASSENGER DATA')
+            return sendResponse(res, 403, false, 'Not Allowed')
+        }
+        const verifyOtp = await OtpModel.findOne({ otp: newPassenger?.otpCode })
+        if(!verifyOtp){
+            console.log('OTP NOT FOUND IN OTP MODEL FOR PASSENGER')
+            return sendResponse(res, 403, false, 'Not Allowed')
+        }
+        if(verifyOtp?.accountType !== 'passenger'){
+            console.log('INVALID OTP ACCOUNT TYPE: PASSENGER')
+            return sendResponse(res, 403, false, 'Not Allowed')
+        }
+
         const emailExist = await PassengerModel.findOne({ email })
         if(emailExist){
             return sendResponse(res, 400, false, 'Email Already exist')
@@ -199,7 +212,11 @@ export async function registerUser(req, res) {
         newPassenger.idCardImgBack = idCardImgBackUrl,
         newPassenger.profileImg = profileImgUrl,
         newPassenger.idCardType = idVerification.cardType
+        newPassenger.otpCode = ''
         await newPassenger.save()
+
+        //delete otp code from otp model
+        const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
 
         //console.log('new passenger', newPassenger)
 

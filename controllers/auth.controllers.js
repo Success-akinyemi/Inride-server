@@ -19,6 +19,7 @@ export async function verifyOtp(req, res) {
         if(getOtp?.accountType === 'passenger'){
             const getPassenger = await PassengerModel.findOne({ mobileNumber: getOtp?.mobileNumber })
             getPassenger.verified = true
+            getPassenger.otpCode = getOtp?.otp
             await getPassenger.save()
             //console.log('PASS', getPassenger)
             return sendResponse(res, 200, true, 'Otp Verified', getOtp?.mobileNumber )
@@ -26,6 +27,7 @@ export async function verifyOtp(req, res) {
         if(getOtp?.accountType === 'driver'){
             const getDriver = await DriverModel.findOne({ mobileNumber: getOtp?.mobileNumber })
             getDriver.verified = true
+            getDriver.otpCode = getOtp?.otp
             await getDriver.save()
             //console.log('DRIV', getDriver)
             return sendResponse(res, 200, true, 'Otp Verified', getOtp?.mobileNumber)

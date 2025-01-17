@@ -14,7 +14,8 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.1",
     "react-use-geolocation": "^0.1.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "use-places-autocomplete": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
