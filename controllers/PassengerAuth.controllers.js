@@ -170,6 +170,7 @@ export async function registerUser(req, res) {
             return sendResponse(res, 403, false, 'Not Allowed')
         }
         const verifyOtp = await OtpModel.findOne({ otp: newPassenger?.otpCode })
+        console.log('PASSNEGER VERIFY OTP', verifyOtp)
         if(!verifyOtp){
             console.log('OTP NOT FOUND IN OTP MODEL FOR PASSENGER')
             return sendResponse(res, 403, false, 'Not Allowed')
@@ -422,7 +423,7 @@ export async function verifyToken(req, res) {
  */
 export async function del(req, res) {
     try {
-        const deletepas = await PassengerModel.deleteMany() 
+        const deletepas = await PassengerModel.deleteOne({ mobileNumber: '+2349059309831' })  
         res.status(200).json({ success: true})
     } catch (error) {
         console.log('object', error)
