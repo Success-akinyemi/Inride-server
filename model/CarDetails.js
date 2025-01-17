@@ -37,7 +37,9 @@ const CarDetailSchema = new mongoose.Schema({
             }
         }
     ]
-})
+},
+{ timestamps: true }
+)
 
 const CarDetailModel = mongoose.model('cardDeatil', CarDetailSchema)
 export default CarDetailModel

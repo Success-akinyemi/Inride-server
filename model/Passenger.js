@@ -33,6 +33,10 @@ const PassengerSchema = new mongoose.Schema({
     rides: {
         type: Array
     },
+    wallet: {
+        type: Number,
+        default: 0
+    },
 
     password: {
         type: String

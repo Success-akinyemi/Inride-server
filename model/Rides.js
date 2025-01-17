@@ -94,7 +94,9 @@ const RideSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     }
-});
+},
+{ timestamps: true }
+);
 
 const RideModel = mongoose.model('ride', RideSchema);
 export default RideModel;

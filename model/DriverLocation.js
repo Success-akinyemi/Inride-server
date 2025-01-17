@@ -29,7 +29,9 @@ const DriverLocationSchema = new mongoose.Schema({
     enum: ['online', 'offline', 'busy'],
     default: 'offline'
   }
-});
+},
+{ timestamps: true }
+);
 
 DriverLocationSchema.index({ location: '2dsphere' });
 
