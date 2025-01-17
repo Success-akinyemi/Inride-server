@@ -131,6 +131,8 @@ export async function completeDriverRegistration(req, res) {
         if(!driver){
             return sendResponse(res, 404, false, 'Account not found')
         }
+        /**
+         * 
         if(!driver?.otpCode){
             console.log('OTP NOT FOUND IN DRIVER DATA')
             return sendResponse(res, 403, false, 'Not Allowed')
@@ -144,6 +146,7 @@ export async function completeDriverRegistration(req, res) {
             console.log('INVALID OTP ACCOUNT TYPE')
             return sendResponse(res, 403, false, 'Not Allowed')
         }
+         */
 
         //VERIFY DRIVER LINCENSE
         const driverLincenseVerification = await verifyDriverLicense(req.files.driverLincenseImgFront[0], req.files.driverLincenseImgBack[0]);
@@ -196,7 +199,7 @@ export async function completeDriverRegistration(req, res) {
             status: 'online'
         })
 
-        const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
+        //const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
 
         // Generate Tokens
         const accessToken = driver.getAccessToken()
@@ -241,6 +244,7 @@ export async function registerNewDriver(req, res) {
         if(numberExist){
             return sendResponse(res, 400, false, 'Mobile number already exist')
         }
+
 
         const otpCode = await generateOtp(mobileNumber, 4, 'driver' )
         console.log('OTP CODE', otpCode)
@@ -396,6 +400,8 @@ export async function completeNewDriverRegistration(req, res) {
         if(!newDriver?.verified){
             return sendResponse(res, 403, false, 'Mobile number not verified')
         }
+        /**
+         * 
         if(!newDriver?.otpCode){
             console.log('OTP NOT FOUND IN DRIVER DATA')
             return sendResponse(res, 403, false, 'Not Allowed')
@@ -409,6 +415,7 @@ export async function completeNewDriverRegistration(req, res) {
             console.log('INVALID OTP ACCOUNT TYPE')
             return sendResponse(res, 403, false, 'Not Allowed')
         }
+         */
 
         //VERIFY DRIVER LINCENSE
         const driverLincenseVerification = await verifyDriverLicense(req.files.driverLincenseImgFront[0], req.files.driverLincenseImgBack[0]);
@@ -470,7 +477,7 @@ export async function completeNewDriverRegistration(req, res) {
             status: 'online'
         })
 
-        const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
+        //const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
 
         // Generate Tokens
         const accessToken = newDriver.getAccessToken()
