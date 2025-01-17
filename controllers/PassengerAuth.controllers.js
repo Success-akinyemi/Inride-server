@@ -317,6 +317,7 @@ export async function verifyLoginOtp(req, res) {
         if(!getOtp){
             return sendResponse(res, 404, false, 'Invalid Otp Code')
         }
+
         const getPassenger = await PassengerModel.findOne({ mobileNumber: getOtp?.mobileNumber })
         if(!getPassenger){
             return sendResponse(res, 404, false, 'Account does not exist')
@@ -423,7 +424,7 @@ export async function verifyToken(req, res) {
  */
 export async function del(req, res) {
     try {
-        const deletepas = await PassengerModel.deleteOne({ mobileNumber: '+2349059309831' })  
+        const deletepas = await PassengerModel.deleteMany({ })  
         res.status(200).json({ success: true})
     } catch (error) {
         console.log('object', error)
