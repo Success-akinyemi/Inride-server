@@ -838,8 +838,35 @@ paths:
               _id:
                 type: string
       responses:
-        201:
+        200:
           description: Car activated successfully
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/homeBreak:
+    post:
+      tags:
+        - Driver 
+      summary: Update the driver info on the home break screen
+      description: This endpoint update the driver information in the home break screen from auto accept rides to ride type and km range
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              autoAcceptRides:
+                type: string
+              rideType:
+                type: string
+              kmRange:
+                type: string
+      responses:
+        200:
+          description: Driver account updated
         400:
           description: User error
         500:

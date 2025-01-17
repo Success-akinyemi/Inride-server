@@ -220,11 +220,24 @@ export async function homeBreak(req, res) {
         return sendResponse(res, 400, false, 'Ride Type is invalid')
       }
     }
+    if (kmRange) {
+      if (typeof kmRange !== 'number' || isNaN(kmRange)) {
+          return sendResponse(res, 400, false, 'kmRange must be a valid number');
+      }
+    }
+    
+    if (autoAcceptRides !== undefined) {
+        if (autoAcceptRides !== true && autoAcceptRides !== false) {
+            return sendResponse(res, 400, false, 'autoAcceptRides must be either true or false');
+        }
+    }
     if(autoAcceptRides) driver.autoAcceptRides = autoAcceptRides;
     if(rideType) driver.rideType = rideType;
     if(kmRange) driver.kmRange = kmRange;
     
     await driver.save()
+
+    return sendResponse(res, 200, true, 'Driver account updated')
   } catch (error) {
     console.log('UNABLE TO PROCESS DRIVER HOME BREAK DATA', error);
     return sendResponse(res, 500, false, 'Unable to update information');

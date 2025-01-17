@@ -14,9 +14,17 @@ const RideSchema = new mongoose.Schema({
         required: [true, 'Ride Id is required'],
         unique: [true, 'Ride Id must be unique']
     },
+    rideType: {
+        type: String,
+        default: 'personal',
+        enum: [ 'personal', 'group', 'split', 'delivery', 'reservation'],
+    },
     noOffPassengers: {
         type: Number,
         default: 1
+    },
+    passengers: {
+        type: Array
     },
     personnalRide: {
         type: Boolean,

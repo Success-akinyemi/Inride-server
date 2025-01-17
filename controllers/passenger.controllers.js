@@ -64,7 +64,7 @@ export async function getNearByDrivers({ data, socket }) {
 
 // REQUEST RIDE
 export async function requestRide({ socket, data, res }) {
-  const { from, fromId, fromCoordinates, to, personnalRide, noOffPassengers, pickupPoint } = data;
+  const { from, fromId, fromCoordinates, to, personnalRide, noOffPassengers, pickupPoint, rideType } = data;
 
   if (!from) {
     const message = 'Ride starting point is required';
@@ -83,6 +83,14 @@ export async function requestRide({ socket, data, res }) {
     if (res) return sendResponse(res, 200, false, message);
     if (socket) socket.emit('rideRequested', { success: false, message });
     return;
+  }
+  if(rideType){
+    if(!['personal', 'group', 'split', 'delivery', 'reservation'].includes(rideType)){
+      const message = 'Ride Type is invalid'
+      if(res) sendResponse(res, 400, false, message)
+      if (socket) socket.emit('rideRequested', { success: false, message })
+      return
+    }
   }
 
   try {
@@ -152,6 +160,7 @@ export async function requestRide({ socket, data, res }) {
         mobileNumber: driver.mobileNumber,
         profileImg: driver.profileImg,
         totalRides: driver.totalRides,
+        driverStatus: driver?.status,
         ratings: ratings.toFixed(1), // Ensure it’s rounded to one decimal place
       };
     });

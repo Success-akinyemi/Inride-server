@@ -8,6 +8,7 @@ import RefreshTokenModel from "../model/RefreshToken.js";
 //REGISTER MOBILE NUMBER
 export async function registerNumber(req, res) {
     const { mobileNumber } = req.body
+    console.log('PASSENGER REGISTER', req.body)
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Provide a mobile number')
     }
