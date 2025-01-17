@@ -696,6 +696,8 @@ export async function verifyToken(req, res) {
 export async function del(req, res) {
     try {
         const deletepas = await DriverModel.deleteMany() 
+        const deletecars = await CarDetailModel.deleteMany() 
+
         res.status(200).json({ success: true})
     } catch (error) {
         console.log('object', error)
@@ -708,12 +710,12 @@ export async function createnew(req, res) {
         console.log('DRIVER ID', `RF${driverId}DR`)
 
         const data = {
-            mobileNumber: '+234805930983',
+            mobileNumber: '+2348059309834',
             firstName: 'Johnson',
             lastName: 'man',
             email: 'johndoe@gmail.com',
             opreatingCity: 'Lagos',
-            pricePerKm: 600,
+            pricePerKm: 100,
             ssn: '123456789',
             idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
@@ -731,22 +733,22 @@ export async function createnew(req, res) {
             driverId: newUser?.driverId,
             cars: [
                 {
-                    registrationNumber: '5555',
+                    registrationNumber: '4444',
                     year: '2025',
                     model: 'Hyundai',
                     color: 'Black',
                     noOfSeats: '6',
                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
-                    active: true
+                    active: false
                 },
                 {
-                    registrationNumber: '3333',
+                    registrationNumber: '6666',
                     year: '2025',
                     model: 'Benz',
                     color: 'Black',
                     noOfSeats: '4',
                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
-                    active: false
+                    active: true
                 }
             ]
         }
