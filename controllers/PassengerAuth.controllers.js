@@ -126,6 +126,7 @@ export async function verifySSN(req, res) {
 //REGISTER DETAILS
 export async function registerUser(req, res) {
     const { email, firstName, lastName, ssn, idCardType, mobileNumber } = req.body;
+    console.log('REGSITRATION BODY', req.body)
     // Validate required fields
     if (!email) return sendResponse(res, 400, false, `Provide an email address`);
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;

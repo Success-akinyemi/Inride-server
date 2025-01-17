@@ -208,3 +208,25 @@ export async function activateCar(req, res) {
     return sendResponse(res, 500, false, 'Unable to make car active');
   }
 }
+
+//HOME BREAK
+export async function homeBreak(req, res) {
+  const { autoAcceptRides, rideType, kmRange } = req.body;  
+  const { driverId } = req.user;
+  try {
+    const driver = await DriverModel.findOne({ driverId });
+    if(rideType){
+      if(!['all', 'personal', 'group', 'split', 'delivery', 'reservation'].includes(rideType)){
+        return sendResponse(res, 400, false, 'Ride Type is invalid')
+      }
+    }
+    if(autoAcceptRides) driver.autoAcceptRides = autoAcceptRides;
+    if(rideType) driver.rideType = rideType;
+    if(kmRange) driver.kmRange = kmRange;
+    
+    await driver.save()
+  } catch (error) {
+    console.log('UNABLE TO PROCESS DRIVER HOME BREAK DATA', error);
+    return sendResponse(res, 500, false, 'Unable to update information');
+  }
+}
