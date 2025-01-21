@@ -28,7 +28,7 @@ const RideSchema = new mongoose.Schema({
     },
     personnalRide: {
         type: Boolean,
-        default: true
+        //default: true
     },
     from: {
         type: String,
@@ -80,7 +80,7 @@ const RideSchema = new mongoose.Schema({
         type: String
     },
     rating: {
-        type: String
+        type: Number
     },
     comment: {
         type: String

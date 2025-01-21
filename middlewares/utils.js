@@ -96,3 +96,21 @@ export async function generateUniqueCode(length) {
 
     return passengerId;
 }
+
+export function calculateAverageRating(ratings) {
+  // If there are no ratings, return a default value of 0
+  if (!ratings || ratings.length === 0) {
+    return 0;
+  }
+  
+  // Sum the ratings
+  const totalRating = ratings.reduce((sum, rating) => sum + rating.number, 0);
+  
+  // Calculate the average rating
+  const averageRating = totalRating / ratings.length;
+  
+  // Round to 1 decimal point and ensure it's between 0 and 5
+  const roundedRating = Math.min(Math.max(averageRating, 0), 5).toFixed(1);
+  
+  return parseFloat(roundedRating);
+}

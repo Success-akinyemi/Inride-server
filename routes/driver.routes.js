@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/updateLocation', AuthenticateDriver, controllers.updateLocation);
 router.post('/goOnline', AuthenticateDriver, controllers.goOnline);
 router.post('/goOffline', AuthenticateDriver, controllers.goOffline);
-router.post('/rideAccepted', AuthenticateDriver, controllers.rideAccepted);
+router.post('/acceptRideRquest', AuthenticateDriver, controllers.acceptRideRquest);
 router.post('/activateCar', AuthenticateDriver, controllers.activateCar);
 router.post('/homeBreak', AuthenticateDriver, controllers.homeBreak);
 

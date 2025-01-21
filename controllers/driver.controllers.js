@@ -1,7 +1,10 @@
 import { sendResponse } from "../middlewares/utils.js";
+import AppSettingsModel from "../model/AppSettings.js";
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js";
 import DriverLocationModel from "../model/DriverLocation.js";
+import driverPriceModel from "../model/DriverPrice.js";
+import driverAroundrideRegionModel from "../model/DriversAroundRideRegion.js";
 import RideModel from "../model/Rides.js";
 
 // UPDATE DRIVER LOCATION
@@ -86,38 +89,154 @@ export async function goOffline({ data, socket, res }) {
 }
 
 // ACCEPT RIDE
-export async function rideAccepted({ driverId, rideId, socket, res }) {
+export async function acceptRideRquest({ data, socket, res }) {
+  const { rideId, price } = data
+  const { driverId } = socket.user;
   try {
-    await DriverLocationModel.updateOne({ driverId }, { status: 'busy' });
-    await DriverModel.updateOne({ driverId }, { status: 'busy' });
-    await RideModel.updateOne({ rideId }, { status: 'Active' });
+    if(!rideId){
+      const message = 'The ride Id is required'
+      if(res) return sendResponse(res, 400, false, message)
+      if(socket) return socket.emit('acceptRideRquest', { success: false, message })
+      return
+    }
+    if(!price){
+      const message = 'Your Price is required'
+      if(res) return sendResponse(res, 400, false, message)
+      if(socket) return socket.emit('acceptRideRquest', { success: false, message })
+      return
+    }
 
-    const message = 'Ride accepted, driver is now busy';
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'No ride Found'
+      if(res) return sendResponse(res, 404, false, message)
+      if(socket) return socket.emit('acceptRideRquest', { success: false, message })
+      return
+    }
+
+    //check if the time the response came in is more than 90 sec from the getRide createdAt
+    const currentTime = new Date()
+    const timeDiff = currentTime - getRide.createdAt
+    if(timeDiff > 90000){
+      const message = 'Time to respond to ride request has elapsed'
+      if(res) return sendResponse(res, 400, false, message)
+      if(socket) return socket.emit('acceptRideRquest', { success: false, message })
+      return
+    }
+
+    //check if price is two dollar more price above or one dollar below
+    const getAppAmount = await AppSettingsModel.findOne()
+    const totalRideAmount = getAppAmount.pricePerKm * getRide?.kmDistance
+
+    if(price > totalRideAmount + 2 || price < totalRideAmount - 1){
+      const message = 'Price is not within the range'
+      if(res) return sendResponse(res, 400, false, message)
+      if(socket) return socket.emit('acceptRideRquest', { success: false, message })
+      return
+    }
+
+    // Check if the driver has already submitted a price for this ride
+    let driverPrice = await driverPriceModel.findOne({ rideId });
+
+    let hasSubmittedPrice = false;
+
+    if (driverPrice) {
+      hasSubmittedPrice = driverPrice.prices.some((priceEntry) => priceEntry.driverId === driverId);
+      
+      if (hasSubmittedPrice) {
+        const message = 'You have already submitted a price for this ride.'
+        if(res) return sendResponse(res, 400, false, message)
+        if(socket) return socket.emit('acceptRideRquest', { success: false, message })
+        return
+      } else {
+        driverPrice.prices.push({ driverId, price });
+        await driverPrice.save();
+      }
+    } else {
+      // Create a new record if no prices exist for the ride
+      driverPrice = await driverPriceModel.create({ rideId, prices: [{ driverId, price }] });
+    }
+
+
+    //remove driverId from driver around region
+    const getDriverToRemove = await driverAroundrideRegionModel.findOne({ rideId })
+    if(getDriverToRemove){
+      getDriverToRemove.driversIds.pop(driverId)
+      getDriverToRemove.save()
+    }
+
+
+    const message = 'Your price bid has been recorded';
     if (res) return sendResponse(res, 200, true, message);
-    if (socket) socket.emit('rideStatusUpdated', { success: true, message });
+    if (socket) socket.emit('acceptRideRquest', { success: true, message });
   } catch (error) {
     console.log('ERROR ACCEPTING RIDE', error);
     const message = 'Error accepting ride';
     if (res) return sendResponse(res, 500, false, message);
-    if (socket) socket.emit('error', { success: false, message });
+    if (socket) socket.emit('acceptRideRquest', { success: false, message });
   }
 }
 
 // CANCEL RIDE
-export async function rideCancel({ driverId, rideId, socket, res }) {
+export async function cancelRideRequest({ data, socket, res }) {
+  const { rideId } = data
+  const { driverId } = socket.user;
+  console.log('HELLO')
   try {
-    await DriverLocationModel.updateOne({ driverId }, { status: 'online' });
-    await DriverModel.updateOne({ driverId }, { status: 'online' });
-    await RideModel.updateOne({ rideId }, { status: 'Canceled' });
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'No ride Found'
+      if(res) return sendResponse(res, 404, false, message)
+      if(socket) return socket.emit('acceptRideRquest', { success: false, message })
+      return
+    }
 
-    const message = 'Ride canceled, driver is now active';
+    //check if the time the response came in is more than 90 sec from the getRide createdAt
+    const currentTime = new Date()
+    const timeDiff = currentTime - getRide.createdAt
+    if(timeDiff > 90000){
+      const message = 'Time to respond to ride request has elapsed'
+      if(res) return sendResponse(res, 400, false, message)
+      if(socket) return socket.emit('cancelRideRequest', { success: false, message })
+      return
+    }
+
+    //remove driverId from driver around region
+    const getDriverToRemove = await driverAroundrideRegionModel.findOne({ rideId })
+    if(getDriverToRemove){
+      getDriverToRemove.driversIds.pop(driverId)
+      getDriverToRemove.save()
+    }
+
+    //add to number of rejected ride to driver
+    const getDriver = await DriverModel.findOne({ driverId })
+    if (getDriver){
+      getDriver.cancelRides += 1
+    }
+
+    const message = 'Ride canceled';
     if (res) return sendResponse(res, 200, true, message);
-    if (socket) socket.emit('rideStatusUpdated', { success: true, message });
+    if (socket) socket.emit('cancelRideRequest', { success: true, message });
   } catch (error) {
     console.log('ERROR CANCELING RIDE', error);
     const message = 'Error canceling ride';
     if (res) return sendResponse(res, 500, false, message);
-    if (socket) socket.emit('rideStatusUpdated', { success: false, message });
+    if (socket) socket.emit('cancelRideRequest', { success: false, message });
+  }
+}
+
+//not done start ride and ride complete
+//START RIDE
+export async function startRide({ data, socket, res}) {
+  try {
+        /**
+     * 
+    await DriverLocationModel.updateOne({ driverId }, { status: 'busy' });
+    await DriverModel.updateOne({ driverId }, { status: 'busy' });
+    await RideModel.updateOne({ rideId }, { status: 'Active' });
+     */
+  } catch {
+
   }
 }
 

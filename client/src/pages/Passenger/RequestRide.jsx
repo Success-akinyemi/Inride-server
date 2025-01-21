@@ -32,6 +32,7 @@ const RequestRide = () => {
     personnalRide: true,
     noOffPassengers: 1,
     pickupPoint: '',
+    rideType: 'personal'
   });
   const [responseMessage, setResponseMessage] = useState('');
   const [availbleDrivers, setAvailbleDrivers] = useState();
@@ -147,25 +148,33 @@ const RequestRide = () => {
 
   socket.on('rideRequested', (response) => {
     console.log('Response from rideRequested:', response);
-    setResponseMessage(`${response.message}. Distance is: ${response.totalDistanceKm} km`);
+    setResponseMessage(`${response.message}. Distance is: ${response.totalDistanceKm} miles`);
     setAvailbleDrivers(response?.drivers)
     setNewRideId(response.rideId)
   });
 
-  //REQUEST RIDE FROM AVAILBLE DRIVERS
-  const handleRequestDriver = (driverId, rideId) => {
-    const data = { driverId, rideId }
-    console.log(`Driver ${driverId} has been requested`, data)
-    socket.emit('requestDriver', data)
-  }
-
-  socket.on('driverRequested', (response) => {
-    console.log('Ride from driver reqeusted', response?.message)
-  })
-
   useEffect(() => {
     console.log('RIDE DETAILS', rideDetails);
   }, [rideDetails]);
+
+  const [ availableDriversForRide, setAvailableDriversForRide ] = useState()
+  //GETTING AVAILBLE DRIVERS
+  socket.on('availableDriversForRide', (data) => {
+    console.log('AVAILABLE DRIVERS FOR RIDE', data)
+    setAvailableDriversForRide(data?.finalResult)
+  })
+
+    //REQUEST RIDE FROM AVAILBLE DRIVERS AND MAKE PAYMENT
+    const handleRequestDriver = (rideId, driverId) => {
+      const data = { driverId, rideId }
+      console.log(`Driver ${driverId} has been requested`, data)
+      return
+      socket.emit('requestDriver', data)
+    }
+  
+    socket.on('driverRequested', (response) => {
+      console.log('Ride from driver reqeusted', response?.message)
+    })
 
   return (
     <div>
@@ -207,32 +216,33 @@ const RequestRide = () => {
       {responseMessage && <p>{responseMessage}</p>}
 
       {
-        availbleDrivers && (
-          <div className="">
-            <h1>Availble Drivers (RIDE ID: {newRideId})</h1>
-            <div>
-              {
-                availbleDrivers?.map((i) => (
-                  <div onClick={ () => handleRequestDriver(i.driverId, newRideId)} key={i?.driverId} className="">
-                    <p>Name: {i?.driverName}</p>
-                    <p>Mobile {i?.mobileNumber}</p>
-                    <p>Price: {i?.price}</p>
-                    <p>Rating: {i?.ratings}</p>
-                    <div>
-                      Car Details: 
-                      <p>Reg No: {i?.carDetails?.registrationNumber}</p>
-                      <p>Model: {i?.carDetails?.model}</p>
-                      <p>Color: {i?.carDetails?.color}</p>
-                      <p>No of seats: {i?.carDetails?.noOfSeats}</p>
-                    </div>
-                    <hr />
-                  </div>
-                ))
-              }
+  availableDriversForRide?.length && (
+    <div className="">
+      <h1>Available Drivers</h1>
+
+      <div className="">
+        {
+          availableDriversForRide?.map((item, idx) => (
+            <div key={idx} onClick={() => handleRequestDriver(item?.rideId, item?.driver?.driverId)} className="">
+              <div className="">
+                {/* Display driver name */}
+                <p>{`${item?.driver?.firstName} ${item?.driver?.lastName}`}</p>
+              </div>
+              <div className="">
+                {/* Display car details */}
+                <p>{`${item?.car?.model} | ${item?.car?.color} | ${item?.car?.registrationNumber} | ${item?.car?.noOfSeats}`}</p>
+              </div>
+              <p>Price: <b>{item?.price}</b></p>
+              <p>Est Time: <b>{item?.estimatedTimeToPickup}</b></p>
+              <hr />
             </div>
-          </div>
-        )
-      }
+          ))
+        }
+      </div>
+    </div>
+  )
+}
+
     </div>
   );
 };

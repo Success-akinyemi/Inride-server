@@ -9,6 +9,7 @@ import { Server } from 'socket.io';
 config();
 import PassengerAuthRoute from './routes/PassengerAuth.routes.js';
 import DriverAuthRoute from './routes/driverAuth.routes.js';
+import appSettingsRoute from './routes/handleappSettings.routes.js';
 
 import authRoute from './routes/auth.routes.js';
 import driverRoutes from './routes/driver.routes.js';
@@ -48,28 +49,45 @@ app.use('/api-doc', swaggerUI.serve, swaggerUI.setup(swaggerJSDocs));
 app.use('/api/auth', authRoute);
 app.use('/api/passenger/auth', PassengerAuthRoute);
 app.use('/api/driver/auth', DriverAuthRoute);
+app.use('/api/appSettings', appSettingsRoute);
+
 
 app.use('/api/driver', driverRoutes);
 
 // Namespaces for Driver and Passenger
-const driverNamespace = io.of('/driver');
-const passengerNamespace = io.of('/passenger');
+export const driverNamespace = io.of('/driver');
+export const passengerNamespace = io.of('/passenger');
+
+export const driverConnections = new Map()
+export const passengerConnections = new Map()
 
 // Apply socket-specific authentication middleware for Driver
 driverNamespace.use(AuthenticateDriverSocket);
 driverNamespace.on('connection', (socket) => {
   console.log('Driver connected:', socket.id);
 
+  const { driverId } = socket.user
+
+  if(driverId){
+    driverConnections.set(driverId, socket.id)
+  }
+  console.log('CONNECTING DRIVER ID TO SOCKET ID', driverConnections)
+
   socket.on('updateLocation', (data) => driverController.updateLocation({ data, socket }));
-  socket.on('goOnline', ({ data }) => driverController.goOnline({ data, socket }));
-  socket.on('goOffline', ({ data }) => driverController.goOffline({ data, socket }));
-  socket.on('rideAccepted', ({ driverId, rideId }) => driverController.rideAccepted({ driverId, rideId, socket }));
-  socket.on('rideCancel', ({ driverId, rideId }) => driverController.rideCancel({ driverId, rideId, socket }));
-  socket.on('rideComplete', ({ driverId, rideId }) => driverController.rideComplete({ driverId, rideId, socket }));
+  socket.on('goOnline', (data) => driverController.goOnline({ data, socket }));
+  socket.on('goOffline', (data) => driverController.goOffline({ data, socket }));
   socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ data, socket }));
+  socket.on('acceptRideRquest', (data) => driverController.acceptRideRquest({ data, socket }));
+  socket.on('cancelRideRequest', (data) => driverController.cancelRideRequest({ data, socket }));
+  
+  socket.on('startRide', ({ data }) => driverController.startRide({ data, socket }));
+  socket.on('rideComplete', ({ data }) => driverController.rideComplete({ data, socket }));
 
   socket.on('disconnect', () => {
     console.log('Driver disconnected:', socket.id);
+    if(driverId){
+      driverConnections.delete(driverId)
+    }
   });
 });
 
@@ -77,6 +95,14 @@ driverNamespace.on('connection', (socket) => {
 passengerNamespace.use(AuthenticatePassengerSocket);
 passengerNamespace.on('connection', (socket) => {
   console.log('Passenger connected:', socket.id);
+
+  const { passengerId } = socket.user
+
+  if(passengerId){
+    passengerConnections.set(passengerId, socket.id)
+  }
+  console.log('CONNECTING PASSENGER ID TO SOCKET ID', passengerConnections)
+
   
   socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ data, socket }));
   socket.on('requestRide', (data) => passengerController.requestRide({ data, socket }));
@@ -87,6 +113,9 @@ passengerNamespace.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('Passenger disconnected:', socket.id);
+    if(passengerId){
+      passengerConnections.delete(passengerId)
+    }
   });
 });
 

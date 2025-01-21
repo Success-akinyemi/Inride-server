@@ -15,6 +15,8 @@ function DriverHome() {
   const [locationUpdateMessage, setLocationUpdateMessage] = useState('');
   const lastUpdateTime = useRef(Date.now());
 
+  const [ newRideRequest, setNewRideRequest ] = useState({})
+
   useEffect(() => {
     let watchId;
 
@@ -104,6 +106,54 @@ function DriverHome() {
           socket.off('error');
         };
   }, [])
+
+  //NEW RIDE REQUEST
+  // Driver socket connection setup
+socket.on('newRideRequest', (data) => {
+  if (data.success) {
+    // Display ride request popup or handle ride details
+    console.log('New ride request:', data.ride);
+    setNewRideRequest(data?.ride)
+  } else {
+    console.log('Failed to receive ride request');
+  }
+});
+
+const [ priceRange, setPriceRange ] = useState()
+const acceptRide = (rideId) => {
+  if(!priceRange){
+    alert('Enter price range')
+    return
+  }
+  const data = { rideId, price: priceRange }
+  socket.emit('acceptRideRquest',data);
+}
+
+socket.on('acceptRideRquest', (data) => {
+  console.log('acceptRideRquest response', data)
+  if(data?.success){
+    alert(`Accepted ride Response', ${data?.message}`)
+  } else {
+    console.log('data?.message', data?.message)
+    alert(`Accepted ride error:',${data?.message}`)
+  }
+})
+
+const rejectRide = (rideId) => {
+  const data = { rideId }
+  socket.emit('cancelRideRequest',data);
+}
+
+socket.on('cancelRideRequest', (data) => {
+  console.log('cancelRideRequest response', data)
+  if(data?.success){
+    alert(`Cancel ride Response, ${data?.message}`)
+  } else {
+    console.log('data?.message', data?.message)
+    alert(`Cancel ride error:,${data?.message}`)
+  }
+})
+
   return (
     <div>
       <h2>Driver Home</h2>
@@ -111,8 +161,30 @@ function DriverHome() {
       <p>Server Response: {locationUpdateMessage}</p>
 
       <button onClick={goOnline}>Go Online</button>
-      <button onClick={goOffline}>Go Online</button>
+      <button onClick={goOffline}>Go Offline</button>
 
+      {
+        newRideRequest?.from && (
+          <div className="">
+            <h1>New ride request</h1>
+            <p>
+              You have a new ride request from {newRideRequest?.passengerName}
+              from <b>{newRideRequest?.from}</b> to <b>{newRideRequest?.to?.map((i, idx) => ( <span key={idx}>{i.place},</span> ))}</b>
+              Pick up Point is {newRideRequest?.pickupPoint}
+              <br />
+              Price range is <b>{newRideRequest?.priceRange}</b>
+              <br />
+              Approximate Distance is <b>{newRideRequest?.kmDistance}</b> milies
+            </p>
+
+            <div className="">
+              <input onChange={(e) => setPriceRange(e.target.value)} type="text" placeholder='Enter price range' />
+              <button onClick={() => acceptRide(newRideRequest?.rideId)}>Accepts Ride</button>
+              <button onClick={() => rejectRide(newRideRequest?.rideId)} >Reject Ride</button>
+            </div>
+          </div>
+        )
+      }
     </div>
   );
 }

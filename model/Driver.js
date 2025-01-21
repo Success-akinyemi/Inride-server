@@ -2,7 +2,6 @@ import mongoose from 'mongoose'
 import bcryptjs from 'bcryptjs'
 import jsonwebtoken from 'jsonwebtoken'
 import crypto from 'crypto'
-import { type } from 'os'
 
 const DriverSchema = new mongoose.Schema({
     mobileNumber: {
@@ -29,13 +28,16 @@ const DriverSchema = new mongoose.Schema({
         default: 'driver'
     },
     totalRides: {
-        type: Number
+        type: Number,
+        default: 0,
     },
     cancelRides: {
-        type: Number
+        type: Number,
+        default: 0,
     },
     earnings: {
-        type: Number
+        type: Number,
+        default: 0,
     },
     ratings: [
         {
@@ -64,6 +66,7 @@ const DriverSchema = new mongoose.Schema({
     },
     rideType: {
         type: String,
+        default: 'all',
         enum: ['all', 'personal', 'group', 'split', 'delivery', 'reservation'],
     },
     kmRange: {

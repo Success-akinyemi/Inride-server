@@ -1,14 +1,18 @@
-import { generateUniqueCode } from "../middlewares/utils.js";
+import { calculateAverageRating, generateUniqueCode, sendResponse } from "../middlewares/utils.js";
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js";
 import DriverLocationModel from "../model/DriverLocation.js";
 import PendingRideRequestModel from "../model/PendingRideRequest.js";
 import RideModel from "../model/Rides.js";
 import { Client } from '@googlemaps/google-maps-services-js';
-
+import { driverConnections, driverNamespace, passengerConnections, passengerNamespace } from "../server.js";
+import driverAroundrideRegionModel from "../model/DriversAroundRideRegion.js";
+import AppSettingsModel from "../model/AppSettings.js";
+import driverPriceModel from "../model/DriverPrice.js";
 const client = new Client({});
 
 async function calculateTotalDistance({ fromId, to }) {
+  console.log('DTAT', fromId, to)
   try {
     const placeIds = [fromId, ...to.map(destination => destination.placeId)];
     let totalDistance = 0;
@@ -25,13 +29,66 @@ async function calculateTotalDistance({ fromId, to }) {
         },
       });
 
-      const distance = response.data.rows[0].elements[0].distance.value; // Distance in meters
+      const distance = response.data.rows[0].elements[0].distance?.value; // Distance in meters
       totalDistance += distance;
     }
-    return totalDistance / 1000; // Convert to kilometers
+    //return to 2d.p
+    return (totalDistance / 1609.34).toFixed(2); // Convert to miles
   } catch (error) {
     console.error('Error calculating distance:', error);
     throw new Error('Failed to calculate distance');
+  }
+}
+
+function calculateDistanceInMiles(coord1, coord2) {
+  const [lat1, lon1] = coord1;
+  const [lat2, lon2] = coord2;
+  const R = 3958.8; // Radius of the Earth in miles
+  const toRadians = (deg) => (deg * Math.PI) / 180;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
+async function filterDriverIdsByRideType(driverIdForType, rideType) {
+  try {
+    let query = { driverId: { $in: driverIdForType } };
+
+    // Log the initial query for debugging
+    console.log('Initial Query:', query);
+
+    // Determine filter for rideType
+    if (rideType) {
+      const formattedRideType = rideType.toLowerCase();
+      console.log('Ride Type:', formattedRideType);
+      query.rideType = { $in: ['all', formattedRideType] };
+    } else {
+      query.rideType = 'all';
+    }
+
+    // Fetch drivers matching the criteria
+    const filteredDrivers = await DriverModel.find(query, 'driverId').lean();
+
+    // Log the results of the query
+    console.log('Filtered Drivers:', filteredDrivers);
+
+    // Extract and return only driverIds from the filtered drivers
+    const filteredDriverIds = filteredDrivers.map(driver => driver.driverId);
+
+    // Log the filtered driver IDs
+    console.log('Filtered Driver IDs:', filteredDriverIds);
+
+    return filteredDriverIds;
+  } catch (error) {
+    console.error('Error filtering driverIds by rideType:', error);
+    throw error;
   }
 }
 
@@ -69,29 +126,33 @@ export async function requestRide({ socket, data, res }) {
 
   if (!from) {
     const message = 'Ride starting point is required';
-    if (res) return sendResponse(res, 200, false, message);
+    if (res) return sendResponse(res, 400, false, message);
     if (socket) socket.emit('rideRequested', { success: false, message });
     return;
   }
   if (!to || to.length < 1) {
     const message = 'At least one destination is required';
-    if (res) return sendResponse(res, 200, false, message);
+    if (res) return sendResponse(res, 400, false, message);
     if (socket) socket.emit('rideRequested', { success: false, message });
     return;
   }
   if (!fromCoordinates || !fromCoordinates.coordinates || fromCoordinates?.coordinates?.length !== 2) {
     const message = 'Coordinates of starting point are required';
-    if (res) return sendResponse(res, 200, false, message);
+    if (res) return sendResponse(res, 400, false, message);
     if (socket) socket.emit('rideRequested', { success: false, message });
     return;
   }
-  if(rideType){
-    if(!['personal', 'group', 'split', 'delivery', 'reservation'].includes(rideType)){
-      const message = 'Ride Type is invalid'
-      if(res) sendResponse(res, 400, false, message)
-      if (socket) socket.emit('rideRequested', { success: false, message })
-      return
-    }
+  if(!rideType){
+    const message = 'Ride Type is Required'
+    if(res) sendResponse(res, 400, false, message)
+    if (socket) socket.emit('rideRequested', { success: false, message })
+    return
+  }
+  if(!['personal', 'group', 'split', 'delivery', 'reservation'].includes(rideType)){
+    const message = 'Ride Type is invalid'
+    if(res) sendResponse(res, 400, false, message)
+    if (socket) socket.emit('rideRequested', { success: false, message })
+    return
   }
 
   try {
@@ -102,8 +163,8 @@ export async function requestRide({ socket, data, res }) {
 
     const totalDistanceKm = await calculateTotalDistance({ fromId, to });
 
-    console.log('Total Ride Distance:', totalDistanceKm, 'km');
-
+    console.log('Total Ride Distance:', totalDistanceKm, 'miles');
+    const passengersArray = [passenger.passengerId]
     const newRideRequest = await RideModel.create({
       passengerId: passenger.passengerId,
       rideId,
@@ -111,13 +172,15 @@ export async function requestRide({ socket, data, res }) {
       personnalRide,
       from,
       fromId,
+      passengers: passengersArray,
       fromCoordinates: { type: 'Point', coordinates: fromCoordinates.coordinates },
       to,
       pickupPoint,
+      rideType,
       kmDistance: totalDistanceKm,
     });
 
-    // Get top 10 nearest drivers
+    // Get nearest drivers
     const nearbyDrivers = await DriverLocationModel.find({
       location: {
         $near: {
@@ -126,51 +189,198 @@ export async function requestRide({ socket, data, res }) {
             coordinates: fromCoordinates.coordinates,
           },
           //$maxDistance: 10000, // 10 km range; adjust as needed
-          $maxDistance: 10000000, // 1000 km range; adjust as needed
+          $maxDistance: 10000000000, // 1000 km range; adjust as needed
         },
       },
+      isActive: true,
       status: 'online',
     })
-      .limit(10)
       .exec();
 
-    // Get driver details
-    const driverIds = nearbyDrivers.map(driver => driver.driverId);
-    const driverDetails = await DriverModel.find({ driverId: { $in: driverIds } }).exec();
-    const carDetails = await CarDetailModel.find({ driverId: { $in: driverIds } }).exec();
-
-    // Match driver details with car details and calculate the price
-    const driverArray = driverDetails.map(driver => {
-      const driverCarDetails = carDetails.filter(carDetail => carDetail.driverId === driver.driverId);
+      //get drivers details
+      const driverIdForType = nearbyDrivers.map(driver => driver.driverId);
+      console.log('driverIdForType', driverIdForType, rideType)
       
-      // If there's only one car, use it, otherwise find the active car
-      const driverCar = driverCarDetails.length === 1
-        ? driverCarDetails[0].cars[0] // Take the only car available if there's only one
-        : driverCarDetails?.find(carDetail => carDetail.cars.some(car => car.active === true))?.cars.find(car => car.active === true) || driverCarDetails[0]?.cars[0]; // Find the active car if available, or the first car
-    
-      const price = driver.pricePerKm * totalDistanceKm;
-    
-      // Calculate average ratings
-      const ratings = driver.ratings.reduce((acc, rating) => acc + rating.number, 0) / driver.ratings.length || 0;
-    
-      return {
-        driverName: `${driver.firstName} ${driver.lastName}`,
-        driverId: driver.driverId,
-        carDetails: driverCar, // Only one car (either active or the only one)
-        price,
-        mobileNumber: driver.mobileNumber,
-        profileImg: driver.profileImg,
-        totalRides: driver.totalRides,
-        driverStatus: driver?.status,
-        ratings: ratings.toFixed(1), // Ensure it’s rounded to one decimal place
-      };
-    });
-    
+      const dirverArray = await filterDriverIdsByRideType(driverIdForType, rideType)
+      
+      // Get driver details
+      //const driverIds = dirverArray.map(driver => driver.driverId);
+      const driverIds = dirverArray;
+      
+      //save nearest drivers
+      console.log('nearbyDrivers', driverIds)
+      const newDriversAroundRideRegionExist = await driverAroundrideRegionModel.findOne({ rideId: rideId })
+      if(newDriversAroundRideRegionExist){
+        newDriversAroundRideRegionExist.driversIds = driverIds
+        await newDriversAroundRideRegionExist.save()
+      } else {
 
-    const message = 'Ride request successful';
-    const responsePayload = { rideId, totalDistanceKm, drivers: driverArray };
+        const newDriversAroundRideRegion = await driverAroundrideRegionModel.create({
+          rideId: rideId,
+          driversIds: driverIds,
+        })
+      }
+
+      const getAppAmount = await AppSettingsModel.findOne()
+      const driverRideRequest = {
+        from: newRideRequest?.from,
+        kmDistance: newRideRequest?.kmDistance,
+        passengerName: `${passenger?.firstName} ${passenger?.lastName}`,
+        to: newRideRequest?.to.map(destination => ({
+          place: destination.place
+        })),
+        pickupPoint: newRideRequest?.pickupPoint,
+        priceRange: getAppAmount?.pricePerKm * newRideRequest?.kmDistance,
+        rideId: newRideRequest?.rideId
+      }
+      //update ride status
+      newRideRequest.status = 'Pending'
+      await newRideRequest.save()
+      //get driver within range and broadcast to them the ride request
+      driverIds.forEach(driver => {
+        console.log('DRIVER ID:', driver);
+        const driverSocketId = driverConnections.get(driver); // Fetch socket ID
+        console.log('object driver connections:', driverConnections);
+        console.log('object driver id:', driverSocketId);
+
+        if (driverSocketId) {
+
+          // Emit to driver if socket ID is found
+          driverNamespace.to(driverSocketId).emit('newRideRequest', { 
+            success: true, 
+            ride: driverRideRequest, 
+           // driverId: driverSocketId 
+          });
+        } else {
+          // Log if connection is not found, and skip to the next
+          console.log(`No active connection for driver ID: ${driver}`);
+        }
+      });
+
+    
+    const message = 'Ride request successful. driver response would take up to a minute';
+    const responsePayload = { rideId, totalDistanceKm, ride: newRideRequest };
     if (res) return sendResponse(res, 200, true, message, responsePayload);
     if (socket) socket.emit('rideRequested', { success: true, message, ...responsePayload });
+  
+    // 90-second monitoring logic
+    setTimeout(async () => {
+      try {
+        const rideRegion = await driverAroundrideRegionModel.findOne({ rideId });
+        if (rideRegion) {
+          const driverIds = rideRegion.driversIds;
+          await Promise.all(
+            driverIds.map(async (driverId) => {
+              const driver = await DriverModel.findOne({ driverId });
+              if (driver) {
+                driver.cancelRides = (driver.cancelRides || 0) + 1;
+                await driver.save();
+              }
+            })
+          );
+          await driverAroundrideRegionModel.deleteOne({ rideId });
+          console.log(`Processed and cleaned up rideId: ${rideId}`);
+        }
+
+        //send top three drivers with the lowest price to the user
+        const getRidePrices = driverPriceModel.findOne({ rideId })
+        if(getRidePrices){
+          const ride = await RideModel.findOne({ rideId });
+          if (!ride){
+            const message = 'Ride not found'
+            if (res) return sendResponse(res, 404, false, message);
+            if (socket) socket.emit('rideRequested', { success: false, message });
+          }
+        
+          const driverPrices = await driverPriceModel.findOne({ rideId });
+          if (!driverPrices || driverPrices.prices.length === 0){
+            console.log('NO DRIVERS WITH PRICES')
+            const message = 'Could not get drivers for your ride request. Please try again';
+            if (res) return sendResponse(res, 404, false, message);
+            if (socket) socket.emit('rideRequested', { success: false, message });
+          }
+
+          // Get top 3 lowest prices
+          const topPrices = driverPrices.prices
+          .sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
+          .slice(0, 3);
+
+          //Arange Result
+          const results = await Promise.all(
+            topPrices.map(async (priceEntry) => {
+              const { driverId, price } = priceEntry;
+              
+              // Fetch driver details
+              const driver = await DriverModel.findOne({ driverId });
+              if (!driver) return null;
+        
+              // Fetch driver location
+              const driverLocation = await DriverLocationModel.findOne({ driverId });
+              const distance = driverLocation && ride.fromCoordinates.coordinates
+                ? calculateDistanceInMiles(ride.fromCoordinates.coordinates, driverLocation.location.coordinates)
+                : null;
+        
+              // Fetch car details, select active car or the first one if only one car exists
+              const carDetails = await CarDetailModel.findOne({ driverId });
+              const activeCar = carDetails?.cars.find(car => car.active) || carDetails?.cars[0];
+              
+              //Avearge time to reach
+              const averageSpeed = 30;
+              let estimatedTimeToPickup = null;
+              if (distance !== null) {
+                // Time in hours = distance / speed
+                const timeInHours = distance / averageSpeed;
+                // Convert time in hours to minutes
+                estimatedTimeToPickup = timeInHours * 60;
+                // Round the result to a reasonable number of minutes
+                estimatedTimeToPickup = Math.round(estimatedTimeToPickup); // Round to nearest minute
+              }
+
+              return {
+                driver: {
+                  firstName: driver.firstName,
+                  lastName: driver.lastName,
+                  email: driver.email,
+                  mobileNumber: driver.mobileNumber,
+                  totalRides: driver.totalRides,
+                  ratings: calculateAverageRating(driver.ratings),
+                  driverId: driver.driverId
+                },
+                car: activeCar ? {
+                  model: activeCar.model,
+                  year: activeCar.year,
+                  color: activeCar.color,
+                  registrationNumber: activeCar.registrationNumber,
+                  noOfSeats: activeCar.noOfSeats,
+                  carImgUrl: activeCar.carImgUrl,
+                } : null,
+                distanceToPickupPoint: distance !== null ? distance.toFixed(2) : 'Unknown',
+                estimatedTimeToPickup: estimatedTimeToPickup !== null ? `${estimatedTimeToPickup}` : 'Unknown',
+                price,
+                rideId
+              };
+            })
+          );
+
+          let passengerSocketId = passengerConnections.get(passenger.passengerId); // Fetch socket ID
+          console.log('object driver connections:', passengerConnections);
+          console.log('object driver id:', passengerSocketId);  
+
+          const finalResult = results.filter(result => result !== null); // Filter out null results
+          const message = 'Drivers Available'
+          if(res) return sendResponse(res, 200, true, finalResult, message)
+          if(socket) return passengerNamespace.to(passengerSocketId).emit('availableDriversForRide', { success: true, message, finalResult})
+        
+        } else {
+          const message = 'Could not get drivers for your ride request. Please try again';
+          if (res) return sendResponse(res, 400, false, message);
+          if (socket) passengerNamespace.to(passengerSocketId).emit('rideRequested', { success: false, message });
+        }
+      } catch (error) {
+        console.error(`Failed to process ride after 90 seconds for rideId: ${rideId}`, error);
+      }
+    }, 90000); // 90 seconds
+
   } catch (error) {
     console.log('UNABLE TO REQUEST RIDE', error);
     const message = 'Unable to request ride';
@@ -185,20 +395,18 @@ export async function requestDriver({ data, socket, res }) {
   const { passengerId } = socket.user
   try {
     //find ride
-    //ensure passenger id matches passenger id on ride
-    //make request to driver
-    console.log('object', driverId, rideId)
     const findRide = await RideModel.findOne({ rideId })
     if(!findRide){
       const message = 'Ride with this Id does not exist';
-      if (res) return sendResponse(res, 200, false, message);
-      if (socket) socket.emit('driverRequested', { success: false, message });
+      if (res) return sendResponse(res, 404, false, message);
+      if (socket) socket.emit('requestDriver', { success: false, message });
     }
 
+    //ensure passenger id matches passenger id on ride
     if(findRide?.passengerId !== passengerId ){
-      const message = 'Passenger only allowed to request your ride';
-      if (res) return sendResponse(res, 200, false, message);
-      if (socket) socket.emit('driverRequested', { success: false, message });
+      const message = 'Passenger only allowed to request ride';
+      if (res) return sendResponse(res, 403, false, message);
+      if (socket) socket.emit('requestDriver', { success: false, message });
     }
 
     const newRideRequest = PendingRideRequestModel.create({
@@ -206,16 +414,35 @@ export async function requestDriver({ data, socket, res }) {
       driverId: driverId
     })
 
+    findRide.driverId = driverId
     findRide.status = 'Requested'
     await findRide.save()
 
-    const message = 'Request sent to driver waiting for driver response';
+    const getDriverPrice = await driverPriceModel.findOne({ rideId  })
+    if(!getDriverPrice){
+      const message = 'Driver Price not found';
+      if (res) return sendResponse(res, 404, false, message);
+      if (socket) socket.emit('requestDriver', { success: false, message });
+    }
+    //get the specific price of the driver with the driverId from the prices array of getDriverPrice
+    const driverPrice = getDriverPrice.prices.find(price => price.driverId === driverId)
+    findRide.charge = driverPrice.price
+   
+
+    /**
+     * 
+    const driverSocketId = driverConnections.get(driverId)
+    console.log('object driver connections', driverConnections)
+    console.log('object driver id', driverSocketId)
+     */
+
+    const message = 'Booking Updated proceed to payment';
     if (res) return sendResponse(res, 200, true, message);
-    if (socket) socket.emit('driverRequested', { success: true, message });
+    if (socket) socket.emit('requestDriver', { success: true, message });
   } catch (error) {
     console.log('ERROR REQUESTING DRIVEr', error);
     const message = 'Error requesting driver';
     if (res) return sendResponse(res, 500, false, message);
-    if (socket) socket.emit('driverRequested', { success: false, message });
+    if (socket) socket.emit('requestDriver', { success: false, message });
   }
 }

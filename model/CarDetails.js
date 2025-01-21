@@ -22,7 +22,7 @@ const CarDetailSchema = new mongoose.Schema({
             },
             color: {
                 type: String,
-                required: [true, 'Car color is required']
+                reqred: [true, 'Car color is required']
             },
             noOfSeats: {
                 type: Number,

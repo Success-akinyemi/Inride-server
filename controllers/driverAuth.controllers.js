@@ -710,10 +710,10 @@ export async function createnew(req, res) {
         console.log('DRIVER ID', `RF${driverId}DR`)
 
         const data = {
-            mobileNumber: '+2348059309834',
-            firstName: 'Johnson',
-            lastName: 'man',
-            email: 'johndoe@gmail.com',
+            mobileNumber: '+2347059309831',
+            firstName: 'Test',
+            lastName: 'Man',
+            email: 'testman@gmail.com',
             opreatingCity: 'Lagos',
             pricePerKm: 100,
             ssn: '123456789',
@@ -733,7 +733,7 @@ export async function createnew(req, res) {
             driverId: newUser?.driverId,
             cars: [
                 {
-                    registrationNumber: '4444',
+                    registrationNumber: '4325',
                     year: '2025',
                     model: 'Hyundai',
                     color: 'Black',
@@ -742,7 +742,7 @@ export async function createnew(req, res) {
                     active: false
                 },
                 {
-                    registrationNumber: '6666',
+                    registrationNumber: '9816',
                     year: '2025',
                     model: 'Benz',
                     color: 'Black',
