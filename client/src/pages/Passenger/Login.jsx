@@ -25,7 +25,7 @@ function DriverLogin() {
         body: JSON.stringify({ mobileNumber: formData.mobileNumber }),  // Send data as JSON
       });
   
-      const result = await response.json();
+      const result = await response?.json();
       if (response.ok) {
         alert(`Success: ${result?.data}`);
         navigate('/passenger/verifyOtp');

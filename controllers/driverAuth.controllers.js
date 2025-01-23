@@ -32,6 +32,8 @@ export async function registerWithPassengerAccount(req, res) {
         console.log('PASSENGER TO DRIVER OTP CODE', otpCode)
 
         if(otpCode){
+            /**
+             * REMOVE LATTER AFTER WORK DONE
             const sendOtpCode = await twilioClient.messages.create({
                 body: `Your RideFuzz Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
@@ -39,6 +41,7 @@ export async function registerWithPassengerAccount(req, res) {
             })
             console.log('SMS BODY', sendOtpCode)
         
+             */
             return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber}, Code: ${otpCode}`)
         }
 
@@ -258,6 +261,8 @@ export async function registerNewDriver(req, res) {
                 driverId: `RF${driverId}DR`
             })
 
+            /**
+             * 
             const sendOtpCode = await twilioClient.messages.create({
                 body: `Your RideFuzz Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
@@ -265,6 +270,7 @@ export async function registerNewDriver(req, res) {
             })
             console.log('SMS BODY', sendOtpCode)
         
+             */
             return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber}, Code: ${otpCode}`)
         }
 
@@ -338,6 +344,10 @@ export async function verifySSN(req, res) {
     const { ssn } = req.body
     if(!ssn){
         return sendResponse(res, 400, false, 'Provide a social security number')
+    }
+    const checkItisANumber = /^\d{9}$/.test(ssn); 
+    if (!checkItisANumber) {
+        return sendResponse(res, 400, false, 'Invalid ssn type');
     }
     try {
         const findSSN = await DriverModel.findOne({ ssn })

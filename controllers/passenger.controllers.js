@@ -392,7 +392,7 @@ export async function requestRide({ socket, data, res }) {
 //REQUEST DRIVER
 export async function requestDriver({ data, socket, res }) {
   const { driverId, rideId } = data
-  const { passengerId } = socket.user
+  const { passengerId, firstName, lastName, mobileNumber } = socket.user
   try {
     //find ride
     const findRide = await RideModel.findOne({ rideId })
@@ -409,38 +409,69 @@ export async function requestDriver({ data, socket, res }) {
       if (socket) socket.emit('requestDriver', { success: false, message });
     }
 
-    const newRideRequest = PendingRideRequestModel.create({
-      rideId: findRide?.rideId,
-      driverId: driverId
-    })
-
-    findRide.driverId = driverId
-    findRide.status = 'Requested'
-    await findRide.save()
-
-    const getDriverPrice = await driverPriceModel.findOne({ rideId  })
-    if(!getDriverPrice){
-      const message = 'Driver Price not found';
-      if (res) return sendResponse(res, 404, false, message);
+    let newRideRequest
+    newRideRequest = PendingRideRequestModel.findOne({ rideId: findRide?.rideId, })
+    if(!newRideRequest){
+      
+      newRideRequest = PendingRideRequestModel.create({
+        rideId: findRide?.rideId,
+        driverId: driverId
+      })
+  
+      findRide.driverId = driverId
+      findRide.status = 'Requested'
+      await findRide.save()
+  
+      const getDriverPrice = await driverPriceModel.findOne({ rideId  })
+      if(!getDriverPrice){
+        const message = 'Driver Price not found';
+        if (res) return sendResponse(res, 404, false, message);
+        if (socket) socket.emit('requestDriver', { success: false, message });
+        return
+      }
+      //get the specific price of the driver with the driverId from the prices array of getDriverPrice
+      const driverPrice = getDriverPrice.prices.find(price => price.driverId === driverId)
+      findRide.charge = driverPrice.price
+    
+  
+      /**
+       Get Driver
+      */
+      const driverSocketId = driverConnections.get(driverId)
+      console.log('object driver connections', driverConnections)
+      console.log('object alerted driver id', driverSocketId)
+      //Alert Driver
+      const rideRequestData = {
+        success: true,
+        message: 'You have a new ride request',
+        data: {
+          rideId,
+          passengerName: `${firstName} ${lastName}`,
+          mobileNumber: mobileNumber,
+          from: findRide?.from,
+          to: findRide?.to.map(destination => ({
+            place: destination.place
+          })),
+          distance: findRide?.kmDistance
+        }
+      }
+  
+      driverNamespace.to(driverSocketId).emit('driverRequested', rideRequestData)
+  
+      const message = 'Driver Request and Booking Updated proceed to payment';
+      if (res) return sendResponse(res, 200, true, message);
+      if (socket) socket.emit('requestDriver', { success: true, message, rideId: rideId });
+      
+      return
+    } else {
+      const message = 'Driver Already Requested';
+      if (res) return sendResponse(res, 200, false, message);
       if (socket) socket.emit('requestDriver', { success: false, message });
+      return
     }
-    //get the specific price of the driver with the driverId from the prices array of getDriverPrice
-    const driverPrice = getDriverPrice.prices.find(price => price.driverId === driverId)
-    findRide.charge = driverPrice.price
-   
 
-    /**
-     * 
-    const driverSocketId = driverConnections.get(driverId)
-    console.log('object driver connections', driverConnections)
-    console.log('object driver id', driverSocketId)
-     */
-
-    const message = 'Booking Updated proceed to payment';
-    if (res) return sendResponse(res, 200, true, message);
-    if (socket) socket.emit('requestDriver', { success: true, message });
   } catch (error) {
-    console.log('ERROR REQUESTING DRIVEr', error);
+    console.log('ERROR REQUESTING DRIVER', error);
     const message = 'Error requesting driver';
     if (res) return sendResponse(res, 500, false, message);
     if (socket) socket.emit('requestDriver', { success: false, message });

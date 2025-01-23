@@ -133,6 +133,7 @@ socket.on('acceptRideRquest', (data) => {
   console.log('acceptRideRquest response', data)
   if(data?.success){
     alert(`Accepted ride Response', ${data?.message}`)
+    return
   } else {
     console.log('data?.message', data?.message)
     alert(`Accepted ride error:',${data?.message}`)
@@ -153,6 +154,19 @@ socket.on('cancelRideRequest', (data) => {
     alert(`Cancel ride error:,${data?.message}`)
   }
 })
+
+//DRIVER REQUESTED FLOR RIDE
+const [ driverRequested, setDriverRequested ] = useState()
+socket.on('driverRequested', (data) => {
+  if (data.success) {
+    // Display ride request popup or handle ride details
+    console.log('Driver requested for ride:', data);
+    setNewRideRequest()
+    setDriverRequested(data)
+  } else {
+    console.log('Failed to receive driver ride request');
+  }
+});
 
   return (
     <div>
@@ -181,6 +195,25 @@ socket.on('cancelRideRequest', (data) => {
               <input onChange={(e) => setPriceRange(e.target.value)} type="text" placeholder='Enter price range' />
               <button onClick={() => acceptRide(newRideRequest?.rideId)}>Accepts Ride</button>
               <button onClick={() => rejectRide(newRideRequest?.rideId)} >Reject Ride</button>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        driverRequested?.success && (
+          <div className="">
+            <h1>You have been requested for a ride</h1>
+            <div className="">
+              <p>{driverRequested?.message}</p>
+              <div className="">
+                <h2>Details</h2>
+                <p>Ride Id: {driverRequested?.data?.rideId}</p>
+                <p>Passenger Details: {driverRequested?.data?.passengerName} | {driverRequested?.data?.mobileNumber}</p>
+                <p>From: {driverRequested?.data?.from}</p>
+                <p>to: {newRideRequest?.to?.map((i, idx) => ( <span key={idx}>{i.place},</span> ))},</p>
+                <p>Distance: {driverRequested?.data?.distance} miles</p>
+              </div>
             </div>
           </div>
         )

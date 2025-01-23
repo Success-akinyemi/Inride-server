@@ -31,12 +31,15 @@ export async function registerNumber(req, res) {
                 passengerId: newPassengerId
             })
 
+            /**
+             * //REMOVE LATER AFTER WORK DONE
             const sendOtpCode = await twilioClient.messages.create({
                 body: `Your RideFuzz Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
                 to: `${mobileNumber}`,
             })
             console.log('SMS BODY', sendOtpCode)
+             */
         
             return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber}, Code: ${otpCode}`)
         }
@@ -111,6 +114,14 @@ export async function verifySSN(req, res) {
     const { ssn } = req.body
     if(!ssn){
         return sendResponse(res, 400, false, 'Provide a social security number')
+    }
+    const checkItisANumber = /^\d{9}$/.test(ssn); 
+    if (!checkItisANumber) {
+        return sendResponse(res, 400, false, 'Invalid ssn type');
+    }
+    //convert to a number and check it is a valid number
+    if(ssn?.length < 9 || ssn?.length > 9){
+        return sendResponse(res, 400, false, 'Invalid ssn lenght')
     }
     try {
         const findSSN = await PassengerModel.findOne({ ssn })
@@ -433,5 +444,32 @@ export async function del(req, res) {
         res.status(200).json({ success: true})
     } catch (error) {
         console.log('object', error)
+    }
+}
+
+export async function createnew(req, res) {
+    try {
+        const passengerId = await generateUniqueCode(8)
+        console.log('PASSENGER ID', `RF${passengerId}PA`)
+
+        const data = {
+            mobileNumber: "+2349059309831",
+            firstName: "Inride",
+            lastName: "User",
+            email: "user@gmail.com",
+            passengerId: `RF${passengerId}PA`,
+            ssn: '123456789',
+            idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            accountImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            verified: true,
+        }
+
+        const newPassenger = await PassengerModel.create(data)
+
+        sendResponse(res, 201, true, 'User created', newPassenger)
+    } catch (error) {
+        console.log('error', error)
     }
 }

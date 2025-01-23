@@ -168,13 +168,20 @@ const RequestRide = () => {
     const handleRequestDriver = (rideId, driverId) => {
       const data = { driverId, rideId }
       console.log(`Driver ${driverId} has been requested`, data)
-      return
       socket.emit('requestDriver', data)
     }
-  
-    socket.on('driverRequested', (response) => {
-      console.log('Ride from driver reqeusted', response?.message)
+    
+    const [ driverRequested, setDriverRequested ] = useState()
+    socket.on('requestDriver', (response) => {
+      setAvailableDriversForRide()
+      setDriverRequested(response)
+      console.log('Ride from driver reqeusted', response)
     })
+
+    //HANDLE RIDE PAYMENT
+    const handleRidePayment = (rideId) => {
+
+    }
 
   return (
     <div>
@@ -233,7 +240,7 @@ const RequestRide = () => {
                 <p>{`${item?.car?.model} | ${item?.car?.color} | ${item?.car?.registrationNumber} | ${item?.car?.noOfSeats}`}</p>
               </div>
               <p>Price: <b>{item?.price}</b></p>
-              <p>Est Time: <b>{item?.estimatedTimeToPickup}</b></p>
+              <p>Est Time: <b>{((item?.estimatedTimeToPickup)/60).toFixed(2)}mins to pickup</b></p>
               <hr />
             </div>
           ))
@@ -242,6 +249,14 @@ const RequestRide = () => {
     </div>
   )
 }
+
+  {
+    driverRequested?.success && (
+      <div className="">
+        <button onClick={() => handleRidePayment(driverRequested?.rideId)} >Pay For Ride Now</button>
+      </div>
+    )
+  }
 
     </div>
   );
