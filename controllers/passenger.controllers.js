@@ -429,9 +429,26 @@ export async function requestDriver({ data, socket, res }) {
         if (socket) socket.emit('requestDriver', { success: false, message });
         return
       }
+
+      // Fetch car details, select active car or the first one if only one car exists
+      const carDetails = await CarDetailModel.findOne({ driverId });
+      const activeCar = carDetails?.cars.find(car => car.active) || carDetails?.cars[0];
+      
+      const car = {
+        model: activeCar?.model,
+        year: activeCar?.year,
+        color: activeCar?.color,
+        registrationNumber: activeCar?.registrationNumber,
+        noOfSeats: activeCar?.noOfSeats,
+        carImgUrl: activeCar?.carImgUrl,
+      }
+
       //get the specific price of the driver with the driverId from the prices array of getDriverPrice
       const driverPrice = getDriverPrice.prices.find(price => price.driverId === driverId)
       findRide.charge = driverPrice.price
+      findRide.carDetails = car
+      
+      await findRide.save()
     
   
       /**
@@ -476,4 +493,22 @@ export async function requestDriver({ data, socket, res }) {
     if (res) return sendResponse(res, 500, false, message);
     if (socket) socket.emit('requestDriver', { success: false, message });
   }
+}
+
+//SHARE RIDE WITH FRIENDS
+export async function shareRideWithFriends({ data, socket, res}) {
+  const { friends } = data
+  const { passengerId } = socket.user
+  try {
+    //get users who also have an account with ridefuze
+    //add them in
+    //ensure they are no more than cr capcity
+    //update ride
+    //notify them
+  } catch (error) {
+    console.log('ERROR SHARING RIDE WITH FRIENDS', error);
+    const message = 'Error sharing ride with friends';
+    if (res) return sendResponse(res, 500, false, message);
+    if (socket) socket.emit('requestDriver', { success: false, message });
+  } 
 }

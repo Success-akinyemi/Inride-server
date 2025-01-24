@@ -6,7 +6,7 @@ const PayoutSchema = new mongoose.Schema({
         required: [ true, 'Driver Is d is required']
     },
     amount: {
-        type: String
+        type: Number
     },
     status: {
         type: String,

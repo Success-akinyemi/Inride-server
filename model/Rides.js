@@ -82,7 +82,13 @@ const RideSchema = new mongoose.Schema({
     rating: {
         type: Number
     },
+    driverRating: {
+        type: Number
+    },
     comment: {
+        type: String
+    },
+    drivercomment: {
         type: String
     },
     status: {
@@ -93,6 +99,31 @@ const RideSchema = new mongoose.Schema({
     paid: {
         type: Boolean,
         default: false
+    },
+    carDetails: {
+        registrationNumber: {
+            type: String,
+            //required: [ true, 'Registration number is required' ],
+        },
+        year: {
+            type: String,
+            //required: [ true, 'Car model year is required']
+        },
+        model: {
+            type: String,
+            //required: [ true, 'Car model is required' ]
+        },
+        color: {
+            type: String,
+            //reqred: [true, 'Car color is required']
+        },
+        noOfSeats: {
+            type: Number,
+            //required: [ true, 'Number of seats is required' ]
+        },
+        carImgUrl: {
+            type: String,
+        }
     }
 },
 { timestamps: true }

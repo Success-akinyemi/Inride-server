@@ -34,6 +34,7 @@ tags:
     description: Endpoints for Booking 
   
 paths:
+#GENARAL
   /:
     get:
       tags:
@@ -43,6 +44,37 @@ paths:
       responses:
         200:
           description: Success
+
+  /api/ride/afterRideFeedBack:
+    post:
+      tags:
+        - General
+      summary: Provide Ride feed backs either passenger or driver
+      description: Provide a feed back about a ride
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+            properties:
+              rideId:
+                type: string
+              comment: 
+                type: string
+              rating:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+#AUTH
 
   /api/auth/verifyOtp:
     post:
@@ -821,6 +853,36 @@ paths:
         500:
           description: Server error
 
+#PASSENGER
+  /api/ride/reportForgotItem:
+    post:
+      tags:
+        - Passenger
+      summary: Report a forgotten item from a ride
+      description: Report items forgotten in a drivers car
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+              - description
+            properties:
+              rideId:
+                type: string
+              description: 
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+
 #DRIVER
   /driver/activateCar:
     post:
@@ -869,6 +931,250 @@ paths:
       responses:
         200:
           description: Driver account updated
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/bank/newBankDetails:
+    post:
+      tags:
+        - Driver 
+      summary: New Bank Details for driver
+      description: This endpoint update the driver bank details for payment
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - accountName
+              - accountNumber
+              - bankName
+            properties:
+              accountName:
+                type: string
+              accountNumber:
+                type: string
+              bankName:
+                type: string
+      responses:
+        201:
+          description: Bank Details updated
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/bank/updateBankDetails:
+    post:
+      tags:
+        - Driver 
+      summary: Update a bank account information
+      description: This endpoint update the driver bank details for payment. requires bankId which is the _id
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - bankId
+              - accountName
+              - accountNumber
+              - bankName
+            properties:
+              bankId:
+                type: string
+              accountName:
+                type: string
+              accountNumber:
+                type: string
+              bankName:
+                type: string
+      responses:
+        201:
+          description: Bank Details updated
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/bank/deleteBankDetails:
+    post:
+      tags:
+        - Driver 
+      summary: Delete a bank account information
+      description: This endpoint delete the driver bank details for payment. requires bankId which is the _id
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - bankId
+            properties:
+              bankId:
+                type: string
+      responses:
+        201:
+          description: Bank Details deleted
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/bank/getBankDetail:
+    get:
+      tags:
+        - Driver 
+      summary: Get a bank account information
+      description: This endpoint get the driver bank details for payment. requires bankId which is the _id as parameter
+      parameters:
+        - name: body
+          in: params
+          required: true
+          schema:
+            type: object
+            required:
+              - bankId
+            properties:
+              bankId:
+                type: string
+      responses:
+        201:
+          description: Succesful - Bank Detail infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/bank/getBankDetails:
+    get:
+      tags:
+        - Driver 
+      summary: Get bank accounts information
+      description: This endpoint get the driver bank details for payment.
+      responses:
+        201:
+          description: Succesful - Bank Details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /rides/getDriverRides:
+    get:
+      tags:
+        - Driver 
+      summary: Get Driver Rides
+      description: This endpoint get a driver rides. possible queries are - limit, page for pagination, startDate, endDate to get data based on date range, rideType to get data based on ride type
+      parameters:
+        - name: body
+          in: query
+          schema:
+            type: string
+            required:
+              - limit
+              - page
+            properties:
+              limit:
+                type: string
+              page: 
+                type: string
+              startDate:
+                type: string
+              endDate: 
+                type: string
+              rideType: 
+                type: string
+      responses:
+        201:
+          description: Succesful - ride details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /rides/getLastSevenDays:
+    get:
+      tags:
+        - Driver 
+      summary: Get Driver Rides last seven days
+      description: This endpoint get a driver past seven days rides. possible queries are - limit, page for pagination,
+      parameters:
+        - name: body
+          in: query
+          schema:
+            type: string
+            required:
+              - limit
+              - page
+            properties:
+              limit:
+                type: string
+              page: 
+                type: string
+      responses:
+        201:
+          description: Succesful - ride details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/payout/newPayout:
+    post:
+      tags:
+        - Driver 
+      summary: Driver Request Payout
+      description: This endpoint request for payout from a earnings
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - bankId
+              - amount
+            properties:
+              bankId:
+                type: string
+              amount:
+                type: string
+      responses:
+        201:
+          description: payout request success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/payout/getPayouts:
+    get:
+      tags:
+        - Driver 
+      summary: Get Driver Payouts histroy
+      description: This endpoint get a driver payout request hsitroy. queries are - limit, page for pagination,
+      parameters:
+        - name: body
+          in: query
+          schema:
+            type: string
+            required:
+              - limit
+              - page
+            properties:
+              limit:
+                type: string
+              page: 
+                type: string
+      responses:
+        201:
+          description: Succesful - payout details infomation
         400:
           description: User error
         500:

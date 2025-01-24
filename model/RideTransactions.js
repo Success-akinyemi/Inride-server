@@ -15,6 +15,8 @@ const RideTransactionSchema = new mongoose.Schema({
     },
     status: {
         type: String,
+        enum: ['Pending', 'Successful', 'Failed']
+        //can be update by admin
     }
 
 },

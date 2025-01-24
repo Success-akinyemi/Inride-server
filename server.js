@@ -10,9 +10,14 @@ config();
 import PassengerAuthRoute from './routes/PassengerAuth.routes.js';
 import DriverAuthRoute from './routes/driverAuth.routes.js';
 import appSettingsRoute from './routes/handleappSettings.routes.js';
-
 import authRoute from './routes/auth.routes.js';
 import driverRoutes from './routes/driver.routes.js';
+import rideRoutes from './routes/rides.routes.js';
+import driverBankDetailsRoutes from './routes/driverBankDetails.routes.js';
+import driverPayoutRoutes from './routes/driverPayout.routes.js';
+
+
+
 import './connection/db.js';
 
 import * as driverController from './controllers/driver.controllers.js';
@@ -47,9 +52,12 @@ app.use('/api-doc', swaggerUI.serve, swaggerUI.setup(swaggerJSDocs));
 
 // Routes
 app.use('/api/auth', authRoute);
+app.use('/api/appSettings', appSettingsRoute);
 app.use('/api/passenger/auth', PassengerAuthRoute);
 app.use('/api/driver/auth', DriverAuthRoute);
-app.use('/api/appSettings', appSettingsRoute);
+app.use('/api/rides', rideRoutes);
+app.use('/api/driver/bank', driverBankDetailsRoutes);
+app.use('/api/driver/payout', driverPayoutRoutes);
 
 
 app.use('/api/driver', driverRoutes);
