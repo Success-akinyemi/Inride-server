@@ -9,6 +9,8 @@ import { driverConnections, driverNamespace, passengerConnections, passengerName
 import driverAroundrideRegionModel from "../model/DriversAroundRideRegion.js";
 import AppSettingsModel from "../model/AppSettings.js";
 import driverPriceModel from "../model/DriverPrice.js";
+import PassengerModel from "../model/Passenger.js";
+import PendingEditRideRequestModel from "../model/PendingEditRide.js";
 const client = new Client({});
 
 async function calculateTotalDistance({ fromId, to }) {
@@ -142,17 +144,13 @@ export async function requestRide({ socket, data, res }) {
     if (socket) socket.emit('rideRequested', { success: false, message });
     return;
   }
-  if(!rideType){
-    const message = 'Ride Type is Required'
-    if(res) sendResponse(res, 400, false, message)
-    if (socket) socket.emit('rideRequested', { success: false, message })
-    return
-  }
-  if(!['personal', 'group', 'split', 'delivery', 'reservation'].includes(rideType)){
-    const message = 'Ride Type is invalid'
-    if(res) sendResponse(res, 400, false, message)
-    if (socket) socket.emit('rideRequested', { success: false, message })
-    return
+  if(rideType){
+      if(!['personal', 'group', 'split', 'delivery', 'reservation'].includes(rideType)){
+        const message = 'Ride Type is invalid'
+        if(res) sendResponse(res, 400, false, message)
+        if (socket) socket.emit('rideRequested', { success: false, message })
+        return
+      }
   }
 
   try {
@@ -497,18 +495,217 @@ export async function requestDriver({ data, socket, res }) {
 
 //SHARE RIDE WITH FRIENDS
 export async function shareRideWithFriends({ data, socket, res}) {
-  const { friends } = data
-  const { passengerId } = socket.user
+  const { friends, rideId } = data
+  const { passengerId, firstName, lastName } = socket.user
+  if(friends?.length < 1){
+    const message = 'No Friends number sent'
+    if(res) sendResponse(res, 404, false, message)
+    if(socket) socket.emit('shareRideWithFriends', { success: false, message })
+    return
+  }
   try {
+    const getRide = RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'No ride with this Id found'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('shareRideWithFriends', { success: false, message })
+      return
+    }
+    if(passengerId !== getRide?.passengerId ){
+      const message = 'You can only share you ride'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('shareRideWithFriends', { success: false, message })
+      return
+    }
+    if(getRide.status === 'Complete' || getRide.status === 'In progress'){
+      const message = 'Cannot share this ride as it is completed or in progress'
+      if(res) sendResponse(res, 400, false, message)
+      if(socket) socket.emit('shareRideWithFriends', { success: false, message})
+      return
+    }
     //get users who also have an account with ridefuze
+    const existingPassengers = await PassengerModel.find({
+      mobileNumber: { $in: friends },
+    });
+
+    // Extract only the mobileNumber from the found passengers
+    const foundFriends = existingPassengers.map((passenger) => passenger.mobileNumber);
+    
+    const totalPassengers = Number(getRide?.passengers?.length) + Number(foundFriends?.length)
+
+    //ensure they are no more than car capcity
+    if(totalPassengers > getRide?.carDetails?.noOfSeats ){
+      const message = `This Ride car can only take ${getRide?.carDetails?.noOfSeats} number of people`
+      if(res) sendResponse(res, 400, false, message)
+      if(socket) socket.emit('shareRideWithFriends', { success: false, message })
+    }
+
     //add them in
-    //ensure they are no more than cr capcity
+    getRide?.passengers.push(foundFriends)
     //update ride
+    await getRide.save()
+    
     //notify them
+    foundFriends.forEach(mobileNumber => {
+      console.log('DRIVER ID:', mobileNumber);
+      const getPassenger = PassengerModel.findOne({ mobileNumber })
+      const passengerSocketId = passengerConnections.get(getPassenger?.passengerId); // Fetch socket ID
+      console.log('object passenger connections:', driverConnections);
+      console.log('object passenger id:', passengerSocketId);
+
+      if (passengerSocketId) {
+
+        // Emit to passenger if socket ID is found
+        passengerNamespace.to(passengerSocketId).emit('newRideShared', { 
+          success: true, 
+          message: `${firstName} ${lastName} has shared a ride with you.`,
+          ride: {
+            from: getRide?.from,
+            to: getRide?.to.map(destination => ({
+              place: destination.place
+            })),
+          }, 
+        });
+      } else {
+        // Log if connection is not found, and skip to the next
+        console.log(`No active connection for passenger mobile number: ${mobileNumber}`);
+      }
+    });
+
+    const message = `${foundFriends?.length} of your loveds ones have been added to the ride`
+    if(res) sendResponse(res, 200, true, message)
+    if(socket) socket.emit('shareRideWithFriends', { success: true, message })
   } catch (error) {
     console.log('ERROR SHARING RIDE WITH FRIENDS', error);
     const message = 'Error sharing ride with friends';
     if (res) return sendResponse(res, 500, false, message);
     if (socket) socket.emit('requestDriver', { success: false, message });
   } 
+}
+
+//EDIT RIDE
+export async function editRide({ data, socket, res}) {
+  const { to, rideId } = data
+  const { passengerId, firstName, lastName } = socket.user
+  if (!to || to.length < 1) {
+    const message = 'At least one destination to add is required';
+    if (res) return sendResponse(res, 400, false, message);
+    if (socket) socket.emit('editRide', { success: false, message });
+    return;
+  }
+  try {
+    const getRide = RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'No ride with this Id found'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('editRide', { success: false, message })
+      return
+    }
+    if(passengerId !== getRide?.passengerId ){
+      const message = 'You can only edit you ride'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('editRide', { success: false, message })
+      return
+    }
+    if(getRide.status === 'Complete'){
+      const message = 'Cannot share this ride as it is completed'
+      if(res) sendResponse(res, 400, false, message)
+      if(socket) socket.emit('editRide', { success: false, message})
+      return
+    }
+
+    const getAppAmount = await AppSettingsModel.findOne()
+    
+    const pendingRideRequest = await PendingEditRideRequestModel.findOne({ rideId })
+    if(!pendingRideRequest){      
+      let newDestinations = getRide?.to
+      newDestinations.push(to)
+      
+      const fromId = getRide?.fromId
+      const totalDistanceMiles = await calculateTotalDistance({ fromId, newDestinations });
+      
+      console.log('New Total Ride Distance:', totalDistanceMiles, 'miles');
+
+      const newPendingRideRequest = await PendingEditRideRequestModel.create({
+        rideId,
+        to: newDestinations,
+        totalDistance: totalDistanceMiles
+      }) 
+
+      //make request to driver
+      const driverSocketId = driverConnections.get(getRide?.driverId);
+      if (driverSocketId) {
+
+        // Emit to driver if socket ID is found
+        driverNamespace.to(driverSocketId).emit('newEditRideRequest', { 
+          success: true, 
+          message: `${firstName} ${lastName} has requested to edit the ride destinations`,
+          ride: {
+            from: getRide?.from,
+            to: newPendingRideRequest?.to.map(destination => ({
+              place: destination.place
+            })),
+          }, 
+          totalDistance: newPendingRideRequest?.totalDistance,
+          priceRange: getAppAmount?.pricePerKm * newPendingRideRequest?.totalDistance,
+        });
+      } else {
+        // Log if connection is not found, and skip to the next
+        console.log(`No active connection for driver ID: ${driver}`);
+      }
+
+      //update passenger
+      const message = 'Edit ride request has been sent to the driver'
+      if(res) sendResponse(res, true, 201, message)
+      if(socket) socket.emit('editRide', { success: true, message })
+      return
+    } else {
+      pendingRideRequest?.to.push(to)
+      await pendingRideRequest.save()
+      
+      const fromId = getRide?.fromId
+      const destination = pendingRideRequest?.to
+      const totalDistanceMiles = await calculateTotalDistance({ fromId, destination });
+      
+      console.log('New Total Ride Distance:', totalDistanceMiles, 'miles');
+
+      pendingRideRequest.totalDistance = totalDistanceMiles
+      pendingRideRequest.status = 'Pending'
+      await pendingRideRequest.save()
+
+            //make request to driver
+            const driverSocketId = driverConnections.get(getRide?.driverId);
+            if (driverSocketId) {
+      
+              // Emit to driver if socket ID is found
+              driverNamespace.to(driverSocketId).emit('newEditRideRequest', { 
+                success: true, 
+                message: `${firstName} ${lastName} has requested to edit the ride destinations. Enter a new price for the entire ride`,
+                ride: {
+                  from: getRide?.from,
+                  to: pendingRideRequest?.to.map(destination => ({
+                    place: destination.place
+                  })),
+                }, 
+                totalDistance: pendingRideRequest?.totalDistance,
+                priceRange: getAppAmount?.pricePerKm * pendingRideRequest?.totalDistance,
+              });
+            } else {
+              // Log if connection is not found, and skip to the next
+              console.log(`No active connection for driver ID: ${driver}`);
+            }
+      
+            //update passenger
+            const message = 'Edit ride request has been sent to the driver'
+            if(res) sendResponse(res, true, 201, message)
+            if(socket) socket.emit('editRide', { success: true, message })
+            return
+    }
+
+  } catch (error) {
+    const message = 'Unable to edit ride'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('editRide', { success: false, message})
+    return
+  }
 }

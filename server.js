@@ -85,8 +85,10 @@ driverNamespace.on('connection', (socket) => {
   socket.on('goOnline', (data) => driverController.goOnline({ data, socket }));
   socket.on('goOffline', (data) => driverController.goOffline({ data, socket }));
   socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ data, socket }));
-  socket.on('acceptRideRquest', (data) => driverController.acceptRideRquest({ data, socket }));
+  socket.on('acceptRideRequest', (data) => driverController.acceptRideRequest({ data, socket }));
   socket.on('cancelRideRequest', (data) => driverController.cancelRideRequest({ data, socket }));
+  socket.on('acceptEditRideRquest', (data) => driverController.acceptEditRideRquest({ data, socket }));
+
   
   socket.on('startRide', ({ data }) => driverController.startRide({ data, socket }));
   socket.on('rideComplete', ({ data }) => driverController.rideComplete({ data, socket }));
@@ -115,6 +117,9 @@ passengerNamespace.on('connection', (socket) => {
   socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ data, socket }));
   socket.on('requestRide', (data) => passengerController.requestRide({ data, socket }));
   socket.on('requestDriver', (data) => passengerController.requestDriver({ data, socket }));
+  socket.on('shareRideWithFriends', (data) => passengerController.shareRideWithFriends({ data, socket }));
+  socket.on('editRide', (data) => passengerController.editRide({ data, socket }));
+
 
   socket.on('cancelRide', (data) => passengerController.cancelRide({ ...data, socket }));
   socket.on('trackRide', (data) => passengerController.trackRide({ ...data, socket }));

@@ -5,7 +5,9 @@ import DriverModel from "../model/Driver.js";
 import DriverLocationModel from "../model/DriverLocation.js";
 import driverPriceModel from "../model/DriverPrice.js";
 import driverAroundrideRegionModel from "../model/DriversAroundRideRegion.js";
+import PendingEditRideRequestModel from "../model/PendingEditRide.js";
 import RideModel from "../model/Rides.js";
+import { passengerConnections, passengerNamespace } from "../server.js";
 
 // UPDATE DRIVER LOCATION
 export async function updateLocation({ data, socket, res }) {
@@ -89,7 +91,7 @@ export async function goOffline({ data, socket, res }) {
 }
 
 // ACCEPT RIDE
-export async function acceptRideRquest({ data, socket, res }) {
+export async function acceptRideRequest({ data, socket, res }) {
   const { rideId, price } = data
   const { driverId } = socket.user;
   try {
@@ -177,6 +179,92 @@ export async function acceptRideRquest({ data, socket, res }) {
   }
 }
 
+//ACCEPT EDIT RIDE REQUEST FROM PASSENGER
+export async function acceptEditRideRquest({ data, socket, res }) {
+  const { rideId, price } = data
+  const { driverId } = socket.user;
+  try {
+    if(!rideId){
+      const message = 'The ride Id is required'
+      if(res) return sendResponse(res, 400, false, message)
+      if(socket) return socket.emit('acceptEditRideRquest', { success: false, message })
+      return
+    }
+    if(!price){
+      const message = 'Your Price is required'
+      if(res) return sendResponse(res, 400, false, message)
+      if(socket) return socket.emit('acceptEditRideRquest', { success: false, message })
+      return
+    }
+
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'No ride Found'
+      if(res) return sendResponse(res, 404, false, message)
+      if(socket) return socket.emit('acceptEditRideRquest', { success: false, message })
+      return
+    }
+
+    const getEditRideRequest = await PendingEditRideRequestModel.findOne({ rideId })
+    if(!getEditRideRequest){
+      const message = 'No edit ride request Found'
+      if(res) return sendResponse(res, 404, false, message)
+      if(socket) return socket.emit('acceptEditRideRquest', { success: false, message })
+      return
+    }
+
+    //check if price is two dollar more price above or one dollar below
+    const getAppAmount = await AppSettingsModel.findOne()
+    const totalRideAmount = getAppAmount.pricePerKm * getEditRideRequest?.totalDistance
+
+    if(price > totalRideAmount + 2 || price < totalRideAmount - 1){
+      const message = 'Price is not within the range'
+      if(res) return sendResponse(res, 400, false, message)
+      if(socket) return socket.emit('acceptEditRideRquest', { success: false, message })
+      return
+    }
+
+    getEditRideRequest.price = price
+    await getEditRideRequest.save()
+
+    //update ride price
+    if(getRide.paid){
+      Number(getEditRideRequest.price) -= Number(getRide?.charge)
+      await getEditRideRequest.save()
+    } else {
+      getRide.charge = getEditRideRequest.price
+      await getRide.save()
+    }
+
+    getEditRideRequest.status = 'Accepted'
+    await getEditRideRequest.save()
+
+    //send response back to passenger
+    const passengerSocketId = passengerConnections.get(getRide?.passengerId); // Fetch socket ID
+          if (passengerSocketId) {
+    
+            // Emit to passenger if socket ID is found
+            passengerNamespace.to(passengerSocketId).emit('editRideRequestAccepted', { 
+              success: true, 
+              message: `Driver has agreed to your ride update reqeuest. proceed to make payment`,
+              price: getEditRideRequest.price
+            });
+          } else {
+            // Log if connection is not found, and skip to the next
+            console.log(`No active connection for passenger: ${getRide?.passengerId}`);
+          }
+
+    const message = 'Your new price bid has been sent to the passenger';
+    if (res) return sendResponse(res, 200, true, message);
+    if (socket) socket.emit('acceptEditRideRquest', { success: true, message });
+  } catch (error) {
+    console.log('ERROR ACCEPTING RIDE', error);
+    const message = 'Error accepting ride';
+    if (res) return sendResponse(res, 500, false, message);
+    if (socket) socket.emit('acceptEditRideRquest', { success: false, message });
+  }
+}
+
 // CANCEL RIDE
 export async function cancelRideRequest({ data, socket, res }) {
   const { rideId } = data
@@ -224,6 +312,8 @@ export async function cancelRideRequest({ data, socket, res }) {
     if (socket) socket.emit('cancelRideRequest', { success: false, message });
   }
 }
+
+//CANCEL EDIT RIDE REQUEST FROM PASSENGER
 
 //not done start ride and ride complete
 //START RIDE
