@@ -926,7 +926,78 @@ paths:
           
 
 #DRIVER
-  /driver/activateCar:
+
+  /driver/car/newCar:
+    post:
+      tags:
+        - Driver 
+      summary: Add a new car by driver
+      description: This endpoint add a new car for driver
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - registrationNumber
+              - year
+              - model
+              - color
+              - noOfSeats
+              - carImg
+            properties:
+              registrationNumber:
+                type: string
+              year:
+                type: string
+              model: 
+                type: string
+              color: 
+                type: string
+              noOfSeats:
+                type: number
+              carImg:
+                type: file
+      responses:
+        200:
+          description: Car added successfully
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/car/updateCarDetails:
+    post:
+      tags:
+        - Driver 
+      summary: Update a car by driver
+      description: This endpoint update a car for driver
+      parameters:
+        - name: body
+          in: body
+            properties:
+              registrationNumber:
+                type: string
+              year:
+                type: string
+              model: 
+                type: string
+              color: 
+                type: string
+              noOfSeats:
+                type: number
+              carImg:
+                type: file
+      responses:
+        200:
+          description: Car updated successfully
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/car/activateCar:
     post:
       tags:
         - Driver 
@@ -950,12 +1021,76 @@ paths:
           description: User error
         500:
           description: Server error
+          
+  /driver/car/getCarDetail:
+    get:
+      tags:
+        - Driver 
+      summary: Get a car information
+      description: This endpoint get the driver car details . requires carId which is the _id as parameter
+      parameters:
+        - name: body
+          in: params
+          required: true
+          schema:
+            type: object
+            required:
+              - carId
+            properties:
+              carId:
+                type: string
+      responses:
+        201:
+          description: Succesful - car Detail infomation
+        400:
+          description: User error
+        500:
+          description: Server error
 
+  /driver/car/getCarDetails:
+    get:
+      tags:
+        - Driver 
+      summary: Get cars information
+      description: This endpoint get the driver cars details.
+      responses:
+        201:
+          description: Succesful - Bank Details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+           
+  /driver/car/deleteCarDetails:
+    post:
+      tags:
+        - Driver 
+      summary: Delete a car account information
+      description: This endpoint delete the driver car details. requires carId which is the _id
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - carId
+            properties:
+              carId:
+                type: string
+      responses:
+        201:
+          description: Car Details deleted
+        400:
+          description: User error
+        500:
+          description: Server error
+                 
   /driver/homeBreak:
     post:
       tags:
         - Driver 
-      summary: Update the driver info on the home break screen
+      summary: Update the driver the home break screen
       description: This endpoint update the driver information in the home break screen from auto accept rides to ride type and km range
       parameters:
         - name: body
@@ -1217,6 +1352,44 @@ paths:
       responses:
         201:
           description: Succesful - payout details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /driver/profile/updateProfile:
+    post:
+      tags:
+        - Driver 
+      summary: Update driver account info
+      description: This endpoint update the driver account info, accountImg as file
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+            properties:
+              language:
+                type: string
+              pushNotification:
+                type: string
+              mailNotification:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              homeAddress:
+                type: string
+              workAddress:
+                type: string
+              accountImg:
+                type: file
+      responses:
+        201:
+          description: Profile updated succesful
         400:
           description: User error
         500:
@@ -1519,12 +1692,37 @@ paths:
     get:
       tags:
         - Booking
-      summary: Alert passenger that his driver has accepted the ride request and can then proceed to complete payment. socket.emit(editRideRequestAccepted) to passenger namespace
-      description: This emit endpoint alert the passenger that the driver has accepted the edit ride request.
+      summary: Alert passenger that his driver has accepted or rejected the ride request and can then proceed to complete payment if accepted. socket.emit(editRideRequestAccepted) to passenger namespace
+      description: This emit endpoint alert the passenger that the driver has accepted or rejected the edit ride request.
       responses:
         201:
-          description: success with price deatils
+          description: success with price deatils | false
         400:
           description: User error
+        500:
+          description: Server error
+
+  /driver/rejectEditRideRquest:
+    post:
+      tags:
+        - Booking
+      summary: Socket connection for driver to reject a ride edit request by passenger socket.on(rejectEditRideRquest, data) socket.emit(rejectEditRideRquest, data) under the driver namespaces
+      description: This endpoint/socket connection allows a driver to reject a edit ride request passing their price and rideId as data
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+            properties:
+              rideId:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
         500:
           description: Server error

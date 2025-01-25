@@ -126,7 +126,7 @@ const acceptRide = (rideId) => {
     return
   }
   const data = { rideId, price: priceRange }
-  socket.emit('acceptRideRquest',data);
+  socket.emit('acceptRideRequest',data);
 }
 
 socket.on('acceptRideRquest', (data) => {

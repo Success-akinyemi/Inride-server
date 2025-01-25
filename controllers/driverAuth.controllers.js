@@ -172,7 +172,7 @@ export async function completeDriverRegistration(req, res) {
         const profileImgUrl = await uploadFile(req.files.profileImg[0], 'driver-profile-image');
         let carImgUrl = ''
         if(carImg){
-            carImgUrl = await uploadFile(req.files.carImg[0], 'driver-profile-image');
+            carImgUrl = await uploadFile(req.files.carImg[0], 'driver-car-image');
         }
         
 
@@ -229,7 +229,7 @@ export async function completeDriverRegistration(req, res) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
 
-        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = driver._doc;
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = driver._doc;
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         
@@ -514,7 +514,7 @@ export async function completeNewDriverRegistration(req, res) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
 
-        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = newDriver._doc;
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = newDriver._doc;
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.log('UNABLE TO COMPLETE NEW DRIVER REGISTRATION', error)

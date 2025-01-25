@@ -31,6 +31,9 @@ const DriverSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    profileImg: {
+        type: String
+    },
     cancelRides: {
         type: Number,
         default: 0,
@@ -72,6 +75,26 @@ const DriverSchema = new mongoose.Schema({
     kmRange: {
         type: Number, // in km
     },
+    language: {
+        type: String
+    },
+    pushNotification: {
+        type: Boolean,
+        default: false
+    },
+    mailNotification: {
+        type: Boolean,
+        default: false
+    },
+    homeAddress: {
+        type: String
+    },
+    workAddress: {
+        type: String
+    },
+    accountImg: {
+        type: String
+    },
 
     password: {
         type: String
@@ -99,6 +122,14 @@ const DriverSchema = new mongoose.Schema({
         type: String
     },
     verified: {
+        type: Boolean,
+        default: false
+    },
+    active: {
+        type: Boolean,
+        default: true
+    },
+    isBlocked: {
         type: Boolean,
         default: false
     },

@@ -8,6 +8,10 @@ const AppSettingsSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    earningCommission: {
+        type: Number,
+        default: 30
+    },
     currency: {
         type: String,
         default: 'USD'

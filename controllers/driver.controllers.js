@@ -94,6 +94,7 @@ export async function goOffline({ data, socket, res }) {
 export async function acceptRideRequest({ data, socket, res }) {
   const { rideId, price } = data
   const { driverId } = socket.user;
+  console.log('OOOOP', data)
   try {
     if(!rideId){
       const message = 'The ride Id is required'
@@ -314,6 +315,60 @@ export async function cancelRideRequest({ data, socket, res }) {
 }
 
 //CANCEL EDIT RIDE REQUEST FROM PASSENGER
+export async function rejectEditRideRquest({ data, socket, res }) {
+  const { rideId } = data
+  const { driverId } = socket.user;
+  try {
+    if(!rideId){
+      const message = 'The ride Id is required'
+      if(res) return sendResponse(res, 400, false, message)
+      if(socket) return socket.emit('rejectEditRideRquest', { success: false, message })
+      return
+    }
+
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'No ride Found'
+      if(res) return sendResponse(res, 404, false, message)
+      if(socket) return socket.emit('rejectEditRideRquest', { success: false, message })
+      return
+    }
+
+    const getEditRideRequest = await PendingEditRideRequestModel.findOne({ rideId })
+    if(!getEditRideRequest){
+      const message = 'No edit ride request Found'
+      if(res) return sendResponse(res, 404, false, message)
+      if(socket) return socket.emit('rejectEditRideRquest', { success: false, message })
+      return
+    }
+
+    getEditRideRequest.status = 'Rejected'
+    await getEditRideRequest.save()
+
+    //send response back to passenger
+    const passengerSocketId = passengerConnections.get(getRide?.passengerId); // Fetch socket ID
+          if (passengerSocketId) {
+    
+            // Emit to passenger if socket ID is found
+            passengerNamespace.to(passengerSocketId).emit('editRideRequestAccepted', { 
+              success: false, 
+              message: `Driver has rejected your ride request`,
+            });
+          } else {
+            // Log if connection is not found, and skip to the next
+            console.log(`No active connection for passenger: ${getRide?.passengerId}`);
+          }
+
+    const message = 'Your have rejected the edit ride reqeust from passenger';
+    if (res) return sendResponse(res, 200, true, message);
+    if (socket) socket.emit('rejectEditRideRquest', { success: true, message });
+  } catch (error) {
+    console.log('ERROR ACCEPTING RIDE', error);
+    const message = 'Error accepting ride';
+    if (res) return sendResponse(res, 500, false, message);
+    if (socket) socket.emit('rejectEditRideRquest', { success: false, message });
+  }
+}
 
 //not done start ride and ride complete
 //START RIDE
@@ -373,48 +428,6 @@ export async function getNearByDrivers({ data, socket }) {
   } catch (error) {
     console.log('ERROR FETCHING NEARBY DRIVERS', error);
     if (socket) socket.emit('nearbyDrivers', { success: false, message: 'Error fetching nearby drivers' });
-  }
-}
-
-//ACTIVATE CARS
-export async function activateCar(req, res) {
-  const { _id } = req.body;  // Car's unique ID (or registration number, etc.)
-  const { driverId } = req.user;  // Driver's ID from user info
-
-  try {
-    // Find the driver's car details
-    const findCars = await CarDetailModel.findOne({ driverId });
-
-    // Check if the driver has any cars
-    if (!findCars) {
-      return sendResponse(res, 404, false, 'Cars not found for this driver');
-    }
-
-    // Find the car that needs to be activated
-    const carToActivate = findCars.cars.find(car => car._id.toString() === _id);
-
-    // Check if the car exists
-    if (!carToActivate) {
-      return sendResponse(res, 404, false, 'Car not found');
-    }
-
-    // Deactivate any currently active car
-    findCars.cars.forEach(car => {
-      if (car.active) {
-        car.active = false;  // Deactivate the currently active car
-      }
-    });
-
-    // Activate the selected car
-    carToActivate.active = true;
-
-    // Save the updated car details
-    await findCars.save();
-
-    return sendResponse(res, 200, true, 'Car activated successfully');
-  } catch (error) {
-    console.log('UNABLE TO MAKE CAR ACTIVE', error);
-    return sendResponse(res, 500, false, 'Unable to make car active');
   }
 }
 

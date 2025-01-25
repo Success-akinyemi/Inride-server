@@ -15,6 +15,9 @@ import driverRoutes from './routes/driver.routes.js';
 import rideRoutes from './routes/rides.routes.js';
 import driverBankDetailsRoutes from './routes/driverBankDetails.routes.js';
 import driverPayoutRoutes from './routes/driverPayout.routes.js';
+import driverProfileRoutes from './routes/driverProfile.routes.js';
+import carRoutes from './routes/car.routes.js';
+
 
 
 
@@ -58,6 +61,10 @@ app.use('/api/driver/auth', DriverAuthRoute);
 app.use('/api/rides', rideRoutes);
 app.use('/api/driver/bank', driverBankDetailsRoutes);
 app.use('/api/driver/payout', driverPayoutRoutes);
+app.use('/api/driver/car', carRoutes);
+app.use('/api/driver/profile', driverProfileRoutes);
+
+
 
 
 app.use('/api/driver', driverRoutes);

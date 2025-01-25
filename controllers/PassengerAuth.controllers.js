@@ -260,7 +260,7 @@ export async function registerUser(req, res) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
 
-        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, _id, ...userData } = newPassenger._doc;
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = newPassenger._doc;
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.error('UNABLE TO REGISTER USER:', error);
