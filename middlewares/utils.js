@@ -1,7 +1,7 @@
 import OtpModel from "../model/Otp.js";
 import PassengerModel from "../model/Passenger.js";
 import AWS from 'aws-sdk';
-
+import crypto from 'crypto';
 
 // Set up AWS S3 bucket configuration
 const s3 = new AWS.S3({
@@ -113,4 +113,24 @@ export function calculateAverageRating(ratings) {
   const roundedRating = Math.min(Math.max(averageRating, 0), 5).toFixed(1);
   
   return parseFloat(roundedRating);
+}
+
+// Encryption and decryption helpers
+const algorithm = 'aes-256-cbc'; // Encryption algorithm
+const key = Buffer.from(process.env.CARD_ENCRYPTION_KEY, 'hex'); // Key from .env (must be 32 bytes)
+const iv = crypto.randomBytes(16); // Initialization vector
+
+export function encrypt(text) {
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return `${iv.toString('hex')}:${encrypted}`; // Store IV with encrypted data
+}
+
+export function decrypt(encryptedText) {
+    const [ivHex, encryptedData] = encryptedText.split(':');
+    const decipher = crypto.createDecipheriv(algorithm, key, Buffer.from(ivHex, 'hex'));
+    let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
 }

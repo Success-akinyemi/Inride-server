@@ -90,6 +90,69 @@ export async function goOffline({ data, socket, res }) {
   }
 }
 
+// GET NEARBY DRIVERS
+export async function getNearByDrivers({ data, socket }) {
+  const { location, radius } = data; // Ensure radius defaults to 5 km
+  //const radiusInKm = radius || 5;
+  const radiusInKm =  1000;
+  
+  console.log('Coordinates:', location , radius);
+  const [ longitude, latitude ] = location;
+
+  try {
+    const drivers = await DriverLocationModel.find({
+      isActive: true,
+      status: 'online',
+      location: {
+        $geoWithin: {
+          $centerSphere: [[longitude, latitude], radiusInKm / 6378.1], // Converting km to radians
+        },
+      },
+    }).select(`-_id`);
+
+    if (socket) socket.emit('nearbyDrivers', { success: true, drivers });
+    return drivers;
+  } catch (error) {
+    console.log('ERROR FETCHING NEARBY DRIVERS', error);
+    if (socket) socket.emit('nearbyDrivers', { success: false, message: 'Error fetching nearby drivers' });
+  }
+}
+
+//HOME BREAK
+export async function homeBreak(req, res) {
+  const { autoAcceptRides, rideType, kmRange } = req.body;  
+  const { driverId } = req.user;
+  try {
+    const driver = await DriverModel.findOne({ driverId });
+    if(rideType){
+      if(!['all', 'personal', 'group', 'split', 'delivery', 'reservation'].includes(rideType)){
+        return sendResponse(res, 400, false, 'Ride Type is invalid')
+      }
+    }
+    if (kmRange) {
+      if (typeof kmRange !== 'number' || isNaN(kmRange)) {
+          return sendResponse(res, 400, false, 'kmRange must be a valid number');
+      }
+    }
+    
+    if (autoAcceptRides !== undefined) {
+        if (autoAcceptRides !== true && autoAcceptRides !== false) {
+            return sendResponse(res, 400, false, 'autoAcceptRides must be either true or false');
+        }
+    }
+    if(autoAcceptRides) driver.autoAcceptRides = autoAcceptRides;
+    if(rideType) driver.rideType = rideType;
+    if(kmRange) driver.kmRange = kmRange;
+    
+    await driver.save()
+
+    return sendResponse(res, 200, true, 'Driver account updated')
+  } catch (error) {
+    console.log('UNABLE TO PROCESS DRIVER HOME BREAK DATA', error);
+    return sendResponse(res, 500, false, 'Unable to update information');
+  }
+}
+
 // ACCEPT RIDE
 export async function acceptRideRequest({ data, socket, res }) {
   const { rideId, price } = data
@@ -172,6 +235,7 @@ export async function acceptRideRequest({ data, socket, res }) {
     const message = 'Your price bid has been recorded';
     if (res) return sendResponse(res, 200, true, message);
     if (socket) socket.emit('acceptRideRquest', { success: true, message });
+    return
   } catch (error) {
     console.log('ERROR ACCEPTING RIDE', error);
     const message = 'Error accepting ride';
@@ -202,6 +266,12 @@ export async function acceptEditRideRquest({ data, socket, res }) {
     if(!getRide){
       const message = 'No ride Found'
       if(res) return sendResponse(res, 404, false, message)
+      if(socket) return socket.emit('acceptEditRideRquest', { success: false, message })
+      return
+    }
+    if(getRide.driverId !== driverId){
+      const message = 'Only Driver assigned to this ride can accept this request'
+      if(res) return sendResponse(res, 403, false, message)
       if(socket) return socket.emit('acceptEditRideRquest', { success: false, message })
       return
     }
@@ -333,6 +403,12 @@ export async function rejectEditRideRquest({ data, socket, res }) {
       if(socket) return socket.emit('rejectEditRideRquest', { success: false, message })
       return
     }
+    if(getRide.driverId !== driverId){
+      const message = 'Only Driver assigned to this ride can accept this request'
+      if(res) return sendResponse(res, 403, false, message)
+      if(socket) return socket.emit('rejectEditRideRquest', { success: false, message })
+      return
+    }
 
     const getEditRideRequest = await PendingEditRideRequestModel.findOne({ rideId })
     if(!getEditRideRequest){
@@ -403,65 +479,3 @@ export async function rideComplete({ driverId, rideId, socket, res }) {
   }
 }
 
-// GET NEARBY DRIVERS
-export async function getNearByDrivers({ data, socket }) {
-  const { location, radius } = data; // Ensure radius defaults to 5 km
-  //const radiusInKm = radius || 5;
-  const radiusInKm =  1000;
-  
-  console.log('Coordinates:', location , radius);
-  const [ longitude, latitude ] = location;
-
-  try {
-    const drivers = await DriverLocationModel.find({
-      isActive: true,
-      status: 'online',
-      location: {
-        $geoWithin: {
-          $centerSphere: [[longitude, latitude], radiusInKm / 6378.1], // Converting km to radians
-        },
-      },
-    }).select(`-_id`);
-
-    if (socket) socket.emit('nearbyDrivers', { success: true, drivers });
-    return drivers;
-  } catch (error) {
-    console.log('ERROR FETCHING NEARBY DRIVERS', error);
-    if (socket) socket.emit('nearbyDrivers', { success: false, message: 'Error fetching nearby drivers' });
-  }
-}
-
-//HOME BREAK
-export async function homeBreak(req, res) {
-  const { autoAcceptRides, rideType, kmRange } = req.body;  
-  const { driverId } = req.user;
-  try {
-    const driver = await DriverModel.findOne({ driverId });
-    if(rideType){
-      if(!['all', 'personal', 'group', 'split', 'delivery', 'reservation'].includes(rideType)){
-        return sendResponse(res, 400, false, 'Ride Type is invalid')
-      }
-    }
-    if (kmRange) {
-      if (typeof kmRange !== 'number' || isNaN(kmRange)) {
-          return sendResponse(res, 400, false, 'kmRange must be a valid number');
-      }
-    }
-    
-    if (autoAcceptRides !== undefined) {
-        if (autoAcceptRides !== true && autoAcceptRides !== false) {
-            return sendResponse(res, 400, false, 'autoAcceptRides must be either true or false');
-        }
-    }
-    if(autoAcceptRides) driver.autoAcceptRides = autoAcceptRides;
-    if(rideType) driver.rideType = rideType;
-    if(kmRange) driver.kmRange = kmRange;
-    
-    await driver.save()
-
-    return sendResponse(res, 200, true, 'Driver account updated')
-  } catch (error) {
-    console.log('UNABLE TO PROCESS DRIVER HOME BREAK DATA', error);
-    return sendResponse(res, 500, false, 'Unable to update information');
-  }
-}

@@ -63,7 +63,7 @@ export async function getBankDetail(req, res) {
             sendResponse(res, 404, false, 'Bank details not found')
             return
         }
-        const bankDetails = getBankDetails.bankDetails.find(bank => bank._id === bankId)
+        const bankDetails = getBankDetails.bankDetails.find(bank => (bank._id).toString() === bankId)
         if(!bankDetails){
             sendResponse(res, 404, false, 'Bank details not found')
             return
@@ -89,7 +89,7 @@ export async function updateBankDetails(req, res) {
             sendResponse(res, 403, false, 'You are not authorized to update this bank details')
             return
         }
-        const bankDetails = getBankDetails.bankDetails.find(bank => bank._id === bankId)
+        const bankDetails = getBankDetails.bankDetails.find(bank => (bank._id).toString() === bankId)
         if(!bankDetails){
             sendResponse(res, 404, false, 'Bank details not found')
             return
@@ -120,7 +120,7 @@ export async function deleteBankDetails(req, res) {
             sendResponse(res, 403, false, 'You are not authorized to delete this bank details')
             return
         }
-        const bankDetails = getBankDetails.bankDetails.filter(bank => bank._id !== bankId)
+        const bankDetails = getBankDetails.bankDetails.filter(bank => (bank._id).toString() !== bankId)
         getBankDetails.bankDetails = bankDetails
         await getBankDetails.save()
         sendResponse(res, 200, true, 'Bank details deleted successfully')

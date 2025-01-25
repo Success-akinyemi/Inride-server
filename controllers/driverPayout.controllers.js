@@ -69,7 +69,7 @@ export async function getPayouts(req, res) {
     const transformedPayouts = payouts.map((payout) => {
       const hashedAccountNumber =
         "*".repeat(payout.accountNumber.length - 1) +
-        payout.accountNumber.slice(-1); // Mask all but the last digit
+        payout.accountNumber.slice(-3); // Mask all but the last three digit
 
       return {
         ...payout._doc, // Spread other payout properties
@@ -94,3 +94,7 @@ export async function getPayouts(req, res) {
     return sendResponse(res, 500, false, "Unable to get payout request");
   }
 }
+
+//approve payoutf and pay
+
+//reject payout with reason

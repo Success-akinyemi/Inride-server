@@ -220,6 +220,7 @@ export async function requestRide({ socket, data, res }) {
       }
 
       const getAppAmount = await AppSettingsModel.findOne()
+      const price = (getAppAmount?.pricePerKm * newRideRequest?.kmDistance).toFixed(2)
       const driverRideRequest = {
         from: newRideRequest?.from,
         kmDistance: newRideRequest?.kmDistance,
@@ -228,7 +229,7 @@ export async function requestRide({ socket, data, res }) {
           place: destination.place
         })),
         pickupPoint: newRideRequest?.pickupPoint,
-        priceRange: getAppAmount?.pricePerKm * newRideRequest?.kmDistance,
+        priceRange: `${price - 1} - ${price + 2}`,
         rideId: newRideRequest?.rideId
       }
       //update ride status
@@ -408,7 +409,8 @@ export async function requestDriver({ data, socket, res }) {
     }
 
     let newRideRequest
-    newRideRequest = PendingRideRequestModel.findOne({ rideId: findRide?.rideId, })
+    newRideRequest = await PendingRideRequestModel.findOne({ rideId: findRide?.rideId, })
+    console.log('newRideRequest', newRideRequest)
     if(!newRideRequest){
       
       newRideRequest = PendingRideRequestModel.create({
@@ -473,9 +475,9 @@ export async function requestDriver({ data, socket, res }) {
   
       driverNamespace.to(driverSocketId).emit('driverRequested', rideRequestData)
   
-      const message = 'Driver Request and Booking Updated proceed to payment';
+      const message = 'Driver Request and Booking Updated. Proceed to payment to start ride';
       if (res) return sendResponse(res, 200, true, message);
-      if (socket) socket.emit('requestDriver', { success: true, message, rideId: rideId });
+      if (socket) socket.emit('requestDriver', { success: true, message, rideId: rideId, price: findRide?.charge });
       
       return
     } else {
@@ -492,6 +494,43 @@ export async function requestDriver({ data, socket, res }) {
     if (socket) socket.emit('requestDriver', { success: false, message });
   }
 }
+
+//MAKE PAYMENT FOR RIDE
+export async function payForRdie({ socket, data, res }) {
+  const { rideId, paymentType, cardDetails } = data
+  if(!rideId){
+    const message = 'Ride Id is required'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForRdie', { success: false, message})
+    return
+  }
+  if(!paymentType){
+    const message = 'Payment type is required'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForRdie', { success: false, message})
+    return
+  }
+  if(!(['card', 'wallet', 'direct']).includes(payForRdie)){
+    const message = 'Invalid payment type. ["card", "wallet", "direct"]'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForRdie', { success: false, message})
+  
+  }
+  if(paymentType === 'direct' && !cardDetails){
+    const message = 'Card details is required for payment type'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForRdie', { success: false, message})
+  }
+  const { nameofCard, cardNumber, cvv, expiryDate} = cardDetails 
+  if(!nameofCard || !cardNumber || !cvv || !expiryDate){
+    const message = `Provide all deatils of the card. ${!nameofCard && 'Name of Card'} ${!cardNumber && 'card number'} ${!cvv && 'cvv'} ${!expiryDate && 'Expiry Date'} is/are required`
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForRdie', { success: false, message})
+    return
+  }
+}
+
+//MAKE PAYMENT FOR EDIT RIDE WITH UPDATED PRICE
 
 //SHARE RIDE WITH FRIENDS
 export async function shareRideWithFriends({ data, socket, res}) {

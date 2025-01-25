@@ -1,4 +1,5 @@
 import { sendResponse } from "../middlewares/utils.js";
+import AppSettingsModel from "../model/AppSettings.js";
 import ForgotItemModel from "../model/ForgotItem.js";
 import RideModel from "../model/Rides.js";
 
@@ -116,9 +117,10 @@ export async function getLastSevenDays(req, res) {
       status: 'Complete',
     });
 
+    const siteCommission = await AppSettingsModel.findOne()
     // Calculate the total payout for paid and completed rides (subtracting 30% from each charge)
     const totalPayout = paidRides.reduce((sum, ride) => {
-      const netCharge = ride.charge - ride.charge * 0.3; // Subtract 30%
+      const netCharge = ride.charge - ride.charge * Number((siteCommission?.earningCommission)/100); // Subtract 30%
       return sum + netCharge;
     }, 0);
 

@@ -8,6 +8,9 @@ import { Server } from 'socket.io';
 
 config();
 import PassengerAuthRoute from './routes/PassengerAuth.routes.js';
+import PassengerCardRoute from './routes/passengerCardDeatil.routes.js';
+import PassengerProfileRoutes from './routes/passengerProfile.routes.js';
+
 import DriverAuthRoute from './routes/driverAuth.routes.js';
 import appSettingsRoute from './routes/handleappSettings.routes.js';
 import authRoute from './routes/auth.routes.js';
@@ -56,9 +59,15 @@ app.use('/api-doc', swaggerUI.serve, swaggerUI.setup(swaggerJSDocs));
 // Routes
 app.use('/api/auth', authRoute);
 app.use('/api/appSettings', appSettingsRoute);
+
 app.use('/api/passenger/auth', PassengerAuthRoute);
-app.use('/api/driver/auth', DriverAuthRoute);
+app.use('/api/passenger/card', PassengerCardRoute);
+app.use('/api/passenger/profile', PassengerProfileRoutes);
+
+
 app.use('/api/rides', rideRoutes);
+
+app.use('/api/driver/auth', DriverAuthRoute);
 app.use('/api/driver/bank', driverBankDetailsRoutes);
 app.use('/api/driver/payout', driverPayoutRoutes);
 app.use('/api/driver/car', carRoutes);

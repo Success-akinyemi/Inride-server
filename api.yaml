@@ -923,7 +923,179 @@ paths:
           description: User error
         500:
           description: Server error
-          
+
+  /passenger/card/newCardDetails:
+    post:
+      tags:
+        - Passenger 
+      summary: New Card Details for passenger
+      description: This endpoint update the passenger card details for payment by adding a new card
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - accountName
+              - accountNumber
+              - bankName
+            properties:
+              accountName:
+                type: string
+              accountNumber:
+                type: string
+              bankName:
+                type: string
+      responses:
+        201:
+          description: Bank Details updated
+        400:
+          description: User error
+        500:
+          description: Server error
+        
+  /passenger/card/updateCardDetails:
+    post:
+      tags:
+        - Passenger 
+      summary: Update a card information
+      description: This endpoint update the passenger card details for payment. requires cardId which is the _id
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - cardId
+              - cardNumber
+              - cardHolderName
+              - expiryDate
+              - cvv
+              - cardType
+            properties:
+              bankId:
+                type: string
+              cardNumber:
+                type: string
+              cardHolderName:
+                type: string
+              expiryDate:
+                type: string
+              cvv:
+                type: string
+              cardType:
+                type: string
+      responses:
+        201:
+          description: Bank Details updated
+        400:
+          description: User error
+        500:
+          description: Server error
+        
+  /passenger/card/deleteCardDetails:
+    post:
+      tags:
+        - Passenger 
+      summary: Delete a card information
+      description: This endpoint delete the passenger card details. requires cardId which is the _id
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - cardId
+            properties:
+              cardId:
+                type: string
+      responses:
+        201:
+          description: Card Details deleted
+        400:
+          description: User error
+        500:
+          description: Server error
+        
+  /passenger/card/getCardDetail:
+    get:
+      tags:
+        - Passenger 
+      summary: Get a single card detail of a passenger
+      description: This endpoint get the passenger card deatail. requires cardId which is the _id as parameter
+      parameters:
+        - name: params
+          in: params
+          required: true
+          schema:
+            type: object
+            required:
+              - cardId
+            properties:
+              bankId:
+                type: string
+      responses:
+        201:
+          description: Succesful - card Detail infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+        
+  /passenger/card/getCardDetails:
+    get:
+      tags:
+        - Passenger 
+      summary: Get all passenger saved card
+      description: This endpoint get the saved cards of a passenger
+      responses:
+        201:
+          description: Succesful - Bank Details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+        
+  /passenger/profile/updateProfile:
+    post:
+      tags:
+        - Passenger 
+      summary: Update passenger account info
+      description: This endpoint update the passenger account info, accountImg as file
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+            properties:
+              language:
+                type: string
+              pushNotification:
+                type: string
+              mailNotification:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              homeAddress:
+                type: string
+              workAddress:
+                type: string
+              accountImg:
+                type: file
+      responses:
+        201:
+          description: Profile updated succesful
+        400:
+          description: User error
+        500:
+          description: Server error
 
 #DRIVER
 
@@ -1487,7 +1659,7 @@ paths:
       tags:
         - Booking
       summary: Alert drivers around the ride pickup location about a new ride. socket.emit(newRideRequest) to drivers namespace
-      description: This emit endpoint alert drivers around a pickup location on a new ride. alert to connected drivers
+      description: This emit endpoint alert drivers around a pickup location on a new ride. alert to connected drivers online and availble after which they can accept the ride set in their price or reject the ride
       responses:
         201:
           description: Drivers locations
@@ -1567,7 +1739,7 @@ paths:
     post:
       tags:
         - Booking
-      summary: Socket connection to request for adriver after seeing their prices and details quest, socket.emit('requestDriver', data) socket.emit(requestDriver, data) under the passengerId namespaces
+      summary: Socket connection to request for a driver after seeing their prices and details, socket.emit('requestDriver', data) socket.emit(requestDriver, serverResponse) under the passengerId namespaces
       description: This endpoint/socket connection allows a driver to accept a new ride request passing the driverId and rideId as data
       parameters:
         - name: body
@@ -1590,6 +1762,23 @@ paths:
           description: User error. success - false
         500:
           description: Server error
+
+  /drivers/driverRequested:
+   get:
+     tags:
+       - Booking
+     summary: Alert driver who has been selected for a ride by a passenger. socket.emit(driverRequested) to drivers namespace
+     description: This emit endpoint alert driver who has been selected for a ride to let the driver know while passenger is making payment
+     responses:
+       201:
+         description: Drivers locations
+       400:
+         description: User error
+       500:
+         description: Server error
+        
+#payment here for new ride
+#alert the diver after payment has been to start going to the passenger place
 
   /passenger/editRide:
     post:
