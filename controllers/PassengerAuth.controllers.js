@@ -1,3 +1,4 @@
+import { sendWelcomeEmail } from "../middlewares/mailTemplate.js.js";
 import twilioClient from "../middlewares/twilioConfig.js";
 import { generateOtp, generateUniqueCode, sendResponse, uploadFile } from "../middlewares/utils.js";
 import { matchFace, verifyID } from "../middlewares/verificationService.js";
@@ -247,6 +248,10 @@ export async function registerUser(req, res) {
         })
 
         //send welcome email to user
+        sendWelcomeEmail({
+            email: newPassenger.email,
+            name: newPassenger.firstName
+        })
         
 
         // Set cookies
@@ -459,7 +464,7 @@ export async function createnew(req, res) {
         console.log('PASSENGER ID', `RF${passengerId}PA`)
 
         const data = {
-            mobileNumber: "+2349059309831",
+            mobileNumber: "+2349059309836",
             firstName: "Inride",
             lastName: "User",
             email: "user@gmail.com",
@@ -473,6 +478,11 @@ export async function createnew(req, res) {
         }
 
         const newPassenger = await PassengerModel.create(data)
+
+        sendWelcomeEmail({
+            email: 'jeniferakinyemi445@gmail.com',
+            name: 'Brown'
+        })
 
         sendResponse(res, 201, true, 'User created', newPassenger)
     } catch (error) {

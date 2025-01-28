@@ -17,7 +17,7 @@ const sendEmail = (options) => {
         from: process.env.NODEMAILER_USER,
         to: options.to,
         subject: options.subject,
-        html: options.text
+        html: options.html
     }
 
     transporter.sendMail(mailOptions, function(err, info){
