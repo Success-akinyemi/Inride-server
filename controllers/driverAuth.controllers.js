@@ -560,13 +560,16 @@ export async function signin(req, res) {
         console.log('OTP CODE', otpCode)
         
         if(otpCode){
-            const sendOtpCode = await twilioClient.messages.create({
-                body: `Your RideFuzz login Otp code is: ${otpCode}`,
-                from: `${process.env.TWILIO_PHONE_NUMBER}`,
-                to: `${mobileNumber}`,
-            })
-            console.log('SMS BODY', sendOtpCode)
-        
+            /**
+             const sendOtpCode = await twilioClient.messages.create({
+                 body: `Your RideFuzz login Otp code is: ${otpCode}`,
+                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
+                 to: `${mobileNumber}`,
+             })
+             console.log('SMS BODY', sendOtpCode)
+         
+             * 
+             */
             return sendResponse(res, 201, true, `Signin verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber} code: ${otpCode}`)
         }
 

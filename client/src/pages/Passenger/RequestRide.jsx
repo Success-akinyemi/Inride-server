@@ -179,9 +179,29 @@ const RequestRide = () => {
     })
 
     //HANDLE RIDE PAYMENT
-    const handleRidePayment = (rideId) => {
-
+    const handleRidePayment = (rideId, type) => {
+      const cardDetails = {
+        cardHolderName: 'Ade one', 
+        cardNumber: '4242424242424242', 
+        cvv: '456', 
+        expiryDate: '12/25',
+      }
+      let data
+      if(type === 'card'){
+        data = { rideId, paymentType: 'card', cardId: '67952582bf03f1fa37e65fbd' }
+      }
+      if(type === 'direct'){
+        data = { rideId, paymentType: 'direct', cardDetails }
+      }
+      if(type === 'wallet'){
+        data = { rideId, paymentType: 'wallet' }
+      }
+      socket.emit('payForRide', data)
     }
+    socket.on('payForRide', (response) => {
+
+      console.log('PAYMENT OF RIDE RESPONSE', response)
+    })
 
   return (
     <div>
@@ -253,7 +273,9 @@ const RequestRide = () => {
   {
     driverRequested?.success && (
       <div className="">
-        <button onClick={() => handleRidePayment(driverRequested?.rideId)} >Pay For Ride Now</button>
+        <button onClick={() => handleRidePayment(driverRequested?.rideId, 'card')} >Pay For Ride Now (card)</button>
+        <button onClick={() => handleRidePayment(driverRequested?.rideId, 'direct')} >Pay For Ride Now (direct)</button>
+        <button onClick={() => handleRidePayment(driverRequested?.rideId, 'wallet')} >Pay For Ride Now (wallet)</button>
       </div>
     )
   }

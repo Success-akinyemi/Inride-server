@@ -12,6 +12,7 @@ router.post('/deleteCardDetails', AuthenticatePassenger, controllers.deleteCardD
 //GET
 router.get('/getCardDetails', AuthenticatePassenger, controllers.getCardDetails)
 router.get('/getCardDetail/:cardId', AuthenticatePassenger, controllers.getCardDetail)
+router.get('/getPaymentCards', AuthenticatePassenger, controllers.getPaymentCards)
 
 
 export default router

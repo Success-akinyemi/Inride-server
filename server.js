@@ -133,6 +133,7 @@ passengerNamespace.on('connection', (socket) => {
   socket.on('getNearbyDrivers', (data) => passengerController.getNearByDrivers({ data, socket }));
   socket.on('requestRide', (data) => passengerController.requestRide({ data, socket }));
   socket.on('requestDriver', (data) => passengerController.requestDriver({ data, socket }));
+  socket.on('payForRide', (data) => passengerController.payForRide({ data, socket }));
   socket.on('shareRideWithFriends', (data) => passengerController.shareRideWithFriends({ data, socket }));
   socket.on('editRide', (data) => passengerController.editRide({ data, socket }));
 
@@ -147,6 +148,12 @@ passengerNamespace.on('connection', (socket) => {
     }
   });
 });
+
+
+//SCEHDULED functions
+import { scheduleRideAlerts } from './controllers/passenger.controllers.js'
+
+scheduleRideAlerts()
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {

@@ -17,7 +17,7 @@ const RideSchema = new mongoose.Schema({
     rideType: {
         type: String,
         default: 'personal',
-        enum: [ 'personal', 'group', 'split', 'delivery', 'reservation'],
+        enum: [ 'personal', 'group', 'delivery', 'schedule'],
     },
     noOffPassengers: {
         type: Number,
@@ -96,9 +96,22 @@ const RideSchema = new mongoose.Schema({
         default: 'Initiated',
         enum: ['Pending', 'Initiated', 'Requested', 'Active', 'In progress', 'Complete', 'Canceled']
     },
+    scheduleRide: {
+        type: Boolean,
+        default: false
+    },
+    scheduleTime: {
+        type: String //14:30:00
+    },
+    scheduleDate: {
+        type: String //2025-01-26
+    },
     paid: {
         type: Boolean,
         default: false
+    },
+    paymentMethod: {
+        type: String
     },
     carDetails: {
         registrationNumber: {

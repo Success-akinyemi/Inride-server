@@ -318,7 +318,8 @@ export async function acceptEditRideRquest({ data, socket, res }) {
             passengerNamespace.to(passengerSocketId).emit('editRideRequestAccepted', { 
               success: true, 
               message: `Driver has agreed to your ride update reqeuest. proceed to make payment`,
-              price: getEditRideRequest.price
+              price: getEditRideRequest.price,
+              rideId: getRide?.rideId
             });
           } else {
             // Log if connection is not found, and skip to the next
@@ -464,7 +465,8 @@ export async function startRide({ data, socket, res}) {
 // COMPLETE RIDE
 export async function rideComplete({ driverId, rideId, socket, res }) {
   try {
-    await DriverLocationModel.updateOne({ driverId }, { status: 'online' });
+    //fund driver acccount
+    await DriverLocationModel.updateOne({ driverId }, { status: 'online', isActive: true });
     await DriverModel.updateOne({ driverId }, { status: 'online' });
     await RideModel.updateOne({ rideId }, { status: 'Complete' });
 

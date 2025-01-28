@@ -937,15 +937,20 @@ paths:
           schema:
             type: object
             required:
-              - accountName
-              - accountNumber
-              - bankName
+              - cardNumber
+              - cardHolderName
+              - expiryDate
+              - cvv
             properties:
-              accountName:
+              cardNumber:
                 type: string
-              accountNumber:
+              cardHolderName:
                 type: string
-              bankName:
+              expiryDate:
+                type: string
+              cvv:
+                type: string
+              cardType:
                 type: string
       responses:
         201:
@@ -1053,7 +1058,7 @@ paths:
       description: This endpoint get the saved cards of a passenger
       responses:
         201:
-          description: Succesful - Bank Details infomation
+          description: Succesful - Card Details infomation
         400:
           description: User error
         500:
@@ -1097,6 +1102,20 @@ paths:
         500:
           description: Server error
 
+  /passenger/card/getPaymentCards:
+    get:
+      tags:
+        - Passenger 
+      summary: Get all passenger saved card fr=or payment
+      description: This endpoint get the saved cards of a passenger for payments
+      responses:
+        201:
+          description: Succesful - card Details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+    
 #DRIVER
 
   /driver/car/newCar:
@@ -1777,15 +1796,74 @@ paths:
        500:
          description: Server error
         
-#payment here for new ride
-#alert the diver after payment has been to start going to the passenger place
+  /passenger/payForRide:
+    post:
+      tags:
+        - Booking
+      summary: Socket connection to make payment for ride socket.on('payForRide', data) socket.emit('payForRide', serverResponse) under the passenger namespace
+      description: This endpoint/socket connection allows for payment of ride by passenger via saved cards, wallet, direct. paymentType= ['card', 'wallet', 'direct']. after successful payment, ride gets activate a ride and driver start heading to passengers location. if paymentType is wallet it deduct user wallet if paymentType is card the cardId is required of the saved user card if paymentType is direct the the user has to provide a card details
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - paymentType
+              - rideId
+            properties:
+              rideId:
+                type: string
+              paymentType:
+                type: string
+              cardId:
+                type: string
+              cardDetails:
+                type: object
+                required:
+                  - cardHolderName
+                  - cardNumber
+                  - cvv
+                  - expiryDate
+                properties:
+                  cardHolderName:
+                    type: string
+                  cardNumber:
+                    type: string
+                  cvv:
+                    type: string
+                  expiryDate:
+                    type: string
+                  cardType:
+                    type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
 
+  /newRideActivated:
+   get:
+     tags:
+       - Booking
+     summary: Alert driver when the ride has been paid for. for the driver to procced to pick passenger or delivery or get informed if it is a scheduled ride. socket.emit('newRideActivated', serverResponse) to drivers namespace
+     description: This emit endpoint alert driver when payment for a ride has been made
+     responses:
+       201:
+         description: Drivers
+       400:
+         description: User error
+       500:
+         description: Server error
+    
   /passenger/editRide:
     post:
       tags:
         - Booking 
-      summary: Edit a ride booking from passenger who has booked a ride under the namespace passenger
-      description: This endpoint creates a new booking for a passenger uses socket.io for communications. socket.emit('editRide', data); socket.on('editRide', serverResponse).
+      summary: Edit a ride booking from passenger who has booked a ride under the namespace passenger. socket.emit('editRide', data); socket.on('editRide', serverResponse).
+      description: This endpoint creates a new booking for a passenger uses socket.io for communications. only send the new locations in the to array.
       parameters:
         - name: body
           in: body
@@ -1869,6 +1947,54 @@ paths:
                 type: string
               rideId:
                 type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+
+  /passenger/payForEdidtRide:
+    post:
+      tags:
+        - Booking
+      summary: Socket connection to make payment for accepted edit ride socket.on('payForEdidtRide', data) socket.emit('payForEdidtRide', serverResponse) under the passenger namespace
+      description: This endpoint/socket connection allows for payment of accepted edit ride by driver. payment via saved cards, wallet, direct. paymentType= ['card', 'wallet', 'direct']. after successful payment, ride gets activate a ride and driver start heading to passengers location. if paymentType is wallet it deduct user wallet if paymentType is card the cardId is required of the saved user card if paymentType is direct the the user has to provide a card details
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - paymentType
+              - rideId
+            properties:
+              rideId:
+                type: string
+              paymentType:
+                type: string
+              cardId:
+                type: string
+              cardDetails:
+                type: object
+                required:
+                  - cardHolderName
+                  - cardNumber
+                  - cvv
+                  - expiryDate
+                properties:
+                  cardHolderName:
+                    type: string
+                  cardNumber:
+                    type: string
+                  cvv:
+                    type: string
+                  expiryDate:
+                    type: string
+                  cardType:
+                    type: string
       responses:
         201:
           description: success - true

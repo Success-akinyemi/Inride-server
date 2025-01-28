@@ -16,7 +16,7 @@ const CardDetailSchema = new mongoose.Schema({
                 required: [true, 'Card holder name is required']
             },
             expiryDate: {
-                type: String,
+                type: String, // 12/25
                 required: [true, 'Expiry date is required']
             },
             cvv: {

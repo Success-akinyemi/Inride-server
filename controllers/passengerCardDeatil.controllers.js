@@ -1,4 +1,4 @@
-import { encrypt, sendResponse } from "../middlewares/utils.js"
+import { decrypt, encrypt, sendResponse } from "../middlewares/utils.js"
 import CardDetailModel from "../model/CardDetails.js"
 
 export async function newCardDetails(req, res) {
@@ -25,6 +25,11 @@ export async function newCardDetails(req, res) {
     if (!expiryDate) {
         sendResponse(res, 400, false, 'Expiry date is required');
         return;
+    }
+    const isValid = /^\d{2}\/\d{2}$/.test(expiryDate);
+    if (!isValid) {
+        sendResponse(res, 400, false, 'Invalid expiry date format. Expected MM/YY.')
+        return
     }
     if (!cvv) {
         sendResponse(res, 400, false, 'CVV is required');
@@ -80,7 +85,13 @@ export async function newCardDetails(req, res) {
 export async function updateCardDetails(req, res) {
     const { passengerId } = req.user;
     const { cardId, cardNumber, cardHolderName, expiryDate, cvv, cardType } = req.body;
-
+    if(expiryDate){
+        const isValid = /^\d{2}\/\d{2}$/.test(expiryDate);
+        if (!isValid) {
+            sendResponse(res, 400, false, 'Invalid expiry date format. Expected MM/YY.')
+            return
+        }
+    }
     try {
         const getCardDetails = await CardDetailModel.findOne({ passengerId });
         if (!getCardDetails) {
@@ -114,39 +125,87 @@ export async function updateCardDetails(req, res) {
 }
 
 export async function getCardDetails(req, res) {
-    const { passengerId } = req.user
+    const { passengerId } = req.user;
     try {
-        const getCardDetails = await CardDetailModel.findOne({passengerId})
-        if(!getCardDetails){
-            sendResponse(res, 404, false, 'Card details not found')
-            return
+        const getCardDetails = await CardDetailModel.findOne({ passengerId });
+        if (!getCardDetails) {
+            sendResponse(res, 404, false, 'Card details not found');
+            return;
         }
-        sendResponse(res, 200, true, getCardDetails, 'Card details fetched successfully')
+
+        // Decrypt card numbers and mask them
+        const cards = getCardDetails.cards.map(card => {
+            const decryptedCardNumber = decrypt(card.cardNumber); // Decrypt the card number
+            const maskedCardNumber = `**** **** **** ${decryptedCardNumber.slice(-4)}`; // Mask all but the last 4 digits
+            return {
+                ...card.toObject(),
+                cardNumber: maskedCardNumber, // Replace cardNumber with the masked value
+            };
+        });
+
+        sendResponse(res, 200, true, { ...getCardDetails.toObject(), cards }, 'Card details fetched successfully');
     } catch (error) {
-        console.log('ERROR FETCHING CARD DETAILS', error)
-        sendResponse(res, 500, false, 'Unable to fetch card details')
+        console.log('ERROR FETCHING CARD DETAILS', error);
+        sendResponse(res, 500, false, 'Unable to fetch card details');
     }
 }
 
 export async function getCardDetail(req, res) {
-    const { passengerId } = req.user
-    const { cardId } = req.params
+    const { passengerId } = req.user;
+    const { cardId } = req.params;
     try {
-        const getCardDetails = await CardDetailModel.findOne({passengerId})
-        if(!getCardDetails){
-            sendResponse(res, 404, false, 'Bank details not found')
-            return
+        const getCardDetails = await CardDetailModel.findOne({ passengerId });
+        if (!getCardDetails) {
+            sendResponse(res, 404, false, 'Card details not found');
+            return;
         }
-        const cards = getCardDetails.cards.find(card => (card._id).toString() === cardId)
-        if(!cards){
-            sendResponse(res, 404, false, 'Card details not found')
-            return
+
+        const card = getCardDetails.cards.find(card => card._id.toString() === cardId);
+        if (!card) {
+            sendResponse(res, 404, false, 'Card details not found');
+            return;
         }
-        sendResponse(res, 200, true, cards, 'Card details fetched successfully')
+
+        // Decrypt card number and mask it
+        const decryptedCardNumber = decrypt(card.cardNumber);
+        const maskedCardNumber = `**** **** **** ${decryptedCardNumber.slice(-4)}`; // Mask all but the last 4 digits
+
+        sendResponse(res, 200, true, { ...card.toObject(), cardNumber: maskedCardNumber }, 'Card details fetched successfully');
     } catch (error) {
-        console.log('ERROR FETCHING CARD DETAILS', error)
-        sendResponse(res, 500, false, 'Unable to fetch card details')
-    }   
+        console.log('ERROR FETCHING CARD DETAILS', error);
+        sendResponse(res, 500, false, 'Unable to fetch card details');
+    }
+}
+
+export async function getPaymentCards(req, res) {
+    const { passengerId } = req.user;
+    try {
+        const getCardDetails = await CardDetailModel.findOne({ passengerId });
+        if (!getCardDetails) {
+            sendResponse(res, 404, false, 'Card details not found');
+            return;
+        }
+
+        /**
+         // Decrypt card numbers and mask them
+         const cards = getCardDetails.cards.map(card => {
+             const decryptedCardNumber = decrypt(card.cardNumber); // Decrypt the card number
+             const maskedCardNumber = `**** **** **** ${decryptedCardNumber.slice(-4)}`; // Mask all but the last 4 digits
+             return {
+                 ...card.toObject(),
+                 cardNumber: maskedCardNumber, // Replace cardNumber with the masked value
+             };
+         });
+         * 
+         */
+
+         const paymentCard = getCardDetails.cards
+
+        sendResponse(res, 200, true,  paymentCard, 'Card details fetched successfully');
+    } catch (error) {
+        console.log('ERROR FETCHING CARD DETAILS', error);
+        sendResponse(res, 500, false, 'Unable to fetch card details');
+    }
 }
 
 export async function deleteCardDetails(req, res) {

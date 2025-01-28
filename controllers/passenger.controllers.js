@@ -1,4 +1,4 @@
-import { calculateAverageRating, generateUniqueCode, sendResponse } from "../middlewares/utils.js";
+import { calculateAverageRating, decrypt, generateUniqueCode, sendResponse } from "../middlewares/utils.js";
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js";
 import DriverLocationModel from "../model/DriverLocation.js";
@@ -11,6 +11,14 @@ import AppSettingsModel from "../model/AppSettings.js";
 import driverPriceModel from "../model/DriverPrice.js";
 import PassengerModel from "../model/Passenger.js";
 import PendingEditRideRequestModel from "../model/PendingEditRide.js";
+import CardDetailModel from "../model/CardDetails.js";
+import cron from 'node-cron';
+import moment from 'moment';
+import Stripe from 'stripe';
+import RideTransactionModel from "../model/RideTransactions.js";
+
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
 const client = new Client({});
 
 async function calculateTotalDistance({ fromId, to }) {
@@ -124,7 +132,7 @@ export async function getNearByDrivers({ data, socket }) {
 
 // REQUEST RIDE
 export async function requestRide({ socket, data, res }) {
-  const { from, fromId, fromCoordinates, to, personnalRide, noOffPassengers, pickupPoint, rideType } = data;
+  const { from, fromId, fromCoordinates, to, personnalRide, noOffPassengers, pickupPoint, rideType, scheduleRide, scheduleTime, scheduleDate } = data;
 
   if (!from) {
     const message = 'Ride starting point is required';
@@ -144,13 +152,41 @@ export async function requestRide({ socket, data, res }) {
     if (socket) socket.emit('rideRequested', { success: false, message });
     return;
   }
-  if(rideType){
-      if(!['personal', 'group', 'split', 'delivery', 'reservation'].includes(rideType)){
-        const message = 'Ride Type is invalid'
-        if(res) sendResponse(res, 400, false, message)
-        if (socket) socket.emit('rideRequested', { success: false, message })
-        return
-      }
+  if(!rideType){
+    const message = 'Ride Type is Required'
+    if(res) sendResponse(res, 400, false, message)
+    if (socket) socket.emit('rideRequested', { success: false, message })
+    return
+  }
+  if(!['personal', 'delivery', 'schedule'].includes(rideType)){
+    const message = 'Ride Type is invalid: available ride type: ["personal", "delivery", "schedule"] '
+    if(res) sendResponse(res, 400, false, message)
+    if (socket) socket.emit('rideRequested', { success: false, message })
+    return
+  }
+  console.log('RIDE TYPE', rideType)
+  if(rideType === 'schedule'){ 
+    if(!scheduleTime || !scheduleDate){
+      const message = 'For scheduled ride, scheduleTime and scheduleDate is required'
+      if(res) sendResponse(res, 400, false, message)
+      if (socket) socket.emit('rideRequested', { success: false, message })
+      return
+    }
+  }
+  if(rideType === 'schedule'){
+    // Regular expression for validating date in YYYY-MM-DD format
+    const isValidDate = /^\d{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[0-1])$/;
+
+    // Regular expression for validating time in HH:mm (24-hour) format
+    const isValidTime = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+    if (!isValidDate.test(scheduleDate)) {
+        console.error('Invalid scheduleDate format. Expected format: YYYY-MM-DD');
+    } else if (!isValidTime.test(scheduleTime)) {
+        console.error('Invalid scheduleTime format. Expected format: HH:mm (24-hour)');
+    } else {
+        console.log('scheduleDate and scheduleTime are in the correct format.');
+    }
   }
 
   try {
@@ -176,6 +212,9 @@ export async function requestRide({ socket, data, res }) {
       pickupPoint,
       rideType,
       kmDistance: totalDistanceKm,
+      scheduleRide: rideType === 'schedule' ? true : false,
+      scheduleDate,
+      scheduleTime,
     });
 
     // Get nearest drivers
@@ -220,7 +259,12 @@ export async function requestRide({ socket, data, res }) {
       }
 
       const getAppAmount = await AppSettingsModel.findOne()
-      const price = (getAppAmount?.pricePerKm * newRideRequest?.kmDistance).toFixed(2)
+      let price
+      if(rideType === 'delivery'){
+        price = (getAppAmount?.deliveryPricePerKm * newRideRequest?.kmDistance).toFixed(2)
+      } else {
+        price = (getAppAmount?.pricePerKm * newRideRequest?.kmDistance).toFixed(2)
+      }
       const driverRideRequest = {
         from: newRideRequest?.from,
         kmDistance: newRideRequest?.kmDistance,
@@ -230,7 +274,10 @@ export async function requestRide({ socket, data, res }) {
         })),
         pickupPoint: newRideRequest?.pickupPoint,
         priceRange: `${price - 1} - ${price + 2}`,
-        rideId: newRideRequest?.rideId
+        rideId: newRideRequest?.rideId,
+        rideType: newRideRequest?.rideType,
+        scheduleTime: newRideRequest?.scheduleTime || '',
+        scheduleDate: newRideRequest?.scheduleDate || ''
       }
       //update ride status
       newRideRequest.status = 'Pending'
@@ -246,7 +293,8 @@ export async function requestRide({ socket, data, res }) {
 
           // Emit to driver if socket ID is found
           driverNamespace.to(driverSocketId).emit('newRideRequest', { 
-            success: true, 
+            success: true,
+            message: `You have a new ${rideType === 'personal' ? 'Personnal' : rideType === 'delivery' ? 'Delivery' : 'Schedule'} ride request`,
             ride: driverRideRequest, 
            // driverId: driverSocketId 
           });
@@ -300,7 +348,7 @@ export async function requestRide({ socket, data, res }) {
           }
 
           // Get top 3 lowest prices
-          const topPrices = driverPrices.prices
+          const topPrices = driverPrices?.prices
           .sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
           .slice(0, 3);
 
@@ -496,41 +544,596 @@ export async function requestDriver({ data, socket, res }) {
 }
 
 //MAKE PAYMENT FOR RIDE
-export async function payForRdie({ socket, data, res }) {
-  const { rideId, paymentType, cardDetails } = data
+export async function payForRide({ socket, data, res }) {
+  const { rideId, paymentType, cardDetails, cardId } = data
+  const { passengerId } = socket.user
   if(!rideId){
     const message = 'Ride Id is required'
     if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForRdie', { success: false, message})
+    if(socket) socket.emit('payForRide', { success: false, message})
     return
   }
   if(!paymentType){
     const message = 'Payment type is required'
     if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForRdie', { success: false, message})
+    if(socket) socket.emit('payForRide', { success: false, message})
     return
   }
-  if(!(['card', 'wallet', 'direct']).includes(payForRdie)){
+  if(!(['card', 'wallet', 'direct']).includes(paymentType)){
     const message = 'Invalid payment type. ["card", "wallet", "direct"]'
     if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForRdie', { success: false, message})
-  
+    if(socket) socket.emit('payForRide', { success: false, message})
+    return
   }
   if(paymentType === 'direct' && !cardDetails){
     const message = 'Card details is required for payment type'
     if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForRdie', { success: false, message})
-  }
-  const { nameofCard, cardNumber, cvv, expiryDate} = cardDetails 
-  if(!nameofCard || !cardNumber || !cvv || !expiryDate){
-    const message = `Provide all deatils of the card. ${!nameofCard && 'Name of Card'} ${!cardNumber && 'card number'} ${!cvv && 'cvv'} ${!expiryDate && 'Expiry Date'} is/are required`
-    if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForRdie', { success: false, message})
+    if(socket) socket.emit('payForRide', { success: false, message})
     return
+  }
+  if(paymentType === 'direct'){
+    const { cardHolderName, cardNumber, cvv, expiryDate, cardType } = cardDetails 
+    if(!cardHolderName || !cardNumber || !cvv || !expiryDate){
+      const message = `Provide all deatils of the card. ${!nameofCard && 'Name of Card'} ${!cardNumber && 'card number'} ${!cvv && 'cvv'} ${!expiryDate && 'Expiry Date'} is/are required`
+      if(res) sendResponse(res, 400, false, message)
+      if(socket) socket.emit('payForRide', { success: false, message})
+      return
+    }
+  }
+  if(paymentType === 'direct'){
+    const isValid = /^\d{2}\/\d{2}$/.test(expiryDate);
+    if (!isValid) {
+        const message = `Invalid expiry date format. Expected MM/YY.`
+        if(res) sendResponse(res, 400, false, message)
+        if(socket) socket.emit('payForRide', { success: false, message})
+        return
+    }
+  }
+  if(paymentType === 'card' && !cardId){
+    const message = 'Choosen Card id is required for payment type'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForRide', { success: false, message})
+    return
+  }
+
+  try {
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'Ride with this Id does not exist'
+      if(res) sendResponse(res, 400, false, message)
+      if(socket) socket.emit('payForRide', { success: false, message})
+      return
+    }
+    if(getRide?.passengerId !== passengerId){
+      const message = 'not allowed to edit this ride'
+      if(res) sendResponse(res, 400, false, message)
+      if(socket) socket.emit('payForRide', { success: false, message})
+      return
+    }
+    const driverId = getRide.driverId
+    const getPassenger = await PassengerModel.findOne({ passengerId })
+    const getDriver = await DriverModel.findOne({ driverId })
+    const getDriverLocation = await DriverLocationModel.findOne({ driverId })
+
+    //RIDE DETAILS TO DRIVER
+    const rideDetails = {
+      from: getRide?.from,
+      fromCoordinates: getRide?.fromCoordinates,
+      to: getRide?.to,
+      pickupPoint: getRide?.pickupPoint,
+      kmDistance: getRide?.kmDistance,
+      charge: getRide?.charge,
+      status: 'Active',
+      noOffPassengers: getRide?.passengers?.length,
+      rideType: getRide?.rideType,
+      nameOfPassenger: `${getPassenger?.firstName} ${getPassenger?.lastName}`,
+      nameOfDriver: `${getDriver?.firstName} ${getDriver?.lastName}`
+    }
+
+    //MAKE PAYMENT
+    if(paymentType === 'card' || paymentType === 'direct'){
+      const getCardDetails = await CardDetailModel.findOne({passengerId})
+      if(!getCardDetails){
+        const message = 'Bank details not found'
+        if(res) sendResponse(res, 404, false, message)
+        if(socket) socket.emit('payForRide', { success: false, message})
+        return
+      }
+      const card = getCardDetails.cards.find(card => (card._id).toString() === cardId)
+      if(!card){
+        const message = 'Card details not found'
+        if(res) sendResponse(res, 404, false, message)
+        if(socket) socket.emit('payForRide', { success: false, message})
+        return
+      }
+      //initaite a stripe payment
+      
+      try {
+        // Split the expiryDate
+        const [exp_month, exp_year] = cardDetails && cardDetails?.expiryDate ? expiryDate?.split("/") : card?.expiryDate?.split("/");
+        let decryptedCardNumber
+        let decryptedCvvNumber
+        if(card){
+          decryptedCardNumber = decrypt(card.cardNumber);
+          decryptedCvvNumber = decrypt(card.cvv);
+        }
+        console.log('CARD', card, decryptedCardNumber, decryptedCvvNumber)
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: Number(getRide?.charge) * 100,
+          currency: 'usd',
+          payment_method_data: {
+            type: 'card',
+            card: {
+              number: cardDetails?.cardNumber || decryptedCardNumber,
+              exp_month: exp_month,
+              exp_year: `20${exp_year}`,
+              cvc: cardDetails?.cvv || decryptedCvvNumber
+            }
+          },
+          confirm: true,
+          payment_method_types: ['card'],
+          automatic_payment_methods: {
+            enabled: false, // Disable automatic payment methods
+          },
+        })
+        console.log('paymentIntent', paymentIntent)
+        
+        //on success send res to
+        getRide.status = 'Active'
+        getRide.paid = true
+        getRide.paymentMethod = 'Saved Card'
+        await getRide.save()
+
+        //new payment transaction
+        const newPayment = await RideTransactionModel.create({
+          rideId: getRide.rideId,
+          driverId: getRide.driverId,
+          amount: getRide.charge,
+          payableAmount: Number(0.7 * Number(getRide.charge)),
+          status: 'Successful'
+        })
+  
+        //inform driver ride ride has bee activated
+        const driverSocketId = driverConnections.get(getRide?.driverId); // Fetch socket ID
+    
+        if (driverSocketId) {
+          // Emit to driver if socket ID is found
+          driverNamespace.to(driverSocketId).emit('newRideActivated', { 
+            success: true, 
+            message: `New ${getRide?.rideType === 'schedule' && 'Scheduled'} ride has been activated. ${getRide?.rideType === 'schedule' && `This ride ride has been scheduled to the pickup time.`}`,
+            ride: rideDetails,
+            driverLocation: getDriverLocation
+          });
+  
+          //update driver location for personal and deliver ride
+          if(getRide?.rideType !== 'schedule') getDriverLocation.status = 'busy'
+          if(getRide?.rideType !== 'schedule') getDriverLocation.isActive = false
+          await getDriverLocation.save()
+          if(getRide?.rideType !== 'schedule') getDriver.status = 'busy'
+          await getDriver.save()
+        } else {
+          console.log(`No active connection for driver ID: ${getRide?.driverId}`);
+        }
+  
+        //inform passenger ride has been activated payment complete
+        const message = 'Payment succesful ride has been activated'
+        socket.emit('payForRide', { 
+          success: true, 
+          message,
+          ride: rideDetails,
+          driverLocation: getDriverLocation
+        })
+      } catch (error) {
+        //on faliure send res to
+        console.log('UNABLE TO PROCESS PAYMENT FOR RIDE', error)
+        const message = 'Unable to process and make payment for ride'
+        if(res) sendResponse(res, 400, false, message)
+        if(socket) socket.emit('payForRide', { success: false, message})
+      }
+    }
+
+    if(paymentType === 'wallet'){
+      if(getPassenger.wallet < getRide.charge){
+        const message = 'Insufficient wallet balance to complete ride payment'
+        if(res) sendResponse(res, false, 400, message)
+        if(socket) socket.emit('payForRide', { success: false, message })
+        return
+      }
+      getPassenger.wallet -= getRide.charge
+      await getPassenger.save()
+
+      getRide.status = 'Active'
+      getRide.paid = true
+      getRide.paymentMethod = 'Wallet'
+      await getRide.save()
+
+      //new payment transaction
+      const newPayment = await RideTransactionModel.create({
+        rideId: getRide.rideId,
+        driverId: getRide.driverId,
+        amount: getRide.charge,
+        payableAmount: Number(0.7 * Number(getRide.charge)),
+        status: 'Successful'
+      })
+
+      //inform driver ride ride has bee activated
+      const driverSocketId = driverConnections.get(getRide?.driverId); // Fetch socket ID
+  
+      if (driverSocketId) {
+        // Emit to driver if socket ID is found
+        driverNamespace.to(driverSocketId).emit('newRideActivated', { 
+          success: true, 
+          message: `New ${getRide?.rideType === 'schedule' && 'Scheduled'} ride has been activated. ${getRide?.rideType === 'schedule' && `This ride ride has been scheduled to the pickup time.`}`,
+          ride: rideDetails,
+          driverLocation: getDriverLocation
+        });
+
+        //update driver location for personal and deliver ride
+        if(getRide?.rideType !== 'schedule') getDriverLocation.status = 'busy'
+        if(getRide?.rideType !== 'schedule') getDriverLocation.isActive = false
+        await getDriverLocation.save()
+        if(getRide?.rideType !== 'schedule') getDriver.status = 'busy'
+        await getDriver.save()
+      } else {
+        console.log(`No active connection for driver ID: ${getRide?.driverId}`);
+      }
+
+      //inform passenger ride has been activated payment complete
+      const message = 'Payment succesful ride has been activated'
+      socket.emit('payForRide', { 
+        success: true, 
+        message,
+        ride: rideDetails,
+        driverLocation: getDriverLocation
+      })
+      return
+    }
+
+  } catch (error) {
+    console.log('UNABLE TO PROCESS PAYMENT FOR RIDE')
+    const message = 'Unable to process payment for ride'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForRide', { success: false, message})
   }
 }
 
 //MAKE PAYMENT FOR EDIT RIDE WITH UPDATED PRICE
+export async function payForEdidtRide({ socket, data, res }) {
+  const { rideId, paymentType, cardDetails, cardId } = data
+  const { passengerId } = socket.user
+  if(!rideId){
+    const message = 'Ride Id is required'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+    return
+  }
+  if(!paymentType){
+    const message = 'Payment type is required'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+    return
+  }
+  if(!(['card', 'wallet', 'direct']).includes(paymentType)){
+    const message = 'Invalid payment type. ["card", "wallet", "direct"]'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+    return
+  }
+  if(paymentType === 'direct' && !cardDetails){
+    const message = 'Card details is required for payment type'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+    return
+  }
+  if(paymentType === 'direct'){
+    const { cardHolderName, cardNumber, cvv, expiryDate, cardType } = cardDetails 
+    if(!cardHolderName || !cardNumber || !cvv || !expiryDate){
+      const message = `Provide all deatils of the card. ${!nameofCard && 'Name of Card'} ${!cardNumber && 'card number'} ${!cvv && 'cvv'} ${!expiryDate && 'Expiry Date'} is/are required`
+      if(res) sendResponse(res, 400, false, message)
+      if(socket) socket.emit('payForEdidtRide', { success: false, message})
+      return
+    }
+  }
+  if(paymentType === 'direct'){
+    const isValid = /^\d{2}\/\d{2}$/.test(expiryDate);
+    if (!isValid) {
+        const message = `Invalid expiry date format. Expected MM/YY.`
+        if(res) sendResponse(res, 400, false, message)
+        if(socket) socket.emit('payForEdidtRide', { success: false, message})
+        return
+    }
+  }
+  if(paymentType === 'card' && !cardId){
+    const message = 'Choosen Card id is required for payment type'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+    return
+  }
+
+  try {
+    const getRide = await RideModel.findOne({ rideId })
+    const getPendingRide = await PendingEditRideRequestModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'Ride with this Id does not exist'
+      if(res) sendResponse(res, 400, false, message)
+      if(socket) socket.emit('payForEdidtRide', { success: false, message})
+      return
+    }
+    if(getRide?.passengerId !== passengerId){
+      const message = 'not allowed to edit this ride'
+      if(res) sendResponse(res, 400, false, message)
+      if(socket) socket.emit('payForEdidtRide', { success: false, message})
+      return
+    }
+    const driverId = getRide.driverId
+    const getPassenger = await PassengerModel.findOne({ passengerId })
+    const getDriver = await DriverModel.findOne({ driverId })
+    const getDriverLocation = await DriverLocationModel.findOne({ driverId })
+
+    //RIDE DETAILS TO DRIVER
+    const rideDetails = {
+      from: getRide?.from,
+      fromCoordinates: getRide?.fromCoordinates,
+      to: getRide?.to,
+      pickupPoint: getRide?.pickupPoint,
+      kmDistance: getRide?.kmDistance,
+      charge: Number(getRide?.charge) + Number(getPendingRide?.price),
+      status: 'Active',
+      noOffPassengers: getRide?.passengers?.length,
+      rideType: getRide?.rideType,
+      nameOfPassenger: `${getPassenger?.firstName} ${getPassenger?.lastName}`,
+      nameOfDriver: `${getDriver?.firstName} ${getDriver?.lastName}`
+    }
+
+    //MAKE PAYMENT
+    if(paymentType === 'card' || paymentType === 'direct'){
+      const getCardDetails = await CardDetailModel.findOne({passengerId})
+      if(!getCardDetails){
+        const message = 'Card details not found'
+        if(res) sendResponse(res, 404, false, message)
+        if(socket) socket.emit('payForEdidtRide', { success: false, message})
+        return
+      }
+      const card = getCardDetails.cards.find(card => (card._id).toString() === cardId)
+      if(!card){
+        const message = 'Card details not found'
+        if(res) sendResponse(res, 404, false, message)
+        if(socket) socket.emit('payForEdidtRide', { success: false, message})
+        return
+      }
+      //initaite a stripe payment
+      
+      try {
+        // Split the expiryDate
+        const [exp_month, exp_year] = cardDetails && cardDetails?.expiryDate ? expiryDate?.split("/") : card?.expiryDate?.split("/");
+        let decryptedCardNumber
+        let decryptedCvvNumber
+        if(card){
+          decryptedCardNumber = decrypt(card.cardNumber);
+          decryptedCvvNumber = decrypt(card.cvv);
+        }
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: Number(getPendingRide?.price) * 100,
+          currency: 'usd',
+          payment_method_data: {
+            type: 'card',
+            card: {
+              number: cardDetails?.cardNumber || decryptedCardNumber,
+              exp_month: exp_month,
+              exp_year: `20${exp_year}`,
+              cvc: cardDetails?.cvv || decryptedCvvNumber
+            }
+          },
+          confirm: true
+        })
+        
+        //on success send res to
+        getRide.status = 'Active'
+        getRide.paid = true
+        getRide.charge += getPendingRide?.price
+        getRide.paymentMethod = 'Saved Card'
+        await getRide.save()
+
+        //new payment ride transaction
+        const newPayment = await RideTransactionModel.create({
+          rideId: getRide.rideId,
+          driverId: getRide.driverId,
+          amount: getPendingRide.price,
+          payableAmount: Number(0.7 * Number(getPendingRide.price)),
+          status: 'Successful'
+        })
+  
+        //inform driver ride ride has bee activated
+        const driverSocketId = driverConnections.get(getRide?.driverId); // Fetch socket ID
+    
+        if (driverSocketId) {
+          // Emit to driver if socket ID is found
+          driverNamespace.to(driverSocketId).emit('newRideActivated', { 
+            success: true, 
+            message: `New ${getRide?.rideType === 'schedule' && 'Scheduled'} ride has been activated. ${getRide?.rideType === 'schedule' && `This ride ride has been scheduled to the pickup time.`}`,
+            ride: rideDetails,
+            driverLocation: getDriverLocation
+          });
+  
+          //update driver location for personal and deliver ride
+          if(getRide?.rideType !== 'schedule') getDriverLocation.status = 'busy'
+          if(getRide?.rideType !== 'schedule') getDriverLocation.isActive = false
+          await getDriverLocation.save()
+          if(getRide?.rideType !== 'schedule') getDriver.status = 'busy'
+          await getDriver.save()
+        } else {
+          console.log(`No active connection for driver ID: ${getRide?.driverId}`);
+        }
+  
+        //inform passenger ride has been activated payment complete
+        const message = 'Payment succesful ride has been updated'
+        socket.emit('payForEdidtRide', { 
+          success: true, 
+          message,
+          ride: rideDetails,
+          driverLocation: getDriverLocation
+        })
+      } catch (error) {
+        //on faliure send res to
+        console.log('UNABLE TO PROCESS PAYMENT FOR RIDE TO BE UPDATED')
+        const message = 'Unable to process and make payment for ride to be updated'
+        if(res) sendResponse(res, 400, false, message)
+        if(socket) socket.emit('payForEdidtRide', { success: false, message})
+      }
+    }
+
+    if(paymentType === 'wallet'){
+      if(getPassenger.wallet < getRide.charge){
+        const message = 'Insufficient wallet balance to complete ride payment'
+        if(res) sendResponse(res, false, 400, message)
+        if(socket) socket.emit('payForEdidtRide', { success: false, message })
+        return
+      }
+      getPassenger.wallet -= getRide.charge
+      await getPassenger.save()
+
+      getRide.status = 'Active'
+      getRide.paid = true
+      getRide.charge += getPendingRide?.price
+      getRide.paymentMethod = 'Wallet'
+      await getRide.save()
+
+      //new payment transaction
+      const newPayment = await RideTransactionModel.create({
+        rideId: getRide.rideId,
+        driverId: getRide.driverId,
+        amount: getPendingRide.price,
+        payableAmount: Number(0.7 * Number(getPendingRide.price)),
+        status: 'Successful'
+      })
+
+      //inform driver ride ride has bee activated
+      const driverSocketId = driverConnections.get(getRide?.driverId); // Fetch socket ID
+  
+      if (driverSocketId) {
+        // Emit to driver if socket ID is found
+        driverNamespace.to(driverSocketId).emit('newRideActivated', { 
+          success: true, 
+          message: `New ${getRide?.rideType === 'schedule' && 'Scheduled'} ride has been activated. ${getRide?.rideType === 'schedule' && `This ride ride has been scheduled to the pickup time.`}`,
+          ride: rideDetails,
+          driverLocation: getDriverLocation
+        });
+
+        //update driver location for personal and deliver ride
+        if(getRide?.rideType !== 'schedule') getDriverLocation.status = 'busy'
+        if(getRide?.rideType !== 'schedule') getDriverLocation.isActive = false
+        await getDriverLocation.save()
+        if(getRide?.rideType !== 'schedule') getDriver.status = 'busy'
+        await getDriver.save()
+      } else {
+        console.log(`No active connection for driver ID: ${getRide?.driverId}`);
+      }
+
+      //inform passenger ride has been activated payment complete
+      const message = 'Payment succesful ride has been updated'
+      socket.emit('payForEdidtRide', { 
+        success: true, 
+        message,
+        ride: rideDetails,
+        driverLocation: getDriverLocation
+      })
+      return
+    }
+
+  } catch (error) {
+    console.log('UNABLE TO PROCESS PAYMENT FOR RIDE TO BE UPDATED')
+    const message = 'Unable to process payment for ride to be updated'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+  }
+}
+
+//HANDLE SCHEDULED RIDE
+export function scheduleRideAlerts() {
+  // Run every 60 seconds
+  cron.schedule('* * * * *', async () => {
+    try {
+      // Get current date and time
+      const currentDate = moment().format('YYYY-MM-DD');
+      const currentTime = moment().format('HH:mm');
+
+      // Find all rides with rideType: 'schedule' or scheduleRide: true, whose scheduleDate and scheduleTime match the current time
+      const rides = await RideModel.find({
+        rideType: 'schedule',
+        scheduleRide: true,
+        scheduleDate: currentDate,
+        scheduleTime: currentTime,
+        status: 'Pending', // Ensure only rides not yet activated are considered
+      });
+
+      if (rides.length === 0) {
+        console.log('No scheduled rides at this time.');
+        return;
+      }
+
+      for (const ride of rides) {
+        const { driverId, passengerId } = ride;
+
+        // Fetch driver location, passenger, and driver details
+        const getDriverLocation = await DriverLocationModel.findOne({ driverId });
+        const getPassenger = await PassengerModel.findOne({ passengerId });
+        const getDriver = await DriverModel.findOne({ driverId });
+
+        if (!getPassenger || !getDriver) {
+          console.log(`Passenger or Driver not found for Ride ID: ${ride.rideId}`);
+          continue;
+        }
+
+        // Prepare ride details
+        const rideDetails = {
+          from: ride.from,
+          fromCoordinates: ride.fromCoordinates,
+          to: ride.to,
+          pickupPoint: ride.pickupPoint,
+          kmDistance: ride.kmDistance,
+          charge: ride.charge,
+          status: 'Active',
+          noOffPassengers: ride.passengers?.length || 1,
+          rideType: ride.rideType,
+          nameOfPassenger: `${getPassenger.firstName} ${getPassenger.lastName}`,
+          nameOfDriver: `${getDriver.firstName} ${getDriver.lastName}`,
+        };
+
+        // Driver socket notification
+        const driverSocketId = driverConnections.get(driverId);
+        if (driverSocketId) {
+          driverNamespace.to(driverSocketId).emit('newRideActivated', {
+            success: true,
+            message: `Schedule Ride is now active. Head over to the pickup location to start the ride.`,
+            ride: rideDetails,
+            driverLocation: getDriverLocation,
+          });
+        } else {
+          console.log(`No active connection for Driver ID: ${driverId}`);
+        }
+
+        // Passenger socket notification
+        const passengerSocketId = passengerConnections.get(passengerId);
+        if (passengerSocketId) {
+          passengerNamespace.to(passengerSocketId).emit('payForRide', {
+            success: true,
+            message: `Schedule Ride is now active. The driver has been notified to come to the pickup location.`,
+            ride: rideDetails,
+            driverLocation: getDriverLocation,
+          });
+        } else {
+          console.log(`No active connection for Passenger ID: ${passengerId}`);
+        }
+
+        // Update ride status to "Active"
+        ride.status = 'Active';
+        await ride.save();
+      }
+    } catch (error) {
+      console.error('Error processing scheduled rides:', error);
+    }
+  });
+}
 
 //SHARE RIDE WITH FRIENDS
 export async function shareRideWithFriends({ data, socket, res}) {
@@ -611,6 +1214,8 @@ export async function shareRideWithFriends({ data, socket, res}) {
       }
     });
 
+    getRide.rideType = 'group'
+    await getRide.save()
     const message = `${foundFriends?.length} of your loveds ones have been added to the ride`
     if(res) sendResponse(res, 200, true, message)
     if(socket) socket.emit('shareRideWithFriends', { success: true, message })
