@@ -63,7 +63,7 @@ const welcomeEmailContent = `
         <br />
         <br />
 
-        <button sty></button>
+        <button style=""></button>
 
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
             Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
