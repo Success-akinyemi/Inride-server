@@ -71,15 +71,128 @@ export async function getDriverRides(req, res) {
   }
 }
 
+//GET A RIDE FOR A DRIVER
 export async function getDriverRide(req, res){
   const { rideId } = req.params
   const { driverId } = req.user
-
+  if(!rideId){
+    const message = 'Ride Id is required'
+    sendResponse(res, 400, false, message)
+    return
+  }
   try {
-    const getRide = Ride
+    const getRide = RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'Ride with this ID does not exist'
+      sendResponse(res, 404, false, message)
+      return
+    }
+    if(getRide.driverId !== driverId){
+      const message = 'Not Allowed'
+      sendResponse(res, 403, false, message)
+      return
+    }
+
+    sendResponse(res, 200, true, getRide)
   } catch (error) {
     console.log('UNABLE TO GET DRIVER RIDE. RIDE ID', rideId, error)
     sendResponse(res, 500, false, 'Unable to get driver ride detail')
+  }
+}
+
+// GET ALL RIDES OF A PASSENGER
+export async function getPassengerRides(req, res) {
+  const { limit = 10, page = 1, startDate, endDate, rideType } = req.query;
+  const { passengerId } = req.user;
+
+  try {
+    // Build the query object
+    const query = { passengerId };
+
+    // Handle date filtering
+    if (startDate && endDate) {
+      query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    } else if (startDate) {
+      query.createdAt = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      query.createdAt = { $lte: new Date(endDate) };
+    }
+
+    // Handle ride type filtering
+    if (rideType) {
+      query.rideType = rideType;
+    }
+
+    // Calculate the number of documents to skip
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Fetch rides from the database
+    const rides = await RideModel.find(query)
+      .sort({ createdAt: -1 }) // Sort by latest rides
+      .skip(skip) // Skip the documents for pagination
+      .limit(Number(limit)); // Limit the results for pagination
+
+    // Transform rides data
+    const transformedRides = rides.map((ride) => {
+      const {
+        fromCoordinates,
+        _id,
+        passengerId,
+        fromId,
+        to,
+        ...rest
+      } = ride._doc;
+
+      // Transform the `to` array to remove specific fields
+      const transformedTo = to.map(({ place }) => ({ place }));
+
+      return {
+        ...rest,
+        to: transformedTo,
+      };
+    });
+
+    // Get the total count of rides for pagination metadata
+    const totalRides = await RideModel.countDocuments(query);
+
+    return sendResponse(res, 200, true, 'Rides fetched successfully', {
+      rides: transformedRides,
+      totalRides,
+      totalPages: Math.ceil(totalRides / limit),
+      currentPage: Number(page),
+    });
+  } catch (error) {
+    console.error('UNABLE TO GET PASSENGER RIDES', error);
+    return sendResponse(res, 500, false, 'Unable to get rides');
+  }
+}
+
+//GET A RIDE FOR A PASSENGER
+export async function getPassengerRide(req, res){
+  const { rideId } = req.params
+  const { passengerId } = req.user
+  if(!rideId){
+    const message = 'Ride Id is required'
+    sendResponse(res, 400, false, message)
+    return
+  }
+  try {
+    const getRide = RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'Ride with this ID does not exist'
+      sendResponse(res, 404, false, message)
+      return
+    }
+    if(getRide.passengerId !== passengerId){
+      const message = 'Not Allowed'
+      sendResponse(res, 403, false, message)
+      return
+    }
+
+    sendResponse(res, 200, true, getRide)
+  } catch (error) {
+    console.log('UNABLE TO GET PASSENGER RIDE. RIDE ID', rideId, error)
+    sendResponse(res, 500, false, 'Unable to get passenger ride detail')
   }
 }
 
@@ -173,16 +286,14 @@ export async function afterRideFeedBack(req, res) {
       sendResponse(res, 404, false, 'No ride with this id found')
       return
     }
-    if(passengerId){
-      getRide.comment = comment
-      getRide.rating = rating
-      await getRide.save()
-    }
-
-    if(driverId){
-      getRide.drivercomment = comment
-      getRide.driverRating = rating
-      await getRide.save()
+    if (passengerId) {
+      getRide.comment = comment;
+      getRide.rating = rating;
+    } else if (driverId) {
+      getRide.drivercomment = comment;
+      getRide.driverRating = rating;
+    } else {
+      return sendResponse(res, 403, false, 'Unauthorized user');
     }
 
     sendResponse(res, 200, true, 'Thank you your feed back has been saved')

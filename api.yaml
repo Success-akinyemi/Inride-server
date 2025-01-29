@@ -74,6 +74,34 @@ paths:
         500:
           description: Server error
 
+  /appSettings/getFaqs:
+    get:
+      tags:
+        - General 
+      summary: Get a faq
+      description: This endpoint get the app faq.
+      responses:
+        201:
+          description: Succesful - Detail infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+  
+  /appSettings/getAbout:
+    get:
+      tags:
+        - General 
+      summary: Get about of app
+      description: This endpoint get the app about.
+      responses:
+        201:
+          description: Succesful - Detail infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+          
 #AUTH
 
   /api/auth/verifyOtp:
@@ -1115,7 +1143,54 @@ paths:
           description: User error
         500:
           description: Server error
-    
+
+  /rides/getPassengerRides:
+    get:
+      tags:
+        - Passenger 
+      summary: Get passenger Rides
+      description: This endpoint get a passenger rides. possible queries are - limit, page for pagination, startDate, endDate to get data based on date range, rideType to get data based on ride type such as ['personal', 'group', 'delivery', 'schedule']
+      parameters:
+        - name: body
+          in: query
+          schema:
+            type: string
+            required:
+              - limit
+              - page
+            properties:
+              limit:
+                type: string
+              page: 
+                type: string
+              startDate:
+                type: string
+              endDate: 
+                type: string
+              rideType: 
+                type: string
+      responses:
+        201:
+          description: Succesful - ride details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+        
+  /rides/getPassengerRide:
+    get:
+      tags:
+        - Passenger 
+      summary: Get passenger a Ride details
+      description: This endpoint get passenger a ride details
+      responses:
+        201:
+          description: Succesful - ride details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+                
 #DRIVER
 
   /driver/car/newCar:
@@ -1466,6 +1541,20 @@ paths:
         500:
           description: Server error
 
+  /rides/getDriverRide:
+    get:
+      tags:
+        - Driver 
+      summary: Get Driver a Ride details
+      description: This endpoint get driver a ride details
+      responses:
+        201:
+          description: Succesful - ride details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+        
   /rides/getLastSevenDays:
     get:
       tags:

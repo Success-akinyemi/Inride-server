@@ -371,7 +371,9 @@ export async function cancelRideRequest({ data, socket, res }) {
     //add to number of rejected ride to driver
     const getDriver = await DriverModel.findOne({ driverId })
     if (getDriver){
-      getDriver.cancelRides += 1
+      if(getDriver.cancelRides !== 0){
+        getDriver.cancelRides += 1
+      }
     }
 
     const message = 'Ride canceled';
@@ -472,7 +474,7 @@ export async function rideComplete({ socket, res }) {
   try {
     //fund driver acccount
     await DriverLocationModel.updateOne({ driverId }, { status: 'online', isActive: true });
-    await DriverModel.updateOne({ driverId }, { status: 'online' });
+    await DriverModel.updateOne({ driverId }, { status: 'online', totalRides: +1 });
     await RideModel.updateOne({ rideId }, { status: 'Complete' });
 
     const message = 'Ride completed, driver is now active for another ride';
