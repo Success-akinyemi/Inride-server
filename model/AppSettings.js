@@ -16,6 +16,10 @@ const AppSettingsSchema = new mongoose.Schema({
         type: Number,
         default: 30
     },
+    cancelationRidePercent: {
+        type: Number,
+        default: 5
+    }, 
     currency: {
         type: String,
         default: 'USD'

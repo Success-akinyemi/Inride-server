@@ -65,7 +65,7 @@ paths:
               comment: 
                 type: string
               rating:
-                type: string
+                type: number
       responses:
         200:
           description: Success
@@ -1438,7 +1438,7 @@ paths:
       tags:
         - Driver 
       summary: Get Driver Rides
-      description: This endpoint get a driver rides. possible queries are - limit, page for pagination, startDate, endDate to get data based on date range, rideType to get data based on ride type
+      description: This endpoint get a driver rides. possible queries are - limit, page for pagination, startDate, endDate to get data based on date range, rideType to get data based on ride type such as ['personal', 'group', 'delivery', 'schedule']
       parameters:
         - name: body
           in: query
@@ -1795,6 +1795,20 @@ paths:
          description: User error
        500:
          description: Server error
+
+  /drivers/passengerFoundDriver:
+   get:
+     tags:
+       - Booking
+     summary: Alert other drivers who also bidded for a price that passenger has already gotten driver for a ride socket.emit('passengerFoundDriver', serverResponse)
+     description: This emit endpoint alert other driver who have also bidded for a ride that passengre has gotten a driver
+     responses:
+       201:
+         description: Drivers locations
+       400:
+         description: User error
+       500:
+         description: Server error
         
   /passenger/payForRide:
     post:
@@ -1844,7 +1858,7 @@ paths:
         500:
           description: Server error
 
-  /newRideActivated:
+  /driver/newRideActivated:
    get:
      tags:
        - Booking
@@ -1944,7 +1958,7 @@ paths:
               - rideId
             properties:
               price:
-                type: string
+                type: number
               rideId:
                 type: string
       responses:
@@ -2041,3 +2055,46 @@ paths:
           description: User error. success - false
         500:
           description: Server error
+
+  /passenger/cancelRide:
+    post:
+      tags:
+        - Booking
+      summary: Socket connection cancel ride by passenger socket.on('cancelRide', data) socket.emit('cancelRide', serverResponse)
+      description: This endpoint/socket connection allows for passenger to cancel ride 
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - reason
+              - rideId
+            properties:
+              rideId:
+                type: string
+              reason:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+
+  /driver/passengerCancelRide:
+    get:
+      tags:
+        - Booking
+      summary: Alert driver when the ride has been Canceled by the passenger  socket.emit('passengerCancelRide', serverResponse) to drivers namespace
+      description: This emit endpoint alert driver when ride has been canceled by passenger
+      responses:
+        201:
+          description: Drivers
+        400:
+          description: User error
+        500:
+          description: Server error
+            

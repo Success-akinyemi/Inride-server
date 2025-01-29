@@ -522,6 +522,25 @@ export async function requestDriver({ data, socket, res }) {
       }
   
       driverNamespace.to(driverSocketId).emit('driverRequested', rideRequestData)
+
+      //alert other drivers that passenger has gotten a driver
+      const otherDrivers = getDriverPrice.prices.filter(
+        (price) => price.driverId !== driverId
+      );
+
+      const otherDriversData = otherDrivers.map(({ driverId }) => ({
+        driverId,
+        socketId: driverConnections.get(driverId),
+      }));
+
+      otherDriversData.forEach(({ socketId }) => {
+        if (socketId) {
+          driverNamespace.to(socketId).emit("passengerFoundDriver", {
+            success: true,
+            message: "The passenger has already chosen another driver.",
+          });
+        }
+      });
   
       const message = 'Driver Request and Booking Updated. Proceed to payment to start ride';
       if (res) return sendResponse(res, 200, true, message);
@@ -1353,3 +1372,97 @@ export async function editRide({ data, socket, res}) {
     return
   }
 }
+
+//CANCEL RIDE
+export async function cancelRide({ data, socket, res}) {
+  const { rideId, reason } = data
+  const { passengerId } = socket.user
+  if(!reason){
+    const message = 'Please provide a reason for canceling the ride'
+    if(res) sendResponse(res, 404, false, message)
+    if(socket) socket.emit('cancelRide', { success: false, message })
+    return
+  }
+  try {
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'Ride with this Id does not exist'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('cancelRide', { success: false, message })
+      return
+    }
+    if(getRide.status === 'In progress' || getRide.status === 'Complete' ){
+      const message = 'Cannot cancel ride in progress or completed ride'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('cancelRide', { success: false, message })
+      return
+    }
+
+    const getPassenger = await PassengerModel.findOne({ passengerId })
+    const appSettings = await AppSettingsModel.findOne()
+
+    const rideCreatedAt = new Date(getRide.createdAt);
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+    //check that the ride is not more than 5min old based on the createdAt of the getRide
+    if(rideCreatedAt < fiveMinutesAgo){
+      //deduct 5%
+      //cancel ride
+      //fund user 95%
+      //alert driver
+      //return response to passenger
+      const deductPercent = Number(appSettings?.cancelationRidePercent) /100
+      const serviceFee = getRide?.charge * deductPercent
+      const finalAmount = getRide.charge - serviceFee
+
+      getRide.status === 'Canceled'
+      getRide.cancelReason = reason
+      await getRide.save()
+
+      getPassenger += finalAmount
+      await getPassenger.save()
+
+      //alreat driver
+      const driverId = getRide.driverId
+      const driverSocketId = driverConnections.get(driverId)
+      if(driverSocketId){
+        const messsage = 'Passenger has canceled the Ride with you'
+        driverNamespace.to(driverSocketId).emit('passengerCancelRide', messsage)
+      }
+      
+      const message = `Your Ride has been Canceled and ${appSettings?.cancelationRidePercent}% has been deducted as cacelation fee. Your wallet has been funded with the balance`
+      if(res) sendResponse(res, 200, true, message)
+      if(socket) socket.emit('cancelRide', { success: true, message })
+      return
+
+    } else {
+      getRide.status === 'Canceled'
+      getRide.cancelReason = reason
+      await getRide.save()
+
+      getPassenger.wallet += getRide.charge
+      await getPassenger.save()
+
+      //alreat driver
+      const driverId = getRide.driverId
+      const driverSocketId = driverConnections.get(driverId)
+      if(driverSocketId){
+        const messsage = 'Passenger has canceled the Ride with you'
+        driverNamespace.to(driverSocketId).emit('passengerCancelRide', messsage)
+      }
+
+      const message = 'Your Ride has been Canceled. Your wallet has been funded with the balance'
+      if(res) sendResponse(res, 200, true, message)
+      if(socket) socket.emit('cancelRide', { success: true, message })
+      return
+    }
+  
+    } catch (error) {
+      const message = 'Unable to cancel ride'
+      if(res) sendResponse(res, 404, false, message)
+        if(socket) socket.emit('cancelRide', { success: false, message })
+        return 
+    }
+}
+
+//SAFTEY

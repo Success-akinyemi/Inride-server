@@ -71,6 +71,18 @@ export async function getDriverRides(req, res) {
   }
 }
 
+export async function getDriverRide(req, res){
+  const { rideId } = req.params
+  const { driverId } = req.user
+
+  try {
+    const getRide = Ride
+  } catch (error) {
+    console.log('UNABLE TO GET DRIVER RIDE. RIDE ID', rideId, error)
+    sendResponse(res, 500, false, 'Unable to get driver ride detail')
+  }
+}
+
 // GET THE LAST 7 DAYS RIDES
 export async function getLastSevenDays(req, res) {
   const { limit = 10, page = 1 } = req.query; // Default limit and page for pagination

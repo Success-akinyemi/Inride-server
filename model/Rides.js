@@ -96,6 +96,9 @@ const RideSchema = new mongoose.Schema({
         default: 'Initiated',
         enum: ['Pending', 'Initiated', 'Requested', 'Active', 'In progress', 'Complete', 'Canceled']
     },
+    cancelReason: {
+        type: String
+    },
     scheduleRide: {
         type: Boolean,
         default: false

@@ -2,11 +2,12 @@ import sendEmail from "./emailService.js";
 
 const logourl = "https://i.ibb.co/HtNmMC5/Group-625936.png";
 const twUrl = ""; // Add Twitter URL
-const twImg = ""; // Add Twitter Image
 const fbUrl = ""; // Add Facebook URL
-const fbImg = ""; // Add Facebook Image
 const igUrl = ""; // Add Instagram URL
-const igImg = ""; // Add Instagram Image
+
+const twImg = 'https://i.ibb.co/TrkW705/Vector.png'; //
+const fbImg = 'https://i.ibb.co/Qd51cS7/Vector.png'; //
+const igImg = 'https://i.ibb.co/BwXQBCr/Social-icon.png'; //
 
 const currentYear = new Date().getFullYear();
 
@@ -63,6 +64,21 @@ export async function sendWelcomeEmail({
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
             <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
+            <br />
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: center;">
+              <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="${twUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${twImg} style="width: 50px; height: auto;" />
+                </a>
+                <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${fbImg} style="width: 50px; height: auto;" />
+                </a>
+                <a href="${igUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${igImg} style="width: 50px; height: auto;" />
+                </a>
+              </div>
+            </div>
         </footer>
     </div>
   `;

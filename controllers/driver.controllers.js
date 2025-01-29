@@ -337,7 +337,7 @@ export async function acceptEditRideRquest({ data, socket, res }) {
   }
 }
 
-// CANCEL RIDE
+// CANCEL RIDE REQUEST
 export async function cancelRideRequest({ data, socket, res }) {
   const { rideId } = data
   const { driverId } = socket.user;
@@ -450,12 +450,15 @@ export async function rejectEditRideRquest({ data, socket, res }) {
 //not done start ride and ride complete
 //START RIDE
 export async function startRide({ data, socket, res}) {
+  const { rideId } = data
+  const { driverId } = socket.user
   try {
         /**
      * 
     await DriverLocationModel.updateOne({ driverId }, { status: 'busy' });
     await DriverModel.updateOne({ driverId }, { status: 'busy' });
-    await RideModel.updateOne({ rideId }, { status: 'Active' });
+    await RideModel.updateOne({ rideId }, { status: 'In progress' });
+    take ride to in progress
      */
   } catch {
 
@@ -463,7 +466,9 @@ export async function startRide({ data, socket, res}) {
 }
 
 // COMPLETE RIDE
-export async function rideComplete({ driverId, rideId, socket, res }) {
+export async function rideComplete({ socket, res }) {
+  const { driverId } = socket.user
+  const { rideId } = data
   try {
     //fund driver acccount
     await DriverLocationModel.updateOne({ driverId }, { status: 'online', isActive: true });

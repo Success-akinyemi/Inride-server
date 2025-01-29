@@ -1,3 +1,4 @@
+import { sendWelcomeEmail } from "../middlewares/mailTemplate.js.js";
 import twilioClient from "../middlewares/twilioConfig.js"
 import { generateOtp, generateUniqueCode, sendResponse } from "../middlewares/utils.js";
 import { matchFace, verifyDriverLicense } from "../middlewares/verificationService.js";
@@ -119,7 +120,7 @@ export async function completeDriverRegistration(req, res) {
         return sendResponse(res, 400, false, `Invalid image format for profile image. Accepted formats: jpeg, png`);
     }
 
-    if(!carDetails || carDetails?.length < 1){
+    if(!carDetails){
         return sendResponse(res, 400, false, 'Car Details is required')
     }
     const {registrationNumber, year, model, color, noOfSeats } = carDetails
@@ -214,6 +215,12 @@ export async function completeDriverRegistration(req, res) {
                 refreshToken: refreshToken
             })
         }
+
+        //send welcome email to user
+        sendWelcomeEmail({
+            email: driver.email,
+            name: driver.firstName
+        })
 
         // Set cookies
         res.cookie('inrideaccesstoken', accessToken, {
@@ -395,7 +402,7 @@ export async function completeNewDriverRegistration(req, res) {
         return sendResponse(res, 400, false, `Invalid image format for profile image. Accepted formats: jpeg, png`);
     }
 
-    if(!carDetails || carDetails?.length < 1){
+    if(!carDetails){
         return sendResponse(res, 400, false, 'Car Details is required')
     }
     const {registrationNumber, year, model, color, noOfSeats } = carDetails
@@ -488,6 +495,11 @@ export async function completeNewDriverRegistration(req, res) {
         })
 
         //const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
+        //send welcome email to user
+        sendWelcomeEmail({
+            email: newDriver.email,
+            name: newDriver.firstName
+        })
 
         // Generate Tokens
         const accessToken = newDriver.getAccessToken()

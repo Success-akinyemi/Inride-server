@@ -76,7 +76,7 @@ export const AuthenticateDriver = async (req, res, next) => {
             try {
                 const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
                 let user;
-                if (decoded.accountType === 'passenger') {
+                if (decoded.accountType === 'driver') {
                     user = await DriverModel.findOne({ driverId: decoded.id });
                 }
                 if (!user) {
