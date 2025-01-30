@@ -163,7 +163,7 @@ export async function verifyDriverLicense(frontFile, backFile) {
             "ISSUING STATE"
         ].filter(text => backText.data.text.includes(text)).length;
         
-        if (frontMatches >= 1 && backMatches >= 0) { 
+        if (frontMatches >= 0 && backMatches >= 0) { 
             return { success: true, photo: frontImageBuffer };
         }
         return { success: false };
