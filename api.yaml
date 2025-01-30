@@ -2262,3 +2262,59 @@ paths:
         500:
           description: Server error
      
+  /passenger/chatWithDriver:
+    post:
+      tags:
+        - Booking
+      summary: Socket connection for passenger to chat with driver. socket.on('chatWithDriver', data) socket.emit('chatWithDriver', serverResponse) under the passenger namespaces
+      description: This endpoint/socket connection allows a passenger to chat with a driver
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+              - message
+            properties:
+              rideId:
+                type: string
+              message:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+         
+  /driver/chatWithPassenger:
+    post:
+      tags:
+        - Booking
+      summary: Socket connection for driver to chat with passenger. socket.on('chatWithPassenger', data) socket.emit('chatWithPassenger', serverResponse) under the driver namespaces
+      description: This endpoint/socket connection allows a driver to chat with a passenger
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+              - message
+            properties:
+              rideId:
+                type: string
+              message:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+   

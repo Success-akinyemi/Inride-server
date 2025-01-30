@@ -187,11 +187,11 @@ export const AuthenticateUser = async (req, res, next) => {
             }
         } else if (accountId) {
             let user;
-            if (decoded?.accountType === 'passenger') {
-                user = await PassengerModel.findOne({ passengerId: accountId });
-            } else {
+            user = await PassengerModel.findOne({ passengerId: accountId });
+            if(!user){
                 user = await DriverModel.findOne({ driverId: accountId });
             }
+            
             const refreshTokenExist = await RefreshTokenModel.findOne({ accountId });
 
             if (user && refreshTokenExist) {

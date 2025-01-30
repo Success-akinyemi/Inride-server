@@ -16,6 +16,7 @@ import cron from 'node-cron';
 import moment from 'moment';
 import Stripe from 'stripe';
 import RideTransactionModel from "../model/RideTransactions.js";
+import RideChatModel from "../model/RideChats.js";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
@@ -1144,6 +1145,8 @@ export async function cancelRide({ data, socket, res}) {
   }
   try {
     const getRide = await RideModel.findOne({ rideId })
+    const getRideTransaction = await RideTransactionModel.findOne({ rideId })
+
     if(!getRide){
       const message = 'Ride with this Id does not exist'
       if(res) sendResponse(res, 404, false, message)
@@ -1181,9 +1184,9 @@ export async function cancelRide({ data, socket, res}) {
       getPassenger += finalAmount
       await getPassenger.save()
 
-      const getDriver = await DriverModel.findOne({ rideId })
-      driverId = getDriver?.driverId
-      const getDriverLocation = await DriverLocationModel.findOne({ driverId })
+      const getDriverId = getRide?.driverId
+      const getDriver = await DriverModel.findOne({ getDriverId })
+      const getDriverLocation = await DriverLocationModel.findOne({ getDriverId })
 
       //update driver
       getDriver.status = 'online'
@@ -1193,6 +1196,8 @@ export async function cancelRide({ data, socket, res}) {
       getDriverLocation.isActive = true
       await getDriverLocation.save()
       
+      getRideTransaction.status = 'Failed'
+      await getRideTransaction.save()
 
       //alreat driver
       const driverId = getRide.driverId
@@ -1222,7 +1227,9 @@ export async function cancelRide({ data, socket, res}) {
       getDriverLocation.status = 'online'
       getDriverLocation.isActive = true
       await getDriverLocation.save()
-            
+      
+      getRideTransaction.status = 'Failed'
+      await getRideTransaction.save()
 
       //alreat driver
       const driverId = getRide.driverId
@@ -1296,5 +1303,63 @@ export async function saftey({ data, res, socket }) {
     
   } catch (error) {
     
+  }
+}
+
+//CHAT WITH DRIVER
+export async function chatWithDriver({ socket, data, res}) {
+  const { rideId, message: passengerMessage } = data
+  try {
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'Ride does not exist'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket('chatWithDriver', { success: false, message })
+      return
+    }
+    if(driverId !== getRide.driverId){
+      const message = 'Not Allowed'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket('chatWithDriver', { success: false, message })
+      return
+    }
+    const getChats = await RideChatModel.findOne({ rideId })
+    if(!getChats){
+      const chatData = {
+        message: passengerMessage,
+        from: 'Driver',
+        senderId: driverId
+      }
+      const newChat = await RideChatModel.create({
+        rideId,
+        chats: [chatData]
+      })
+    } else {
+      const chatData = {
+        message: passengerMessage,
+        from: 'Driver',
+        senderId: driverId
+      }
+      getChats.chats.push(chatData)
+      await getChats.save()
+    }
+
+    //alert passenger
+    const passengerSocketId = passengerConnections.get(getRide.passengerId)
+    if(passengerSocketId){
+      const message = getChats.chats
+      passengerNamespace.to(passengerSocketId).emit('chatWithPassenger', { success: true, message })
+    } else {
+      console.log('PASSENGER SOCKET FOR CHATS NOT FOUND> PASSENGER NOT ONLINE')
+    }
+
+    const message = getChats.chats
+    if(res) sendResponse(res, 200, true, message)
+    if(socket) socket.emit('chatWithDriver', { success: false, message })
+
+  } catch (error) {
+    const message = 'Unable to send message to passenger'
+    if(res) sendResponse(res, 500, false, message)
+    if(socket) socket.emit('chatWithDriver', { success: false, message })
   }
 }

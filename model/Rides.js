@@ -99,6 +99,9 @@ const RideSchema = new mongoose.Schema({
     cancelReason: {
         type: String
     },
+    driverCancelReason: {
+        type: String
+    },
     scheduleRide: {
         type: Boolean,
         default: false

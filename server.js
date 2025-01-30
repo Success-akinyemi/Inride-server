@@ -107,6 +107,9 @@ driverNamespace.on('connection', (socket) => {
   socket.on('rejectEditRideRquest', (data) => driverController.rejectEditRideRquest({ data, socket }));  
   socket.on('startRide', ({ data }) => driverController.startRide({ data, socket }));
   socket.on('rideComplete', ({ data }) => driverController.rideComplete({ data, socket }));
+  socket.on('cancelRide', ({ data }) => driverController.cancelRide({ data, socket }));
+  socket.on('chatWithPassenger', ({ data }) => driverController.chatWithPassenger({ data, socket }));
+
 
   socket.on('disconnect', () => {
     console.log('Driver disconnected:', socket.id);
@@ -138,6 +141,8 @@ passengerNamespace.on('connection', (socket) => {
   socket.on('editRide', (data) => passengerController.editRide({ data, socket }));
   socket.on('cancelRide', (data) => passengerController.cancelRide({ data, socket }));
   socket.on('trackRide', (data) => passengerController.trackRide({ data, socket }));
+  socket.on('chatWithDriver', (data) => passengerController.chatWithDriver({ data, socket }));
+
 
   socket.on('disconnect', () => {
     console.log('Passenger disconnected:', socket.id);

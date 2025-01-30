@@ -6,7 +6,9 @@ import DriverLocationModel from "../model/DriverLocation.js";
 import driverPriceModel from "../model/DriverPrice.js";
 import driverAroundrideRegionModel from "../model/DriversAroundRideRegion.js";
 import PendingEditRideRequestModel from "../model/PendingEditRide.js";
+import RideChatModel from "../model/RideChats.js";
 import RideModel from "../model/Rides.js";
+import RideTransactionModel from "../model/RideTransactions.js";
 import { passengerConnections, passengerNamespace } from "../server.js";
 
 // UPDATE DRIVER LOCATION
@@ -458,7 +460,21 @@ export async function startRide({ data, socket, res}) {
      * 
         take ride to in progress
         */
-    await DriverLocationModel.updateOne({ driverId }, { status: 'busy' });
+    const getRide = await RideModel.findOne({ rideId })
+
+    if(!getRide){
+      const message = 'Ride with this Id does not exist'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('cancelRide', { success: false, message })
+      return
+    }
+    if(getRide.status !== 'Active' ){
+      const message = 'Cannot start ride as it is not Active'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('cancelRide', { success: false, message })
+      return
+    }
+    await DriverLocationModel.updateOne({ driverId }, { status: 'busy', isActive: false });
     await DriverModel.updateOne({ driverId }, { status: 'busy', activeRide: rideId });
     await RideModel.updateOne({ rideId }, { status: 'In progress' });
 
@@ -477,12 +493,40 @@ export async function rideComplete({ socket, res }) {
   const { driverId } = socket.user
   const { rideId } = data
   try {
-    //fund driver acccount
-    await DriverLocationModel.updateOne({ driverId }, { status: 'online', isActive: true });
-    await DriverModel.updateOne({ driverId }, { status: 'online', totalRides: +1 });
-    await RideModel.updateOne({ rideId }, { status: 'Complete' });
+    const getDriver = await DriverModel.findOne({ driverId })
+    const getRide = await RideModel.findOne({ rideId })
 
-    const message = 'Ride completed, driver is now active for another ride';
+    if(!getRide){
+      const message = 'Ride with this Id does not exist'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('cancelRide', { success: false, message })
+      return
+    }
+    if(getRide.status !== 'In progress' ){
+      const message = 'Cannot complete ride as it is not in progress'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('cancelRide', { success: false, message })
+      return
+    }
+
+    await DriverLocationModel.updateOne({ driverId }, { status: 'online', isActive: true });
+    await DriverModel.updateOne({ driverId }, { status: 'online', totalRides: +1, activeRide: '' });
+    await RideModel.updateOne({ rideId }, { status: 'Complete' });
+    //fund driver acccount
+    const getAppSetting = await AppSettingsModel.findOne()
+    if(getRide?.rideType === 'delivery'){
+      const amount = Number(Number(getAppSetting?.earningCommission) /100) * getRide?.charge
+      const finalAmount = Number(getRide?.charge) - amount
+      getDriver.earnings += finalAmount
+      await getDriver.save()
+    } else{
+      const amount = Number(Number(getAppSetting?.earningCommission) /100) * getRide?.charge
+      const finalAmount = Number(getRide?.charge) - amount
+      getDriver.earnings += finalAmount
+      await getDriver.save()
+    }
+
+    const message = 'Ride completed, earings updated driver is now active for another ride';
     if (res) return sendResponse(res, 200, true, message);
     if (socket) socket.emit('rideComplete', { success: true, message });
   } catch (error) {
@@ -493,3 +537,163 @@ export async function rideComplete({ socket, res }) {
   }
 }
 
+//CANCEL RIDE
+export async function cancelRide({ res, data, socket}) {
+  const { rideId, reason } = data
+  const { driverId } = socket.user
+
+  try {
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'Ride with this Id does not exist'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('cancelRide', { success: false, message })
+      return
+    }
+    if(getRide.status === 'In progress' || getRide.status === 'Complete' ){
+      const message = 'Cannot cancel ride in progress or completed ride'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('cancelRide', { success: false, message })
+      return
+    }
+
+    const getPassengerId = getRide.passengerId
+    const getPassenger = await PassengerModel.findOne({ getPassengerId })
+    const appSettings = await AppSettingsModel.findOne()
+    const getDriver = await DriverModel.findOne({ driverId })
+    const driverId = getDriver?.driverId
+    const getDriverLocation = await DriverLocationModel.findOne({ driverId })
+    const getRideTransaction =  await RideTransactionModel.findOne({ rideId })
+
+    if(getRide?.paid){
+      getRide.status === 'Canceled'
+      getRide.driverCancelReason = reason
+      await getRide.save()
+
+      getPassenger.wallet += getRide.charge
+      await getPassenger.save()
+
+      //update driver
+      getDriver.status = 'online'
+      getDriver.activeRide = ''
+      getDriver.cancelRides += 1
+      await getDriver.save()
+      getDriverLocation.status = 'online'
+      getDriverLocation.isActive = true
+      await getDriverLocation.save()
+      
+      getRideTransaction.status = 'Failed'
+      await getRideTransaction.save()
+
+      //aleart passenger
+      const passengerSocketId = passengerConnections.get(getRide?.passengerId)
+      if(passengerSocketId){
+        passengerNamespace.to(passengerSocketId).emit('driverCancelRide', {
+          success: false,
+          message: `Driver has cancel the ride and you wallet refunded`
+        })
+      } else{
+        console.log('Passenger Active connection not found')
+      }
+
+      const message = 'Ride has been canceled'
+      if(res) sendResponse( res, 200, true, message)
+      if(socket) socket.emit('cancelRide', { success: true, message })
+        
+      return
+    } else {
+      getRide.status === 'Canceled'
+      getRide.driverCancelReason = reason
+      await getRide.save()
+      
+      //update driver
+      getDriver.status = 'online'
+      getDriver.activeRide = ''
+      getDriver.cancelRides += 1
+      await getDriver.save()
+      getDriverLocation.status = 'online'
+      getDriverLocation.isActive = true
+      await getDriverLocation.save()
+      
+      //aleart passenger
+      const passengerSocketId = passengerConnections.get(getRide?.passengerId)
+      if(passengerSocketId){
+        passengerNamespace.to(passengerSocketId).emit('driverCancelRide', {
+          success: false,
+          message: `Driver has cancel the ride and you wallet refunded`
+        })
+      } else{
+        console.log('Passenger Active connection not found')
+      }
+
+      const message = 'Ride has been canceled'
+      if(res) sendResponse( res, 200, true, message)
+      if(socket) socket.emit('cancelRide', { success: true, message })
+      return  
+    }
+
+  } catch (error) {
+    const message = 'Unable to get ride'
+    if(res) sendResponse( res, 500, false, message)
+    if(socket) socket.emit('cancelRide', { success: false, message })
+  }
+}
+
+//CHAT WITH PASSNEGER
+export async function chatWithPassenger({ socket, data, res}) {
+  const { rideId, message: driverMessage } = data
+  const { driverId } = socket.user
+  try {
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'Ride does not exist'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket('chatWithPassenger', { success: false, message })
+      return
+    }
+    if(driverId !== getRide.driverId){
+      const message = 'Not Allowed'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket('chatWithPassenger', { success: false, message })
+      return
+    }
+    const getChats = await RideChatModel.findOne({ rideId })
+    if(!getChats){
+      const chatData = {
+        message: driverMessage,
+        from: 'Driver',
+        senderId: driverId
+      }
+      const newChat = await RideChatModel.create({
+        rideId,
+        chats: [chatData]
+      })
+    } else {
+      const chatData = {
+        message: driverMessage,
+        from: 'Driver',
+        senderId: driverId
+      }
+      getChats.chats.push(chatData)
+      await getChats.save()
+    }
+
+    //alert passenger
+    const passengerSocketId = passengerConnections.get(getRide.passengerId)
+    if(passengerSocketId){
+      const message = getChats.chats
+      passengerNamespace.to(passengerSocketId).emit('chatWithDriver', { success: true, message })
+    } else {
+      console.log('PASSENGER SOCKET FOR CHATS NOT FOUND> PASSENGER NOT ONLINE')
+    }
+
+    const message = getChats.chats
+    if(res) sendResponse(res, 200, true, message)
+    if(socket) socket.emit('chatWithPassenger', { success: false, message })
+
+  } catch (error) {
+    const message = 'Unable to send message to passenger'
+    if(res) sendResponse(res, 500, false, message)
+    if(socket) socket.emit('chatWithPassenger', { success: false, message })
+  }
+}
