@@ -8,6 +8,7 @@ import DriverModel from "../model/Driver.js";
 export const AuthenticatePassenger = async (req, res, next) => {
     const accessToken = req.cookies.inrideaccesstoken;
     const accountId = req.cookies.inrideaccessid;
+    console.log('PASSENGER','accessToken', accessToken, 'accountId', accountId)
 
     try {
         if (accessToken) {
@@ -70,7 +71,7 @@ export const AuthenticatePassenger = async (req, res, next) => {
 export const AuthenticateDriver = async (req, res, next) => {
     const accessToken = req.cookies.inrideaccesstoken;
     const accountId = req.cookies.inrideaccessid;
-
+    console.log('DRIVER','accessToken', accessToken, 'accountId', accountId)
     try {
         if (accessToken) {
             try {

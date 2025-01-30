@@ -1249,10 +1249,41 @@ export async function cancelRide({ data, socket, res}) {
 //TRACK RIDE
 export async function trackRide({ data, res, socket }) {
   const { rideId } = data
+  if(!rideId){
+    const message = 'Ride Id is required'
+    if(res) sendResponse(res, 400, false, message)
+    if(socket) socket.emit('trackRide', { success: false, message })
+    return
+  }
   try {
-    
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      const message = 'Ride does not exist'
+      if(res) sendResponse(res, 404, false, message)
+      if(socket) socket.emit('trackRide', { success: false, message })
+      return
+    }
+  const driverId = getRide?.driverId
+  if(!driverId){
+    const message = 'No driver associated with this ride yet'
+    if(res) sendResponse(res, 404, false, message)
+    if(socket) socket.emit('trackRide', { success: false, message })
+    return
+  }
+  const getDriverLocation = DriverLocationModel.findOne({ driverId })
+  if(!getDriverLocation){
+    const message = 'No Location found'
+    if(res) sendResponse(res, 404, false, message)
+    if(socket) socket.emit('trackRide', { success: false, message })
+    return
+  }
+
+  
   } catch (error) {
-    
+    console.log('UNABLE TO TRACK RIDE', error)
+    const message = 'Unable to track ride'
+    if(res) sendResponse(res, 500, false, message)
+    if(socket) socket.emit('trackRide', { success: false, message })
   }
 }
 
