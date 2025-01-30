@@ -104,7 +104,7 @@ export async function completeDriverRegistration(req, res) {
     
 
     const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg } = req.files;
-    console.log('COMPLETE DRIVER REG', req?.files)
+    console.log('COMPLETE RETURNING DRIVER REG', req?.files)
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
     if (!driverLincenseImgBack || !driverLincenseImgBack[0]) return sendResponse(res, 400, false, `Provide a valid photo of the back image of driver lincense`);
     if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
