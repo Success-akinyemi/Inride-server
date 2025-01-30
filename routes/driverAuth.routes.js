@@ -2,6 +2,7 @@ import express from 'express'
 import * as controllers from '../controllers/driverAuth.controllers.js'
 import { uploadImages } from '../middlewares/multer.js'
 const router = express.Router()
+import multer from "multer";
 
 // Custom error handler for Multer
 const multerErrorHandler = (err, req, res, next) => {

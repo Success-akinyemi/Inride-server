@@ -163,11 +163,10 @@ export const AuthenticateUser = async (req, res, next) => {
                 if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
                     if (accountId) {
                         let user;
-                        if (decoded?.accountType === 'passenger') {
-                            user = await PassengerModel.findOne({ passengerId: accountId });
-                        } else {
+                        user = await PassengerModel.findOne({ passengerId: accountId });
+                        if (!user) {
                             user = await DriverModel.findOne({ driverId: accountId });
-                        }
+                        } 
                         const refreshTokenExist = await RefreshTokenModel.findOne({ accountId });
 
                         if (user && refreshTokenExist) {
@@ -191,7 +190,7 @@ export const AuthenticateUser = async (req, res, next) => {
             if(!user){
                 user = await DriverModel.findOne({ driverId: accountId });
             }
-            
+
             const refreshTokenExist = await RefreshTokenModel.findOne({ accountId });
 
             if (user && refreshTokenExist) {
