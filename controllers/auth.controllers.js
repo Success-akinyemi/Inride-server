@@ -43,7 +43,7 @@ export async function verifyOtp(req, res) {
 
 //SIGNOUT
 export async function signout(req, res) {
-    const { accountId } = req.user
+    const { accountId } = req.user || {}
     try {
         const getRefreshTokenToken = await RefreshTokenModel.findOne({ accountId: accountId })
         const getDriver = await DriverModel.findOne({ driverId: getRefreshTokenToken?.accountId })

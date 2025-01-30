@@ -143,7 +143,7 @@ export const AuthenticateUser = async (req, res, next) => {
             try {
                 const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
                 let user;
-
+                const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: decoded.id })
                 if (decoded.accountType === 'passenger') {
                     user = await PassengerModel.findOne({ passengerId: decoded.id });
                 } else if (decoded.accountType === 'driver') {
@@ -153,11 +153,11 @@ export const AuthenticateUser = async (req, res, next) => {
                 if (!user) {
                     return sendResponse(res, 404, false, 'User not found');
                 }
-                if (!user.refreshToken) {
+                if (!refreshTokenExist) {
                     return sendResponse(res, 403, false, 'Unauthenticated');
                 }
 
-                req.user = { ...user.toObject(), accountType: decoded.accountType };
+                req.user = { ...user.toObject(), accountType: decoded.accountType, accountId };
                 return next();
             } catch (error) {
                 if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
@@ -178,7 +178,7 @@ export const AuthenticateUser = async (req, res, next) => {
                                 secure: true,
                                 maxAge: 15 * 60 * 1000, // 15 minutes
                             });
-                            req.user = { ...user.toObject(), accountType: decoded?.accountType };
+                            req.user = { ...user.toObject(), accountType: decoded?.accountType, accountId };
                             return next();
                         }
                     }
@@ -202,7 +202,7 @@ export const AuthenticateUser = async (req, res, next) => {
                     secure: true,
                     maxAge: 15 * 60 * 1000, // 15 minutes
                 });
-                req.user = { ...user.toObject(), accountType: decoded?.accountType };
+                req.user = { ...user.toObject(), accountType: decoded?.accountType, accountId };
                 return next();
             }
         }
