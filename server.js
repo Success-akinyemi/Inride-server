@@ -137,7 +137,6 @@ passengerNamespace.on('connection', (socket) => {
   socket.on('shareRideWithFriends', (data) => passengerController.shareRideWithFriends({ data, socket }));
   socket.on('editRide', (data) => passengerController.editRide({ data, socket }));
   socket.on('cancelRide', (data) => passengerController.cancelRide({ data, socket }));
-
   socket.on('trackRide', (data) => passengerController.trackRide({ data, socket }));
 
   socket.on('disconnect', () => {

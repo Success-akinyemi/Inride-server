@@ -15,13 +15,14 @@ export const AuthenticatePassenger = async (req, res, next) => {
             try {
                 const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
                 let user;
+                const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: decoded.id })
                 if (decoded.accountType === 'passenger') {
                     user = await PassengerModel.findOne({ passengerId: decoded.id });
                 }
                 if (!user) {
                     return sendResponse(res, 404, false, 'User not found');
                 }
-                if (!user.refreshToken) {
+                if (!refreshTokenExist) {
                     return sendResponse(res, 403, false, 'UnAuthenicated');
                 }
                 req.user = user;
@@ -77,13 +78,15 @@ export const AuthenticateDriver = async (req, res, next) => {
             try {
                 const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
                 let user;
+                console.log('decoded', decoded)
+                const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: decoded.id })
                 if (decoded.accountType === 'driver') {
                     user = await DriverModel.findOne({ driverId: decoded.id });
                 }
                 if (!user) {
                     return sendResponse(res, 404, false, 'User not found');
                 }
-                if (!user.refreshToken) {
+                if (!refreshTokenExist) {
                     return sendResponse(res, 403, false, 'UnAuthenicated');
                 }
                 req.user = user;

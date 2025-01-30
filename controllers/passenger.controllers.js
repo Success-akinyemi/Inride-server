@@ -1278,7 +1278,9 @@ export async function trackRide({ data, res, socket }) {
     return
   }
 
-  
+  //send driver location
+  socket.emit('trackRide', { success: true, getDriverLocation })
+  return
   } catch (error) {
     console.log('UNABLE TO TRACK RIDE', error)
     const message = 'Unable to track ride'
