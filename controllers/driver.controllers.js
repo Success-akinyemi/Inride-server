@@ -449,7 +449,6 @@ export async function rejectEditRideRquest({ data, socket, res }) {
   }
 }
 
-//not done start ride and ride complete
 //START RIDE
 export async function startRide({ data, socket, res}) {
   const { rideId } = data
@@ -457,13 +456,19 @@ export async function startRide({ data, socket, res}) {
   try {
         /**
      * 
+        take ride to in progress
+        */
     await DriverLocationModel.updateOne({ driverId }, { status: 'busy' });
-    await DriverModel.updateOne({ driverId }, { status: 'busy' });
+    await DriverModel.updateOne({ driverId }, { status: 'busy', activeRide: rideId });
     await RideModel.updateOne({ rideId }, { status: 'In progress' });
-    take ride to in progress
-     */
-  } catch {
 
+    const message = 'Ride has started'
+    if(res) sendResponse(res, 200, true, message)
+    if(socket) socket.emit('startRide', { success: true, message })
+  } catch {
+    const message ='Unable to Start Ride'
+    if(res) sendResponse(res, 500, false, message)
+    if(socket) socket.emit('startRide', { success: false, message })
   }
 }
 
@@ -479,12 +484,12 @@ export async function rideComplete({ socket, res }) {
 
     const message = 'Ride completed, driver is now active for another ride';
     if (res) return sendResponse(res, 200, true, message);
-    if (socket) socket.emit('rideStatusUpdated', { success: true, message });
+    if (socket) socket.emit('rideComplete', { success: true, message });
   } catch (error) {
     console.log('ERROR COMPLETING RIDE', error);
     const message = 'Error completing ride';
     if (res) return sendResponse(res, 500, false, message);
-    if (socket) socket.emit('rideStatusUpdated', { success: false, message });
+    if (socket) socket.emit('rideComplete', { success: false, message });
   }
 }
 

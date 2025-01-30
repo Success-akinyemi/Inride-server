@@ -584,36 +584,6 @@ export async function payForRide({ socket, data, res }) {
     if(socket) socket.emit('payForRide', { success: false, message})
     return
   }
-  if(paymentType === 'direct' && !cardDetails){
-    const message = 'Card details is required for payment type'
-    if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForRide', { success: false, message})
-    return
-  }
-  if(paymentType === 'direct'){
-    const { cardHolderName, cardNumber, cvv, expiryDate, cardType } = cardDetails 
-    if(!cardHolderName || !cardNumber || !cvv || !expiryDate){
-      const message = `Provide all deatils of the card. ${!nameofCard && 'Name of Card'} ${!cardNumber && 'card number'} ${!cvv && 'cvv'} ${!expiryDate && 'Expiry Date'} is/are required`
-      if(res) sendResponse(res, 400, false, message)
-      if(socket) socket.emit('payForRide', { success: false, message})
-      return
-    }
-  }
-  if(paymentType === 'direct'){
-    const isValid = /^\d{2}\/\d{2}$/.test(expiryDate);
-    if (!isValid) {
-        const message = `Invalid expiry date format. Expected MM/YY.`
-        if(res) sendResponse(res, 400, false, message)
-        if(socket) socket.emit('payForRide', { success: false, message})
-        return
-    }
-  }
-  if(paymentType === 'card' && !cardId){
-    const message = 'Choosen Card id is required for payment type'
-    if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForRide', { success: false, message})
-    return
-  }
 
   try {
     const getRide = await RideModel.findOne({ rideId })
@@ -651,104 +621,7 @@ export async function payForRide({ socket, data, res }) {
 
     //MAKE PAYMENT
     if(paymentType === 'card' || paymentType === 'direct'){
-      const getCardDetails = await CardDetailModel.findOne({passengerId})
-      if(!getCardDetails){
-        const message = 'Bank details not found'
-        if(res) sendResponse(res, 404, false, message)
-        if(socket) socket.emit('payForRide', { success: false, message})
-        return
-      }
-      const card = getCardDetails.cards.find(card => (card._id).toString() === cardId)
-      if(!card){
-        const message = 'Card details not found'
-        if(res) sendResponse(res, 404, false, message)
-        if(socket) socket.emit('payForRide', { success: false, message})
-        return
-      }
-      //initaite a stripe payment
-      
-      try {
-        // Split the expiryDate
-        const [exp_month, exp_year] = cardDetails && cardDetails?.expiryDate ? expiryDate?.split("/") : card?.expiryDate?.split("/");
-        let decryptedCardNumber
-        let decryptedCvvNumber
-        if(card){
-          decryptedCardNumber = decrypt(card.cardNumber);
-          decryptedCvvNumber = decrypt(card.cvv);
-        }
-        console.log('CARD', card, decryptedCardNumber, decryptedCvvNumber)
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: Number(getRide?.charge) * 100,
-          currency: 'usd',
-          payment_method_data: {
-            type: 'card',
-            card: {
-              number: cardDetails?.cardNumber || decryptedCardNumber,
-              exp_month: exp_month,
-              exp_year: `20${exp_year}`,
-              cvc: cardDetails?.cvv || decryptedCvvNumber
-            }
-          },
-          confirm: true,
-          payment_method_types: ['card'],
-          automatic_payment_methods: {
-            enabled: false, // Disable automatic payment methods
-          },
-        })
-        console.log('paymentIntent', paymentIntent)
-        
-        //on success send res to
-        getRide.status = 'Active'
-        getRide.paid = true
-        getRide.paymentMethod = 'Saved Card'
-        await getRide.save()
 
-        //new payment transaction
-        const newPayment = await RideTransactionModel.create({
-          rideId: getRide.rideId,
-          driverId: getRide.driverId,
-          amount: getRide.charge,
-          payableAmount: Number(0.7 * Number(getRide.charge)),
-          status: 'Successful'
-        })
-  
-        //inform driver ride ride has bee activated
-        const driverSocketId = driverConnections.get(getRide?.driverId); // Fetch socket ID
-    
-        if (driverSocketId) {
-          // Emit to driver if socket ID is found
-          driverNamespace.to(driverSocketId).emit('newRideActivated', { 
-            success: true, 
-            message: `New ${getRide?.rideType === 'schedule' && 'Scheduled'} ride has been activated. ${getRide?.rideType === 'schedule' && `This ride ride has been scheduled to the pickup time.`}`,
-            ride: rideDetails,
-            driverLocation: getDriverLocation
-          });
-  
-          //update driver location for personal and deliver ride
-          if(getRide?.rideType !== 'schedule') getDriverLocation.status = 'busy'
-          if(getRide?.rideType !== 'schedule') getDriverLocation.isActive = false
-          await getDriverLocation.save()
-          if(getRide?.rideType !== 'schedule') getDriver.status = 'busy'
-          await getDriver.save()
-        } else {
-          console.log(`No active connection for driver ID: ${getRide?.driverId}`);
-        }
-  
-        //inform passenger ride has been activated payment complete
-        const message = 'Payment succesful ride has been activated'
-        socket.emit('payForRide', { 
-          success: true, 
-          message,
-          ride: rideDetails,
-          driverLocation: getDriverLocation
-        })
-      } catch (error) {
-        //on faliure send res to
-        console.log('UNABLE TO PROCESS PAYMENT FOR RIDE', error)
-        const message = 'Unable to process and make payment for ride'
-        if(res) sendResponse(res, 400, false, message)
-        if(socket) socket.emit('payForRide', { success: false, message})
-      }
     }
 
     if(paymentType === 'wallet'){
@@ -765,6 +638,14 @@ export async function payForRide({ socket, data, res }) {
       getRide.paid = true
       getRide.paymentMethod = 'Wallet'
       await getRide.save()
+
+      //update driver
+      getDriver.status = 'busy'
+      getDriver.activeRide = rideId
+      await getDriver.save()
+      getDriverLocation.status = 'busy'
+      getDriverLocation.isActive = false
+      await getDriverLocation.save()
 
       //new payment transaction
       const newPayment = await RideTransactionModel.create({
@@ -817,55 +698,25 @@ export async function payForRide({ socket, data, res }) {
 }
 
 //MAKE PAYMENT FOR EDIT RIDE WITH UPDATED PRICE
-export async function payForEdidtRide({ socket, data, res }) {
+export async function payForEditRide({ socket, data, res }) {
   const { rideId, paymentType, cardDetails, cardId } = data
   const { passengerId } = socket.user
   if(!rideId){
     const message = 'Ride Id is required'
     if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+    if(socket) socket.emit('payForEditRide', { success: false, message})
     return
   }
   if(!paymentType){
     const message = 'Payment type is required'
     if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+    if(socket) socket.emit('payForEditRide', { success: false, message})
     return
   }
   if(!(['card', 'wallet', 'direct']).includes(paymentType)){
     const message = 'Invalid payment type. ["card", "wallet", "direct"]'
     if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForEdidtRide', { success: false, message})
-    return
-  }
-  if(paymentType === 'direct' && !cardDetails){
-    const message = 'Card details is required for payment type'
-    if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForEdidtRide', { success: false, message})
-    return
-  }
-  if(paymentType === 'direct'){
-    const { cardHolderName, cardNumber, cvv, expiryDate, cardType } = cardDetails 
-    if(!cardHolderName || !cardNumber || !cvv || !expiryDate){
-      const message = `Provide all deatils of the card. ${!nameofCard && 'Name of Card'} ${!cardNumber && 'card number'} ${!cvv && 'cvv'} ${!expiryDate && 'Expiry Date'} is/are required`
-      if(res) sendResponse(res, 400, false, message)
-      if(socket) socket.emit('payForEdidtRide', { success: false, message})
-      return
-    }
-  }
-  if(paymentType === 'direct'){
-    const isValid = /^\d{2}\/\d{2}$/.test(expiryDate);
-    if (!isValid) {
-        const message = `Invalid expiry date format. Expected MM/YY.`
-        if(res) sendResponse(res, 400, false, message)
-        if(socket) socket.emit('payForEdidtRide', { success: false, message})
-        return
-    }
-  }
-  if(paymentType === 'card' && !cardId){
-    const message = 'Choosen Card id is required for payment type'
-    if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+    if(socket) socket.emit('payForEditRide', { success: false, message})
     return
   }
 
@@ -875,13 +726,13 @@ export async function payForEdidtRide({ socket, data, res }) {
     if(!getRide){
       const message = 'Ride with this Id does not exist'
       if(res) sendResponse(res, 400, false, message)
-      if(socket) socket.emit('payForEdidtRide', { success: false, message})
+      if(socket) socket.emit('payForEditRide', { success: false, message})
       return
     }
     if(getRide?.passengerId !== passengerId){
       const message = 'not allowed to edit this ride'
       if(res) sendResponse(res, 400, false, message)
-      if(socket) socket.emit('payForEdidtRide', { success: false, message})
+      if(socket) socket.emit('payForEditRide', { success: false, message})
       return
     }
     const driverId = getRide.driverId
@@ -906,106 +757,14 @@ export async function payForEdidtRide({ socket, data, res }) {
 
     //MAKE PAYMENT
     if(paymentType === 'card' || paymentType === 'direct'){
-      const getCardDetails = await CardDetailModel.findOne({passengerId})
-      if(!getCardDetails){
-        const message = 'Card details not found'
-        if(res) sendResponse(res, 404, false, message)
-        if(socket) socket.emit('payForEdidtRide', { success: false, message})
-        return
-      }
-      const card = getCardDetails.cards.find(card => (card._id).toString() === cardId)
-      if(!card){
-        const message = 'Card details not found'
-        if(res) sendResponse(res, 404, false, message)
-        if(socket) socket.emit('payForEdidtRide', { success: false, message})
-        return
-      }
-      //initaite a stripe payment
-      
-      try {
-        // Split the expiryDate
-        const [exp_month, exp_year] = cardDetails && cardDetails?.expiryDate ? expiryDate?.split("/") : card?.expiryDate?.split("/");
-        let decryptedCardNumber
-        let decryptedCvvNumber
-        if(card){
-          decryptedCardNumber = decrypt(card.cardNumber);
-          decryptedCvvNumber = decrypt(card.cvv);
-        }
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: Number(getPendingRide?.price) * 100,
-          currency: 'usd',
-          payment_method_data: {
-            type: 'card',
-            card: {
-              number: cardDetails?.cardNumber || decryptedCardNumber,
-              exp_month: exp_month,
-              exp_year: `20${exp_year}`,
-              cvc: cardDetails?.cvv || decryptedCvvNumber
-            }
-          },
-          confirm: true
-        })
-        
-        //on success send res to
-        getRide.status = 'Active'
-        getRide.paid = true
-        getRide.charge += getPendingRide?.price
-        getRide.paymentMethod = 'Saved Card'
-        await getRide.save()
 
-        //new payment ride transaction
-        const newPayment = await RideTransactionModel.create({
-          rideId: getRide.rideId,
-          driverId: getRide.driverId,
-          amount: getPendingRide.price,
-          payableAmount: Number(0.7 * Number(getPendingRide.price)),
-          status: 'Successful'
-        })
-  
-        //inform driver ride ride has bee activated
-        const driverSocketId = driverConnections.get(getRide?.driverId); // Fetch socket ID
-    
-        if (driverSocketId) {
-          // Emit to driver if socket ID is found
-          driverNamespace.to(driverSocketId).emit('newRideActivated', { 
-            success: true, 
-            message: `New ${getRide?.rideType === 'schedule' && 'Scheduled'} ride has been activated. ${getRide?.rideType === 'schedule' && `This ride ride has been scheduled to the pickup time.`}`,
-            ride: rideDetails,
-            driverLocation: getDriverLocation
-          });
-  
-          //update driver location for personal and deliver ride
-          if(getRide?.rideType !== 'schedule') getDriverLocation.status = 'busy'
-          if(getRide?.rideType !== 'schedule') getDriverLocation.isActive = false
-          await getDriverLocation.save()
-          if(getRide?.rideType !== 'schedule') getDriver.status = 'busy'
-          await getDriver.save()
-        } else {
-          console.log(`No active connection for driver ID: ${getRide?.driverId}`);
-        }
-  
-        //inform passenger ride has been activated payment complete
-        const message = 'Payment succesful ride has been updated'
-        socket.emit('payForEdidtRide', { 
-          success: true, 
-          message,
-          ride: rideDetails,
-          driverLocation: getDriverLocation
-        })
-      } catch (error) {
-        //on faliure send res to
-        console.log('UNABLE TO PROCESS PAYMENT FOR RIDE TO BE UPDATED')
-        const message = 'Unable to process and make payment for ride to be updated'
-        if(res) sendResponse(res, 400, false, message)
-        if(socket) socket.emit('payForEdidtRide', { success: false, message})
-      }
     }
 
     if(paymentType === 'wallet'){
       if(getPassenger.wallet < getRide.charge){
         const message = 'Insufficient wallet balance to complete ride payment'
         if(res) sendResponse(res, false, 400, message)
-        if(socket) socket.emit('payForEdidtRide', { success: false, message })
+        if(socket) socket.emit('payForEditRide', { success: false, message })
         return
       }
       getPassenger.wallet -= getRide.charge
@@ -1050,7 +809,7 @@ export async function payForEdidtRide({ socket, data, res }) {
 
       //inform passenger ride has been activated payment complete
       const message = 'Payment succesful ride has been updated'
-      socket.emit('payForEdidtRide', { 
+      socket.emit('payForEditRide', { 
         success: true, 
         message,
         ride: rideDetails,
@@ -1063,7 +822,7 @@ export async function payForEdidtRide({ socket, data, res }) {
     console.log('UNABLE TO PROCESS PAYMENT FOR RIDE TO BE UPDATED')
     const message = 'Unable to process payment for ride to be updated'
     if(res) sendResponse(res, 400, false, message)
-    if(socket) socket.emit('payForEdidtRide', { success: false, message})
+    if(socket) socket.emit('payForEditRide', { success: false, message})
   }
 }
 
@@ -1422,6 +1181,19 @@ export async function cancelRide({ data, socket, res}) {
       getPassenger += finalAmount
       await getPassenger.save()
 
+      const getDriver = await DriverModel.findOne({ rideId })
+      driverId = getDriver?.driverId
+      const getDriverLocation = await DriverLocationModel.findOne({ driverId })
+
+      //update driver
+      getDriver.status = 'online'
+      getDriver.activeRide = ''
+      await getDriver.save()
+      getDriverLocation.status = 'online'
+      getDriverLocation.isActive = true
+      await getDriverLocation.save()
+      
+
       //alreat driver
       const driverId = getRide.driverId
       const driverSocketId = driverConnections.get(driverId)
@@ -1442,6 +1214,15 @@ export async function cancelRide({ data, socket, res}) {
 
       getPassenger.wallet += getRide.charge
       await getPassenger.save()
+
+      //update driver
+      getDriver.status = 'online'
+      getDriver.activeRide = ''
+      await getDriver.save()
+      getDriverLocation.status = 'online'
+      getDriverLocation.isActive = true
+      await getDriverLocation.save()
+            
 
       //alreat driver
       const driverId = getRide.driverId
@@ -1465,4 +1246,22 @@ export async function cancelRide({ data, socket, res}) {
     }
 }
 
+//TRACK RIDE
+export async function trackRide({ data, res, socket }) {
+  const { rideId } = data
+  try {
+    
+  } catch (error) {
+    
+  }
+}
+
 //SAFTEY
+export async function saftey({ data, res, socket }) {
+  const { rideId } = data
+  try {
+    
+  } catch (error) {
+    
+  }
+}

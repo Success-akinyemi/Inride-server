@@ -95,6 +95,9 @@ const DriverSchema = new mongoose.Schema({
     accountImg: {
         type: String
     },
+    activeRide: {
+        type: String
+    },
 
     password: {
         type: String

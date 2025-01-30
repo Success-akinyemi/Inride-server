@@ -108,6 +108,7 @@ export const AuthenticateDriver = async (req, res, next) => {
                 }
             }
         } else if (accountId) {
+            console.log('object')
             const user = await DriverModel.findOne({ driverId: accountId });
             const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId })
             if (user && refreshTokenExist) {

@@ -5,7 +5,7 @@ import CarDetailModel from "../model/CarDetails.js";
 export async function newCar(req, res) {
   const { registrationNumber, year, model, color, noOfSeats } = req.body;
   const { driverId } = req.user;
-  const { carImg } = req.files;
+  const { carImg } = req.files || {};
 
   // Validate required fields
   if (!registrationNumber || !year || !model || !color || !noOfSeats) {
@@ -74,7 +74,7 @@ export async function newCar(req, res) {
     export async function updateCarDetails(req, res) {
       const { driverId } = req.user;
       const { carId, registrationNumber, year, model, color, noOfSeats } = req.body;
-      const { carImg } = req.files;
+      const { carImg } = req.files | {};
   
       // Validate image format
       if (carImg) {

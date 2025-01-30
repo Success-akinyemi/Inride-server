@@ -2186,4 +2186,54 @@ paths:
           description: User error
         500:
           description: Server error
-            
+
+  /driver/startRide:
+    post:
+      tags:
+        - Booking
+      summary: Socket connection for driver to start a ride. socket.on(startRide, data) socket.emit(startRide, serverResponse) under the driver namespaces
+      description: This endpoint/socket connection allows a driver to start ride
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+            properties:
+              rideId:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+     
+  /driver/rideComplete:
+    post:
+      tags:
+        - Booking
+      summary: Socket connection for driver to complete or end ride after a ride has been completed. socket.on('rideComplete', data) socket.emit('rideComplete', serverResponse) under the driver namespaces
+      description: This endpoint/socket connection allows a driver to start ride
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+            properties:
+              rideId:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+     
