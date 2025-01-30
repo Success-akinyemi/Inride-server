@@ -1,6 +1,6 @@
 import { sendWelcomeEmail } from "../middlewares/mailTemplate.js.js";
 import twilioClient from "../middlewares/twilioConfig.js"
-import { generateOtp, generateUniqueCode, sendResponse } from "../middlewares/utils.js";
+import { generateOtp, generateUniqueCode, sendResponse, uploadFile } from "../middlewares/utils.js";
 import { matchFace, verifyDriverLicense } from "../middlewares/verificationService.js";
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js"
