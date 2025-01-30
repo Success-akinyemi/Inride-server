@@ -11,6 +11,7 @@ export const uploadImages = upload.fields([
     { name: "driverLincenseImgFront", maxCount: 1 }, // For single event driver lincense front image
     { name: "driverLincenseImgBack", maxCount: 1 }, // For single event driver lincense back image
     { name: "carImg", maxCount: 1 }, // For single event car image
+    { name: "carDetails[carImg]", maxCount: 1 },
     { name: 'accountImg', maxCount: 1 }, //account image
     { name: "eventGallery", maxCount: 10 }, // For multiple gallery images
 ]);

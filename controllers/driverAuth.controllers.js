@@ -100,8 +100,7 @@ export async function completeDriverRegistration(req, res) {
         return sendResponse(res, 400, false, 'Opreating city is required')
     }
     if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
-    const coords = JSON.parse(req.body.coordinates)
-    if(coords?.length < 2 || coords?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
+    if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
     
 
     const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg } = req.files;
@@ -179,7 +178,7 @@ export async function completeDriverRegistration(req, res) {
         
 
         driver.opreatingCity = opreatingCity
-        driver.ssn = ssn ? ssn : '',
+        driver.ssn = req.body.ssn ? req.body.ssn : '',
         driver.driverLincenseImgFront = driverLincenseImgFrontUrl
         driver.driverLincenseImgBack = driverLicenseImgBackUrl
         driver.profileImg = profileImgUrl
