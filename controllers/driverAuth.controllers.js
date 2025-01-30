@@ -169,11 +169,16 @@ export async function completeDriverRegistration(req, res) {
         // Upload images and get URLs
         const folder = 'driver-id-cards';
         const driverLincenseImgFrontUrl = await uploadFile(req.files.driverLincenseImgFront[0], folder);
+        console.log('driverLincenseImgFrontUrl', driverLincenseImgFrontUrl)
         const driverLicenseImgBackUrl = await uploadFile(req.files.driverLincenseImgBack[0], folder);
+        console.log('driverLicenseImgBackUrl', driverLicenseImgBackUrl)
         const profileImgUrl = await uploadFile(req.files.profileImg[0], 'driver-profile-image');
+        console.log('profileImgUrl', profileImgUrl)
         let carImgUrl = ''
         if(carImg){
+            console.log('car image upload', req.files.carImg[0])
             carImgUrl = await uploadFile(req.files.carImg[0], 'driver-car-image');
+            console.log('carImgUrl', carImgUrl)
         }
         
 

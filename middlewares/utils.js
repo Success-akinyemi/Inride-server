@@ -19,7 +19,7 @@ const s3 = new AWS.S3({
     if (!file) {
       throw new Error('No file provided for upload');
     }
-    
+    console.log('file upload')
     const fileExtension = file.originalname.split('.').pop();
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
   
