@@ -28,7 +28,9 @@ import './connection/db.js';
 
 import * as driverController from './controllers/driver.controllers.js';
 import * as passengerController from './controllers/passenger.controllers.js';
-import { AuthenticateDriverSocket, AuthenticatePassengerSocket } from './middlewares/auth.js'; 
+import * as generalLiveCallController from './controllers/liveCall.controllers.js';
+
+import { AuthenticateDriverSocket, AuthenticatePassengerSocket, AuthenticateUserSocket } from './middlewares/auth.js'; 
 
 const app = express();
 const server = http.createServer(app);
@@ -81,9 +83,13 @@ app.use('/api/driver', driverRoutes);
 // Namespaces for Driver and Passenger
 export const driverNamespace = io.of('/driver');
 export const passengerNamespace = io.of('/passenger');
+export const generalNamespace = io.of('/general');
+
 
 export const driverConnections = new Map()
 export const passengerConnections = new Map()
+export const generalConnections = new Map()
+
 
 // Apply socket-specific authentication middleware for Driver
 driverNamespace.use(AuthenticateDriverSocket);
@@ -105,10 +111,10 @@ driverNamespace.on('connection', (socket) => {
   socket.on('acceptEditRideRquest', (data) => driverController.acceptEditRideRquest({ data, socket }));
   socket.on('cancelRideRequest', (data) => driverController.cancelRideRequest({ data, socket }));
   socket.on('rejectEditRideRquest', (data) => driverController.rejectEditRideRquest({ data, socket }));  
-  socket.on('startRide', ({ data }) => driverController.startRide({ data, socket }));
-  socket.on('rideComplete', ({ data }) => driverController.rideComplete({ data, socket }));
-  socket.on('cancelRide', ({ data }) => driverController.cancelRide({ data, socket }));
-  socket.on('chatWithPassenger', ({ data }) => driverController.chatWithPassenger({ data, socket }));
+  socket.on('startRide', (data) => driverController.startRide({ data, socket }));
+  socket.on('rideComplete', (data) => driverController.rideComplete({ data, socket }));
+  socket.on('cancelRide', (data) => driverController.cancelRide({ data, socket }));
+  socket.on('chatWithPassenger', (data) => driverController.chatWithPassenger({ data, socket }));
 
 
   socket.on('disconnect', () => {
@@ -152,6 +158,31 @@ passengerNamespace.on('connection', (socket) => {
   });
 });
 
+
+// Apply socket-specific authentication middleware for General
+generalNamespace.use(AuthenticateUserSocket);
+generalNamespace.on('connection', (socket) => {
+  console.log('Passenger connected:', socket.id);
+
+  const { accountId } = socket.user
+
+  if(accountId){
+    generalConnections.set(accountId, socket.id)
+  }
+  console.log('CONNECTING USER ID TO SOCKET ID', generalConnections)
+
+  //sockets
+  socket.on('callUser', (data) => generalLiveCallController.callUser({ data, socket }));
+
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+    if(accountId){
+      generalConnections.delete(accountId)
+    }
+  });
+
+});
 
 //SCEHDULED functions
 import { scheduleRideAlerts } from './controllers/passenger.controllers.js'

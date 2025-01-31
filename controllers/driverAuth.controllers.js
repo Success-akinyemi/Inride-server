@@ -174,11 +174,13 @@ export async function completeDriverRegistration(req, res) {
         console.log('driverLicenseImgBackUrl', driverLicenseImgBackUrl)
         const profileImgUrl = await uploadFile(req.files.profileImg[0], 'driver-profile-image');
         console.log('profileImgUrl', profileImgUrl)
-        let carImgUrl = ''
-        if(carImg){
-            console.log('car image upload', req.files.carImg[0])
-            carImgUrl = await uploadFile(req.files.carImg[0], 'driver-car-image');
-            console.log('carImgUrl', carImgUrl)
+        let carImgUrl
+        let carImgFile = req.files?.carImg?.[0] || req.files?.['carDetails[carImg]']?.[0];
+
+        if (carImgFile) {
+            console.log('Car image upload:', carImgFile);
+            carImgUrl = await uploadFile(carImgFile, 'driver-car-image');
+            console.log('carImgUrl', carImgUrl);
         }
         
 
@@ -215,7 +217,7 @@ export async function completeDriverRegistration(req, res) {
         const refreshToken = driver.getRefreshToken()
         const getRefreshToken = await RefreshTokenModel.findOne({ accountId: driver?.driverId })
         if(!getRefreshToken){
-            const newRefreshToken = RefreshTokenModel.create({
+            const newRefreshToken = await RefreshTokenModel.create({
                 accountId: driver.driverId,
                 refreshToken: refreshToken
             })
@@ -244,7 +246,8 @@ export async function completeDriverRegistration(req, res) {
         const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = driver._doc;
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
-        
+        console.log('UNABLE TO COMPLETE PASSENGER TO DRIVER REGISTRATION', error)
+        sendResponse(res, 500, false, 'Uanble to complete driver registration')
     }
 }
 
@@ -309,7 +312,8 @@ export async function resendOtp(req, res) {
         console.log('OTP CODE', otpCode)
         
         if(otpCode){
-
+            /**
+             * 
             const sendOtpCode = await twilioClient.messages.create({
                 body: `Your RideFuzz Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
@@ -317,6 +321,7 @@ export async function resendOtp(req, res) {
             })
             console.log('SMS BODY', sendOtpCode?.body)
         
+             */
             return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}`, `${mobileNumber} Code: ${otpCode}`)
         }
 
@@ -391,7 +396,7 @@ export async function completeNewDriverRegistration(req, res) {
     if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
     //if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
 
-    const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg } = req.files;
+    const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg, } = req.files;
     console.log('COMPLETE NEW DRIVER REG', req?.files)
 
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
@@ -461,8 +466,12 @@ export async function completeNewDriverRegistration(req, res) {
         const driverLicenseImgBackUrl = await uploadFile(req.files.driverLincenseImgBack[0], folder);
         const profileImgUrl = await uploadFile(req.files.profileImg[0], 'driver-profile-image');
         let carImgUrl = ''
-        if(carImg){
-            carImgUrl = await uploadFile(req.files.carImg[0], 'driver-car-image');
+        let carImgFile = req.files?.carImg?.[0] || req.files?.['carDetails[carImg]']?.[0];
+
+        if (carImgFile) {
+            console.log('Car image upload:', carImgFile);
+            carImgUrl = await uploadFile(carImgFile, 'driver-car-image');
+            console.log('carImgUrl', carImgUrl);
         }
                 
         const driverId = await generateUniqueCode(8)
@@ -513,7 +522,7 @@ export async function completeNewDriverRegistration(req, res) {
         const refreshToken = newDriver.getRefreshToken()
         const getRefreshToken = await RefreshTokenModel.findOne({ accountId: newDriver?.driverId })
         if(!getRefreshToken){
-            const newRefreshToken = RefreshTokenModel.create({
+            const newRefreshToken = await RefreshTokenModel.create({
                 accountId: newDriver.driverId,
                 refreshToken: refreshToken
             })
@@ -537,7 +546,7 @@ export async function completeNewDriverRegistration(req, res) {
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.log('UNABLE TO COMPLETE NEW DRIVER REGISTRATION', error)
-        return sendResponse()
+        return sendResponse(res, 500, false, 'Unable to complete driver registration')
     }
 }
 
@@ -589,6 +598,55 @@ export async function signin(req, res) {
          
              * 
              */
+            return sendResponse(res, 201, true, `Signin verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber} code: ${otpCode}`)
+        }
+
+
+    } catch (error) {
+        console.log('UNABLE TO SIGNIN DRIVER', error)
+        return sendResponse(res, 500, false, 'Unable to signin driver')
+    }
+}
+
+//Sigining Driver with google
+export async function signinWithGoogle(req, res) {
+    const { email } = req.body
+    if(!email){
+        return sendResponse(res, 400, false, 'Provide a mobile number')
+    }
+    try { 
+        const numberExist = await DriverModel.findOne({ email: email })
+        if(!numberExist){
+            return sendResponse(res, 404, false, 'Mobile number does not exist')
+        }
+        if(!numberExist.verified){
+            return sendResponse(res, 403, false, 'Unverified account')
+        }
+
+        //check
+        if(
+            !numberExist?.email || 
+            numberExist?.email === '' ||
+            !numberExist?.firstName ||
+            numberExist?.firstName === '' ||
+            !numberExist?.lastName ||
+            numberExist?.lastName === '' ||
+            !numberExist?.ssn ||
+            !numberExist?.profileImg ||
+            !numberExist?.idCardImgFront ||
+            !numberExist?.idCardImgBack ||
+            !numberExist?.opreatingCity ||
+            !numberExist?.driverLincenseImgFront ||
+            !numberExist?.driverLincenseImgBack
+        ){
+            return sendResponse(res, 403, false, 'register driver information')
+        }
+
+        const otpCode = await generateOtp(numberExist.mobileNumber, 4, 'driver' )
+        console.log('OTP CODE', otpCode)
+        
+        if(otpCode){
+            
             return sendResponse(res, 201, true, `Signin verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber} code: ${otpCode}`)
         }
 

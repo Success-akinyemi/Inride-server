@@ -39,6 +39,36 @@ const s3 = new AWS.S3({
       throw new Error(`File upload failed: ${error.message}`);
     }
   }
+
+  //UPLOAD BUFFER TO S3
+  export async function uploadBufferFile(file, folder) {
+    if (!file || !file.buffer) {
+      throw new Error('No file or buffer provided for upload');
+    }
+  
+    console.log('Uploading file...');
+  
+    // Generate a unique file name
+    const fileExtension = file.mimetype ? file.mimetype.split('/').pop() : 'bin'; // Default to 'bin' if mimetype is missing
+    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
+  
+    // Define the S3 upload parameters
+    const params = {
+      Bucket: bucketName,
+      Key: fileName,
+      Body: file.buffer, // File buffer
+      ContentType: file.mimetype || 'application/octet-stream', // Default MIME type if missing
+    };
+  
+    try {
+      // Upload the file to S3
+      const data = await s3.upload(params).promise();
+      return data.Location; // Return the S3 file URL
+    } catch (error) {
+      console.error('FILE UPLOAD ERROR', error);
+      throw new Error(`File upload failed: ${error.message}`);
+    }
+  }  
   
 export const sendResponse = (res, statusCode, success, data, message) => {
     return res.status(statusCode).json({ success: success, data: data, message: message ? message : '' });

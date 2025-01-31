@@ -1,4 +1,4 @@
-import { calculateAverageRating, decrypt, generateUniqueCode, sendResponse } from "../middlewares/utils.js";
+import { calculateAverageRating, decrypt, generateUniqueCode, sendResponse, uploadBufferFile, uploadFile } from "../middlewares/utils.js";
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js";
 import DriverLocationModel from "../model/DriverLocation.js";
@@ -1308,27 +1308,37 @@ export async function saftey({ data, res, socket }) {
 
 //CHAT WITH DRIVER
 export async function chatWithDriver({ socket, data, res}) {
-  const { rideId, message: passengerMessage } = data
+  const { rideId, message: passengerMessage, file } = data
+  const { passengerId } = socket.user
   try {
     const getRide = await RideModel.findOne({ rideId })
     if(!getRide){
+      console.log('NO RIDE')
       const message = 'Ride does not exist'
       if(res) sendResponse(res, 404, false, message)
-      if(socket) socket('chatWithDriver', { success: false, message })
-      return
-    }
-    if(driverId !== getRide.driverId){
+        if(socket) socket('chatWithDriver', { success: false, message })
+          return
+      }
+    if(passengerId !== getRide.passengerId){
       const message = 'Not Allowed'
       if(res) sendResponse(res, 404, false, message)
       if(socket) socket('chatWithDriver', { success: false, message })
       return
     }
-    const getChats = await RideChatModel.findOne({ rideId })
+
+    // Upload image if present
+    let imageUrl
+    if (file) {
+      imageUrl = await uploadBufferFile(file, 'chat-images');
+    }
+    let getChats
+    getChats = await RideChatModel.findOne({ rideId })
     if(!getChats){
       const chatData = {
-        message: passengerMessage,
-        from: 'Driver',
-        senderId: driverId
+        message: passengerMessage || '',
+        from: 'Passenger',
+        senderId: passengerId,
+        mediaLink: imageUrl || ''
       }
       const newChat = await RideChatModel.create({
         rideId,
@@ -1337,27 +1347,29 @@ export async function chatWithDriver({ socket, data, res}) {
     } else {
       const chatData = {
         message: passengerMessage,
-        from: 'Driver',
-        senderId: driverId
+        from: 'Passenger',
+        senderId: passengerId,
+        mediaLink: imageUrl || ''
       }
       getChats.chats.push(chatData)
       await getChats.save()
     }
-
-    //alert passenger
-    const passengerSocketId = passengerConnections.get(getRide.passengerId)
-    if(passengerSocketId){
+    console.log('CHATS', getChats.chats )
+    //alert driver
+    const driverSocketId = driverConnections.get(getRide.driverId)
+    if(driverSocketId){
       const message = getChats.chats
-      passengerNamespace.to(passengerSocketId).emit('chatWithPassenger', { success: true, message })
+      driverNamespace.to(driverSocketId).emit('chatWithPassenger', { success: true, message })
     } else {
-      console.log('PASSENGER SOCKET FOR CHATS NOT FOUND> PASSENGER NOT ONLINE')
+      console.log('DRIVER SOCKET FOR CHATS NOT FOUND> DRIVER NOT ONLINE')
     }
 
     const message = getChats.chats
     if(res) sendResponse(res, 200, true, message)
-    if(socket) socket.emit('chatWithDriver', { success: false, message })
+    if(socket) socket.emit('chatWithDriver', { success: true, message })
 
   } catch (error) {
+    console.log('CHAT WITH DRIVER ERROR', error)
     const message = 'Unable to send message to passenger'
     if(res) sendResponse(res, 500, false, message)
     if(socket) socket.emit('chatWithDriver', { success: false, message })

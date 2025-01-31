@@ -1,4 +1,4 @@
-import { sendResponse } from "../middlewares/utils.js";
+import { sendResponse, uploadBufferFile, uploadFile } from "../middlewares/utils.js";
 import AppSettingsModel from "../model/AppSettings.js";
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js";
@@ -93,7 +93,7 @@ export async function goOffline({ data, socket, res }) {
 }
 
 // GET NEARBY DRIVERS
-export async function getNearByDrivers({ data, socket }) {
+export async function getNearByDrivers({ data, socket, res }) {
   const { location, radius } = data; // Ensure radius defaults to 5 km
   //const radiusInKm = radius || 5;
   const radiusInKm =  1000;
@@ -489,7 +489,7 @@ export async function startRide({ data, socket, res}) {
 }
 
 // COMPLETE RIDE
-export async function rideComplete({ socket, res }) {
+export async function rideComplete({ socket, res, data }) {
   const { driverId } = socket.user
   const { rideId } = data
   try {
@@ -641,7 +641,8 @@ export async function cancelRide({ res, data, socket}) {
 
 //CHAT WITH PASSNEGER
 export async function chatWithPassenger({ socket, data, res}) {
-  const { rideId, message: driverMessage } = data
+  console.log('DTA', data)
+  const { rideId, message: driverMessage, file } = data
   const { driverId } = socket.user
   try {
     const getRide = await RideModel.findOne({ rideId })
@@ -657,12 +658,21 @@ export async function chatWithPassenger({ socket, data, res}) {
       if(socket) socket('chatWithPassenger', { success: false, message })
       return
     }
-    const getChats = await RideChatModel.findOne({ rideId })
+
+    // Upload image if present
+    let imageUrl
+    if (file) {
+      imageUrl = await uploadBufferFile(file, 'chat-images');
+    }
+
+    let getChats
+    getChats = await RideChatModel.findOne({ rideId })
     if(!getChats){
       const chatData = {
-        message: driverMessage,
+        message: driverMessage || '',
         from: 'Driver',
-        senderId: driverId
+        senderId: driverId,
+        mediaLink: imageUrl || ''
       }
       const newChat = await RideChatModel.create({
         rideId,
@@ -670,9 +680,10 @@ export async function chatWithPassenger({ socket, data, res}) {
       })
     } else {
       const chatData = {
-        message: driverMessage,
+        message: driverMessage || '',
         from: 'Driver',
-        senderId: driverId
+        senderId: driverId,
+        mediaLink: imageUrl || ''
       }
       getChats.chats.push(chatData)
       await getChats.save()
@@ -689,9 +700,10 @@ export async function chatWithPassenger({ socket, data, res}) {
 
     const message = getChats.chats
     if(res) sendResponse(res, 200, true, message)
-    if(socket) socket.emit('chatWithPassenger', { success: false, message })
+    if(socket) socket.emit('chatWithPassenger', { success: true, message })
 
   } catch (error) {
+    console.log('CHAT WITH PASSENGER ERROR', error)
     const message = 'Unable to send message to passenger'
     if(res) sendResponse(res, 500, false, message)
     if(socket) socket.emit('chatWithPassenger', { success: false, message })
