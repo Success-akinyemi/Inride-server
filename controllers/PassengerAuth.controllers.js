@@ -91,6 +91,8 @@ export async function verifyPersonalDetails(req, res) {
     const { email, mobileNumber  } = req.body
     if(!email) return sendResponse(res, 400, false, 'Provide an Email address')
     if(!mobileNumber) return sendResponse(res, 400, false, 'Provide a mobile number')
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
     try {
         const findUser = await PassengerModel.findOne({ mobileNumber })
         if(!findUser){
@@ -242,7 +244,7 @@ export async function registerUser(req, res) {
         // Generate Tokens
         const accessToken = newPassenger.getAccessToken()
         const refreshToken = newPassenger.getRefreshToken()
-        const newRefreshToken = RefreshTokenModel.create({
+        const newRefreshToken = await RefreshTokenModel.create({
             accountId: newPassenger.passengerId,
             refreshToken: refreshToken
         })
@@ -357,7 +359,7 @@ export async function verifyLoginOtp(req, res) {
         const refreshToken = getPassenger.getRefreshToken()
         const getRefreshToken = await RefreshTokenModel.findOne({ accountId: getPassenger?.passengerId })
         if(!getRefreshToken){
-            const newRefreshToken = RefreshTokenModel.create({
+            const newRefreshToken = await RefreshTokenModel.create({
                 accountId: getPassenger.passengerId,
                 refreshToken: refreshToken
             })
@@ -444,6 +446,212 @@ export async function verifyToken(req, res) {
     } catch (error) {
         console.log('UNABLE TO VERIFY TOKEN', error)   
         return sendResponse(res, 500, false, 'Unable to verify token')
+    }
+}
+
+//signup with google
+export async function signupWithGoogle(req, res) {
+    const { email } = req.body
+    if(!email){
+        return sendResponse(res, 400, false, 'Provide a email address')
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
+    try { 
+        const emailExist = await PassengerModel.findOne({ email: email })
+        if(emailExist){
+            return sendResponse(res, 404, false, 'this email already exist exist')
+        }
+
+        const passengerId = await generateUniqueCode(8)
+        console.log('PASSENGER ID', `RF${passengerId}PA`)
+        const newPassengerId = `RF${passengerId}PA`
+
+        const newUser = await PassengerModel.create({
+            email: email,
+            passengerId: newPassengerId,
+            verified: true
+        })
+
+        // Generate Tokens
+        const accessToken = newUser.getAccessToken()
+        const refreshToken = newUser.getRefreshToken()
+        const newRefreshToken = await RefreshTokenModel.create({
+            accountId: newUser.passengerId,
+            refreshToken: refreshToken
+        })
+
+        //send welcome email to user
+        sendWelcomeEmail({
+            email: email
+        })
+        
+
+        // Set cookies
+        res.cookie('inrideaccesstoken', accessToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 15 * 60 * 1000, // 15 minutes
+        });
+        res.cookie('inrideaccessid', newUser?.passengerId, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        });
+
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = newUser._doc;
+        sendResponse(res, 201, true, userData, 'Account Created')
+    } catch (error) {
+        console.log('UNABLE TO SIGNUP PASSENGER', error)
+        return sendResponse(res, 500, false, 'Unable to signup passenger')
+    }
+}
+
+//signin with google
+export async function signinWithGoogle(req, res) {
+    const { email } = req.body
+    if(!email){
+        return sendResponse(res, 400, false, 'Provide a email address')
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
+    try { 
+        const emailExist = await PassengerModel.findOne({ email: email })
+        if(!emailExist){
+            return sendResponse(res, 404, false, 'this email does not exist exist')
+        }
+
+        // Generate Tokens
+        const accessToken = emailExist.getAccessToken()
+        const refreshToken = emailExist.getRefreshToken()
+        const newRefreshToken = await RefreshTokenModel.create({
+            accountId: emailExist.passengerId,
+            refreshToken: refreshToken
+        })
+   
+
+        // Set cookies
+        res.cookie('inrideaccesstoken', accessToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 15 * 60 * 1000, // 15 minutes
+        });
+        res.cookie('inrideaccessid', emailExist?.passengerId, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        });
+
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = emailExist._doc;
+        sendResponse(res, 200, true, userData, 'Account Created')
+    } catch (error) {
+        console.log('UNABLE TO SIGNIN PASSENGER', error)
+        return sendResponse(res, 500, false, 'Unable to signin passenger')
+    }
+}
+
+//complete user registration
+export async function completeRegisterUser(req, res) {
+    const { firstName, lastName, ssn, idCardType, mobileNumber } = req.body;
+    const { passengerId } = req.user
+    
+    // Validate required fields
+    if (!mobileNumber) return sendResponse(res, 400, false, `Provide a mobile number`);
+    if (!firstName) return sendResponse(res, 400, false, `Provide a first name`);
+    if (!lastName) return sendResponse(res, 400, false, `Provide a last name`);
+    if (!ssn) return sendResponse(res, 400, false, `Provide a social security number`);
+    if (!["driverLicense", "internationalPassport", "voterCard"].includes(idCardType)) {
+        return sendResponse(res, 400, false, `ID card type must be: Driver License, International Passport, or Voter's Card`);
+    }
+    
+    const { idCardImgFront, idCardImgBack, profileImg } = req.files;
+    //console.log('idCardImgFront', idCardImgBack, idCardImgFront)
+    if (!idCardImgFront || !idCardImgFront[0]) return sendResponse(res, 400, false, `Provide the front image of your ID card`);
+    if (!idCardImgBack || !idCardImgBack[0]) return sendResponse(res, 400, false, `Provide the back image of your ID card`);
+    if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
+
+    const allowedImageTypes = ['image/jpeg', 'image/png'];
+    if (!allowedImageTypes.includes(idCardImgFront[0].mimetype)) {
+        return sendResponse(res, 400, false, `Invalid image format for ID card front. Accepted formats: jpeg, png`);
+    }
+    if (!allowedImageTypes.includes(idCardImgBack[0].mimetype)) {
+        return sendResponse(res, 400, false, `Invalid image format for ID card back. Accepted formats: jpeg, png`);
+    }
+    if (!allowedImageTypes.includes(profileImg[0].mimetype)) {
+        return sendResponse(res, 400, false, `Invalid image format for profile image. Accepted formats: jpeg, png`);
+    }
+
+    try {
+        const newPassenger = await PassengerModel.findOne({ passengerId })
+
+        //console.log('idCardImgFront', idCardImgBack, idCardImgFront)
+        const idVerification = await verifyID(req.files.idCardImgFront[0], req.files.idCardImgBack[0]);
+        if (!idVerification.success) {
+            return sendResponse(res, 400, false, `Invalid ID card Image. Provide a Valid ID Card Image`);
+        }
+
+        const idPhotoBuffer = idVerification.photo;
+        const profilePhotoBuffer = req.files.profileImg[0].buffer;
+        const faceMatchResult = await matchFace(idPhotoBuffer, profilePhotoBuffer);
+        if (!faceMatchResult.success) {
+            return sendResponse(res, 400, false, `Face matching failed. Ensure your selfie matches your ID photo`);
+        }
+
+        // Upload images and get URLs
+        const folder = 'passenger-id-cards';
+        const idCardImgFrontUrl = await uploadFile(req.files.idCardImgFront[0], folder);
+        const idCardImgBackUrl = await uploadFile(req.files.idCardImgBack[0], folder);
+        const profileImgUrl = await uploadFile(req.files.profileImg[0], 'passenger-profile-image');
+
+        newPassenger.firstName = firstName
+        newPassenger.lastName = lastName
+        newPassenger.email = email
+        newPassenger.ssn = req.body.ssn
+        newPassenger.idCardImgFront = idCardImgFrontUrl,
+        newPassenger.idCardImgBack = idCardImgBackUrl,
+        newPassenger.profileImg = profileImgUrl,
+        newPassenger.idCardType = idVerification.cardType
+        newPassenger.mobileNumber = mobileNumber
+        await newPassenger.save()
+
+        // Generate Tokens
+        const accessToken = newPassenger.getAccessToken()
+        const refreshToken = newPassenger.getRefreshToken()
+        const newRefreshToken = await RefreshTokenModel.create({
+            accountId: newPassenger.passengerId,
+            refreshToken: refreshToken
+        })
+
+        //send welcome email to user
+        sendWelcomeEmail({
+            email: newPassenger.email,
+            name: newPassenger.firstName
+        })
+        
+
+        // Set cookies
+        res.cookie('inrideaccesstoken', accessToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 15 * 60 * 1000, // 15 minutes
+        });
+        res.cookie('inrideaccessid', newPassenger?.passengerId, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        });
+
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = newPassenger._doc;
+        return sendResponse(res, 200, true, 'Account updated');
+    } catch (error) {
+        console.error('UNABLE TO COMPLETE REGISTER USER:', error);
+        return sendResponse(res, 500, false, `Unable to complete register user. Please try again.`);
     }
 }
 

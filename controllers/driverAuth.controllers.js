@@ -690,7 +690,7 @@ export async function verifyLoginOtp(req, res) {
         const refreshToken = getDriver.getRefreshToken()
         const getRefreshToken = await RefreshTokenModel.findOne({ accountId: getDriver?.driverId })
         if(!getRefreshToken){
-            const newRefreshToken = RefreshTokenModel.create({
+            const newRefreshToken = await RefreshTokenModel.create({
                 accountId: getDriver.driverId,
                 refreshToken: refreshToken
             })

@@ -392,6 +392,109 @@ paths:
         500:
           description: Server error
 
+  /api/passenger/auth/signupWithGoogle:
+    post:
+      tags:
+        - Passenger Auth
+      summary: Allows user to signup/create a new account with google
+      description: This endpoint allows users to sign up with google account
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+      responses:
+        201:
+          description: Successful
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/passenger/auth/signinWithGoogle:
+    post:
+      tags:
+        - Passenger Auth
+      summary: Allows user to signin/login with google
+      description: This endpoint allows users to sign in with google account
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+      responses:
+        200:
+          description: Successful
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/passenger/auth/completeRegisterUser:
+    post:
+      tags:
+        - Passenger Auth
+      summary: Complete Register user account
+      description: Completes registration for a passenger user account.
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: ssn
+          in: formData
+          required: false
+          type: string
+        - name: firstName
+          in: formData
+          required: true
+          type: string
+        - name: lastName
+          in: formData
+          required: true
+          type: string
+        - name: mobileNumber
+          in: formData
+          required: true
+          type: string
+        - name: idCardType
+          in: formData
+          required: true
+          type: string
+          enum:
+            - driverLicense
+            - internationalPassport
+            - voterCard
+        - name: idCardImgFront
+          in: formData
+          required: true
+          type: file
+        - name: idCardImgBack
+          in: formData
+          required: true
+          type: file
+        - name: profileImg
+          in: formData
+          required: true
+          type: file
+      responses:
+        200:
+          description: Successful
+        400:
+          description: User error
+        500:
+          description: Server error
+
 #DRIVER AUTH
 
   /api/driver/auth/registerWithPassengerAccount:

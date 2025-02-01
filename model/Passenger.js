@@ -6,8 +6,8 @@ import crypto from 'crypto'
 const PassengerSchema = new mongoose.Schema({
     mobileNumber: {
         type: String,
-        required: [ true, 'Mobile number is required'],
-        unique: [ true, 'Mobile Number already exist' ]
+        //required: [ true, 'Mobile number is required'],
+        //unique: [ true, 'Mobile Number already exist' ]
     },
     firstName: {
         type: String,
