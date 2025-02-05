@@ -185,8 +185,16 @@ export async function requestRide({ socket, data, res }) {
         console.error('Invalid scheduleDate format. Expected format: YYYY-MM-DD');
     } else if (!isValidTime.test(scheduleTime)) {
         console.error('Invalid scheduleTime format. Expected format: HH:mm (24-hour)');
+        const message = `Invalid scheduleTime format. Expected format: HH:mm (24-hour)`
+        if(res) sendResponse(res, 400, false, message)
+        if (socket) socket.emit('rideRequested', { success: false, message })
+        return
     } else {
         console.log('scheduleDate and scheduleTime are in the correct format.');
+        const message = `scheduleDate and scheduleTime are in the correct format.`
+        if(res) sendResponse(res, 400, false, message)
+        if (socket) socket.emit('rideRequested', { success: false, message })
+        return
     }
   }
 

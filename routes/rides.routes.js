@@ -12,8 +12,10 @@ router.post('/reportForgotItem', controllers.reportForgotItem)
 //GET
 router.get('/getDriverRides', AuthenticateDriver, controllers.getDriverRides)
 router.get('/getDriverRide', AuthenticateDriver, controllers.getDriverRide)
+router.get('/getUpcomingDriverRides', AuthenticateDriver, controllers.getUpcomingDriverRides)
 router.get('/getLastSevenDays', AuthenticateDriver, controllers.getLastSevenDays)
 router.get('/getPassengerRides', AuthenticatePassenger, controllers.getPassengerRides)
+router.get('/getUpcomingPassengerRides', AuthenticatePassenger, controllers.getUpcomingPassengerRides)
 router.get('/getPassengerRide', AuthenticatePassenger, controllers.getPassengerRide)
 
 

@@ -32,7 +32,8 @@ tags:
     description: Endpoints for driver 
   - name: Booking 
     description: Endpoints for Booking 
-  
+  - name: Live call
+    description: Live call between passenger and driver.
 paths:
 #GENARAL
   /:
@@ -1252,7 +1253,7 @@ paths:
       tags:
         - Passenger 
       summary: Get passenger Rides
-      description: This endpoint get a passenger rides. possible queries are - limit, page for pagination, startDate, endDate to get data based on date range, rideType to get data based on ride type such as ['personal', 'group', 'delivery', 'schedule']
+      description: This endpoint get a passenger rides. possible queries are - limit, page for pagination, startDate, endDate to get data based on date range, rideType to get data based on ride type such as ['personal', 'group', 'delivery', 'schedule']. Date format is - YYYY-MM-DDTHH:mm:ss.sssZ
       parameters:
         - name: body
           in: query
@@ -1286,6 +1287,35 @@ paths:
         - Passenger 
       summary: Get passenger a Ride details
       description: This endpoint get passenger a ride details
+      responses:
+        201:
+          description: Succesful - ride details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /rides/getUpcomingPassengerRides:
+    get:
+      tags:
+        - Passenger 
+      summary: Get Passenger upcoming Rides
+      description: This endpoint get a Passenger upcoming rides. possible queries are - limit, page for pagination, rideType to get data based on ride type such as ['personal', 'group', 'delivery', 'schedule']. Date format is - YYYY-MM-DDTHH:mm:ss.sssZ
+      parameters:
+        - name: body
+          in: query
+          schema:
+            type: string
+            required:
+              - limit
+              - page
+            properties:
+              limit:
+                type: string
+              page: 
+                type: string
+              rideType: 
+                type: string
       responses:
         201:
           description: Succesful - ride details infomation
@@ -1616,7 +1646,7 @@ paths:
       tags:
         - Driver 
       summary: Get Driver Rides
-      description: This endpoint get a driver rides. possible queries are - limit, page for pagination, startDate, endDate to get data based on date range, rideType to get data based on ride type such as ['personal', 'group', 'delivery', 'schedule']
+      description: This endpoint get a driver rides. possible queries are - limit, page for pagination, startDate, endDate to get data based on date range, rideType to get data based on ride type such as ['personal', 'group', 'delivery', 'schedule']. Date format is - YYYY-MM-DDTHH:mm:ss.sssZ
       parameters:
         - name: body
           in: query
@@ -1657,7 +1687,36 @@ paths:
           description: User error
         500:
           description: Server error
-        
+
+  /rides/getUpcomingDriverRides:
+    get:
+      tags:
+        - Driver 
+      summary: Get Driver upcoming Rides
+      description: This endpoint get a driver upcoming rides. possible queries are - limit, page for pagination, rideType to get data based on ride type such as ['personal', 'group', 'delivery', 'schedule']. Date format is - YYYY-MM-DDTHH:mm:ss.sssZ
+      parameters:
+        - name: body
+          in: query
+          schema:
+            type: string
+            required:
+              - limit
+              - page
+            properties:
+              limit:
+                type: string
+              page: 
+                type: string
+              rideType: 
+                type: string
+      responses:
+        201:
+          description: Succesful - ride details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+     
   /rides/getLastSevenDays:
     get:
       tags:
@@ -2421,3 +2480,103 @@ paths:
         500:
           description: Server error
    
+  /general/callUser:
+    post:
+      tags:
+        - Live call
+      summary: Socket connection for driver and passenger to call each each other. socket.on('callUser', data) socket.emit('callUser', serverResponse) under the general namespaces
+      description: This endpoint/socket connection allows a driver or passenger to call each other
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+            properties:
+              rideId:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+
+  /general/acceptCall:
+    post:
+      tags:
+        - Live call
+      summary: Socket connection for driver and passenger to accept call. socket.on('acceptCall', data) socket.emit('acceptCall', serverResponse) under the general namespaces
+      description: This endpoint/socket connection allows a driver or passenger to accept call request
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+            properties:
+              rideId:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+
+  /general/rejectCall:
+    post:
+      tags:
+        - Live call
+      summary: Socket connection for driver and passenger to reject call. socket.on('rejectCall', data) socket.emit('rejectCall', serverResponse) under the general namespaces
+      description: This endpoint/socket connection allows a driver or passenger to reject call request
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+            properties:
+              rideId:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+
+  /general/endCall:
+    post:
+      tags:
+        - Live call
+      summary: Socket connection for driver and passenger to end call. socket.on('endCall', data) socket.emit('endCall', serverResponse) under the general namespaces
+      description: This endpoint/socket connection allows a driver or passenger to end call request
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - rideId
+            properties:
+              rideId:
+                type: string
+      responses:
+        201:
+          description: success - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+      

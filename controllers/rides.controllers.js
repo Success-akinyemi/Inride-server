@@ -100,6 +100,73 @@ export async function getDriverRide(req, res){
   }
 }
 
+//GET DRIVER UPCOMING RIDES
+export async function getUpcomingDriverRides(req, res) {
+  const { limit = 10, page = 1, rideType } = req.query;
+  const { driverId, earnings } = req.user;
+
+  try {
+    // Get current date and time
+    const now = new Date();
+    const currentDate = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const currentTime = now.toTimeString().split(" ")[0]; // HH:MM:SS
+
+    // Build the query object
+    const query = {
+      driverId,
+      status: "schedule",
+      $or: [
+        { scheduleDate: { $gt: currentDate } }, // Future dates
+        { 
+          scheduleDate: currentDate, 
+          scheduleTime: { $gt: currentTime } // Future times on the same day
+        }
+      ]
+    };
+
+    // Handle ride type filtering
+    if (rideType) {
+      query.rideType = rideType;
+    }
+
+    // Calculate the number of documents to skip
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Fetch upcoming rides from the database
+    const rides = await RideModel.find(query)
+      .sort({ scheduleDate: 1, scheduleTime: 1 }) // Sort by nearest scheduled rides
+      .skip(skip) // Skip the documents for pagination
+      .limit(Number(limit)); // Limit the results for pagination
+
+    // Transform rides data
+    const transformedRides = rides.map((ride) => {
+      const { fromCoordinates, _id, passengerId, fromId, to, ...rest } = ride._doc;
+
+      // Transform the `to` array to remove specific fields
+      const transformedTo = to.map(({ place }) => ({ place }));
+
+      return {
+        ...rest,
+        to: transformedTo,
+      };
+    });
+
+    // Get the total count of rides for pagination metadata
+    const totalRides = await RideModel.countDocuments(query);
+
+    return sendResponse(res, 200, true, "Upcoming rides fetched successfully", {
+      rides: transformedRides,
+      totalRides,
+      totalPages: Math.ceil(totalRides / limit),
+      currentPage: Number(page),
+      earningsBalance: earnings,
+    });
+  } catch (error) {
+    console.error("UNABLE TO GET UPCOMING DRIVERS RIDES", error);
+    return sendResponse(res, 500, false, "Unable to get upcoming rides");
+  }
+}
+
 // GET ALL RIDES OF A PASSENGER
 export async function getPassengerRides(req, res) {
   const { limit = 10, page = 1, startDate, endDate, rideType } = req.query;
@@ -196,7 +263,74 @@ export async function getPassengerRide(req, res){
   }
 }
 
-// GET THE LAST 7 DAYS RIDES
+//GET PASSENGER UPCOMING RIDES
+export async function getUpcomingPassengerRides(req, res) {
+  const { limit = 10, page = 1, rideType } = req.query;
+  const { passengerId, earnings } = req.user;
+
+  try {
+    // Get current date and time
+    const now = new Date();
+    const currentDate = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const currentTime = now.toTimeString().split(" ")[0]; // HH:MM:SS
+
+    // Build the query object
+    const query = {
+      passengerId,
+      status: "schedule",
+      $or: [
+        { scheduleDate: { $gt: currentDate } }, // Future dates
+        { 
+          scheduleDate: currentDate, 
+          scheduleTime: { $gt: currentTime } // Future times on the same day
+        }
+      ]
+    };
+
+    // Handle ride type filtering
+    if (rideType) {
+      query.rideType = rideType;
+    }
+
+    // Calculate the number of documents to skip
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Fetch upcoming rides from the database
+    const rides = await RideModel.find(query)
+      .sort({ scheduleDate: 1, scheduleTime: 1 }) // Sort by nearest scheduled rides
+      .skip(skip) // Skip the documents for pagination
+      .limit(Number(limit)); // Limit the results for pagination
+
+    // Transform rides data
+    const transformedRides = rides.map((ride) => {
+      const { fromCoordinates, _id, passengerId, fromId, to, ...rest } = ride._doc;
+
+      // Transform the `to` array to remove specific fields
+      const transformedTo = to.map(({ place }) => ({ place }));
+
+      return {
+        ...rest,
+        to: transformedTo,
+      };
+    });
+
+    // Get the total count of rides for pagination metadata
+    const totalRides = await RideModel.countDocuments(query);
+
+    return sendResponse(res, 200, true, "Upcoming rides fetched successfully", {
+      rides: transformedRides,
+      totalRides,
+      totalPages: Math.ceil(totalRides / limit),
+      currentPage: Number(page),
+      earningsBalance: earnings,
+    });
+  } catch (error) {
+    console.error("UNABLE TO GET UPCOMING PASSENGER RIDES", error);
+    return sendResponse(res, 500, false, "Unable to get upcoming rides");
+  }
+}
+
+// GET THE LAST 7 DAYS RIDES FOR DRIVER
 export async function getLastSevenDays(req, res) {
   const { limit = 10, page = 1 } = req.query; // Default limit and page for pagination
   const { driverId } = req.user;
