@@ -1,5 +1,6 @@
 import { decrypt, encrypt, sendResponse } from "../middlewares/utils.js"
 import CardDetailModel from "../model/CardDetails.js"
+import NotificationModel from "../model/Notifications.js";
 
 export async function newCardDetails(req, res) {
     const { cardNumber, cardHolderName, expiryDate, cvv, cardType } = req.body;
@@ -61,6 +62,12 @@ export async function newCardDetails(req, res) {
                 }],
             });
             await newCardDetails.save();
+
+            //new notification
+            await NotificationModel.create({
+                accountId: passengerId,
+                message: `You added a new payment card`
+            })
             sendResponse(res, 201, true, 'Card details added successfully');
             return
         } else {
@@ -73,6 +80,13 @@ export async function newCardDetails(req, res) {
             };
             getCardDetails.cards.push(newCard);
             await getCardDetails.save();
+
+            //new notification
+            await NotificationModel.create({
+              accountId: passengerId,
+              message: `You added a new payment card`
+            })
+
             sendResponse(res, 201, true, 'Card details added successfully');
             return
         }
@@ -117,6 +131,13 @@ export async function updateCardDetails(req, res) {
         if (cardType) card.cardType = cardType;
 
         await getCardDetails.save();
+
+        //new notification
+        await NotificationModel.create({
+            accountId: passengerId,
+            message: `You updated a payment card`
+        })
+
         sendResponse(res, 200, true, 'Card details updated successfully', getCardDetails);
     } catch (error) {
         console.log('ERROR UPDATING CARD DETAILS', error);

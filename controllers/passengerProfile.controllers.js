@@ -56,6 +56,18 @@ export async function updateProfile(req, res) {
     }
 }
 
+export async function getProfile(req, res) {
+  const { passengerId } = req.user
+  try {
+      const getPassenger = await PassengerModel.findOne({ passengerId })
+
+      const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, _id, ...userData } = getPassenger._doc;
+      sendResponse(res, 200, true, userData)
+  } catch (error) {
+      console.log('UNABLE TO GET PASSENGER PROFILE', error)
+      sendResponse(res, 500, false, 'Unable to get passenger profile')
+  }
+}
 
 //ADMIN
 export async function getAPassenger(req, res) {

@@ -5,6 +5,7 @@ import DriverModel from "../model/Driver.js";
 import DriverLocationModel from "../model/DriverLocation.js";
 import driverPriceModel from "../model/DriverPrice.js";
 import driverAroundrideRegionModel from "../model/DriversAroundRideRegion.js";
+import NotificationModel from "../model/Notifications.js";
 import PendingEditRideRequestModel from "../model/PendingEditRide.js";
 import RideChatModel from "../model/RideChats.js";
 import RideModel from "../model/Rides.js";
@@ -234,6 +235,11 @@ export async function acceptRideRequest({ data, socket, res }) {
       getDriverToRemove.save()
     }
 
+        //new notification
+        await NotificationModel.create({
+          accountId: driverId,
+          message: `You ride bid has been set for ride ${rideId}. Bid: ${price}`
+        })
 
     const message = 'Your price bid has been recorded';
     if (res) return sendResponse(res, 200, true, message);
@@ -309,6 +315,12 @@ export async function acceptEditRideRquest({ data, socket, res }) {
       getRide.charge = getEditRideRequest.price
       await getRide.save()
     }
+
+    //new notification
+    await NotificationModel.create({
+      accountId: driverId,
+      message: `You accepted passenger ride edit request for ride ${rideId}.`
+    })
 
     getEditRideRequest.status = 'Accepted'
     await getEditRideRequest.save()
@@ -441,6 +453,12 @@ export async function rejectEditRideRquest({ data, socket, res }) {
             console.log(`No active connection for passenger: ${getRide?.passengerId}`);
           }
 
+                    //new notification
+        await NotificationModel.create({
+          accountId: driverId,
+          message: `You rejected passenger ride edit requset ${rideId}.`
+        })
+
     const message = 'Your have rejected the edit ride reqeust from passenger';
     if (res) return sendResponse(res, 200, true, message);
     if (socket) socket.emit('rejectEditRideRquest', { success: true, message });
@@ -478,6 +496,12 @@ export async function startRide({ data, socket, res}) {
     await DriverLocationModel.updateOne({ driverId }, { status: 'busy', isActive: false });
     await DriverModel.updateOne({ driverId }, { status: 'busy', activeRide: rideId });
     await RideModel.updateOne({ rideId }, { status: 'In progress' });
+
+    //new notification for passenger
+    await NotificationModel.create({
+      accountId: getRide?.passengerId,
+      message: `Ride: ${getRide.rideId} has been started, heading to destination.`
+    })
 
     const message = 'Ride has started'
     if(res) sendResponse(res, 200, true, message)
@@ -527,6 +551,18 @@ export async function rideComplete({ socket, res, data }) {
       await getDriver.save()
     }
 
+    //new notification for driver
+    await NotificationModel.create({
+      accountId: driverId,
+      message: `Hurray ride completed. Earnings updated`
+    })
+
+    //new notification for passenger
+    await NotificationModel.create({
+      accountId: getRide?.passengerId,
+      message: `Ride: ${getRide.rideId} has been completed.`
+    })
+
     const message = 'Ride completed, earings updated driver is now active for another ride';
     if (res) return sendResponse(res, 200, true, message);
     if (socket) socket.emit('rideComplete', { success: true, message });
@@ -540,6 +576,7 @@ export async function rideComplete({ socket, res, data }) {
 
 //CANCEL RIDE
 export async function cancelRide({ res, data, socket}) {
+
   const { rideId, reason } = data
   const { driverId } = socket.user
 
@@ -626,6 +663,12 @@ export async function cancelRide({ res, data, socket}) {
       } else{
         console.log('Passenger Active connection not found')
       }
+
+          //new notification
+        await NotificationModel.create({
+          accountId: driverId,
+          message: `You Canceled ride ${rideId}.`
+        })
 
       const message = 'Ride has been canceled'
       if(res) sendResponse( res, 200, true, message)

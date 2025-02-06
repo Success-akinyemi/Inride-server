@@ -17,6 +17,7 @@ import moment from 'moment';
 import Stripe from 'stripe';
 import RideTransactionModel from "../model/RideTransactions.js";
 import RideChatModel from "../model/RideChats.js";
+import NotificationModel from "../model/Notifications.js";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
@@ -200,6 +201,7 @@ export async function requestRide({ socket, data, res }) {
 
   try {
     const passenger = socket.user;
+    let passengerId =  passenger.passengerId
 
     const getRideId = await generateUniqueCode(8);
     const rideId = `RF${getRideId}RI`;
@@ -225,6 +227,12 @@ export async function requestRide({ socket, data, res }) {
       scheduleDate,
       scheduleTime,
     });
+
+    //new notification
+    await NotificationModel.create({
+      accountId: passengerId,
+      message: `You have Booked a new ride from: ${from}. Ride ID: ${rideId}`
+    })
 
     // Get nearest drivers
     const nearbyDrivers = await DriverLocationModel.find({
@@ -362,6 +370,12 @@ export async function requestRide({ socket, data, res }) {
           .sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
           .slice(0, 3);
 
+          //new notification
+          await NotificationModel.create({
+            accountId: passengerId,
+            message: `Drivers for Ride: ${rideId} are availble.`
+          })
+
           //Arange Result
           const results = await Promise?.all(
             topPrices?.map(async (priceEntry) => {
@@ -429,6 +443,11 @@ export async function requestRide({ socket, data, res }) {
           if(socket) return passengerNamespace.to(passengerSocketId).emit('availableDriversForRide', { success: true, message, finalResult})
         
         } else {
+          //new notification
+          await NotificationModel.create({
+            accountId: passengerId,
+            message: `Could not get drivers for ride: ${rideId}. Please try again`
+          })
           const message = 'Could not get drivers for your ride request. Please try again';
           if (res) return sendResponse(res, 400, false, message);
           if (socket) passengerNamespace.to(passengerSocketId).emit('rideRequested', { success: false, message });
@@ -666,6 +685,18 @@ export async function payForRide({ socket, data, res }) {
         status: 'Successful'
       })
 
+      //new notification for passenger
+      await NotificationModel.create({
+        accountId: passengerId,
+        message: `Ride: ${getRide.rideId} has been paid for and it is now active`
+      })
+
+      //new notification for driver
+      await NotificationModel.create({
+        accountId: getRide?.driverId,
+        message: `Ride: ${getRide.rideId} has been paid for and it is now active`
+      })
+
       //inform driver ride ride has bee activated
       const driverSocketId = driverConnections.get(getRide?.driverId); // Fetch socket ID
   
@@ -795,6 +826,19 @@ export async function payForEditRide({ socket, data, res }) {
         status: 'Successful'
       })
 
+      //new notification for passenger
+      await NotificationModel.create({
+        accountId: passengerId,
+        message: `Ride: ${getRide.rideId} has been paid for and it is now active`
+      })
+
+      //new notification for driver
+      await NotificationModel.create({
+        accountId: getRide?.driverId,
+        message: `Ride: ${getRide.rideId} has been paid for and it is now active`
+      })
+      
+
       //inform driver ride ride has bee activated
       const driverSocketId = driverConnections.get(getRide?.driverId); // Fetch socket ID
   
@@ -859,6 +903,7 @@ export function scheduleRideAlerts() {
         return;
       }
 
+      
       for (const ride of rides) {
         const { driverId, passengerId } = ride;
 
@@ -886,6 +931,18 @@ export function scheduleRideAlerts() {
           nameOfPassenger: `${getPassenger.firstName} ${getPassenger.lastName}`,
           nameOfDriver: `${getDriver.firstName} ${getDriver.lastName}`,
         };
+
+        //new notification for passenger
+        await NotificationModel.create({
+          accountId: ride?.passengerId,
+          message: `Scheduled Ride: ${ride.rideId} is now active, get ready for pickup`
+        })
+
+        //new notification for driver
+        await NotificationModel.create({
+          accountId: ride?.driverId,
+          message: `Scheduled Ride: ${ride.rideId} is now active head over to pick passenger`
+        })
 
         // Driver socket notification
         const driverSocketId = driverConnections.get(driverId);
@@ -975,32 +1032,51 @@ export async function shareRideWithFriends({ data, socket, res}) {
     //update ride
     await getRide.save()
     
-    //notify them
-    foundFriends.forEach(mobileNumber => {
-      console.log('DRIVER ID:', mobileNumber);
-      const getPassenger = PassengerModel.findOne({ mobileNumber })
-      const passengerSocketId = passengerConnections.get(getPassenger?.passengerId); // Fetch socket ID
-      console.log('object passenger connections:', driverConnections);
-      console.log('object passenger id:', passengerSocketId);
+    // Notify friends
+    for (const mobileNumber of foundFriends) {
+      console.log('FRIEND MOBILE ID:', mobileNumber);
+
+      // Fetch passenger
+      const getPassenger = await PassengerModel.findOne({ mobileNumber });
+      if (!getPassenger) {
+        console.log(`No passenger found for mobile number: ${mobileNumber}`);
+        continue; // Skip to the next iteration
+      }
+
+      // Fetch socket ID
+      const passengerSocketId = passengerConnections.get(getPassenger.passengerId);
+      console.log('Passenger Connections:', passengerConnections);
+      console.log('Passenger ID:', passengerSocketId);
+
+      const toPlaces = getRide?.to.map(destination => ({
+        place: destination.place
+      }));
+
+      // Store notification
+      await NotificationModel.create({
+        accountId: getPassenger.passengerId,
+        message: `${firstName} ${lastName} shared a ride with you from ${getRide?.from} to ${toPlaces.map(i => i.place)}.`
+      });
 
       if (passengerSocketId) {
-
         // Emit to passenger if socket ID is found
         passengerNamespace.to(passengerSocketId).emit('newRideShared', { 
           success: true, 
           message: `${firstName} ${lastName} has shared a ride with you.`,
           ride: {
             from: getRide?.from,
-            to: getRide?.to.map(destination => ({
-              place: destination.place
-            })),
+            to: toPlaces,
           }, 
         });
       } else {
-        // Log if connection is not found, and skip to the next
         console.log(`No active connection for passenger mobile number: ${mobileNumber}`);
       }
-    });
+    }
+
+    await NotificationModel.create({
+      accountId: passengerId,
+      message: `You have shared you ride with ${totalPassengers} of your loved ones`
+    })
 
     getRide.rideType = 'group'
     await getRide.save()
@@ -1208,6 +1284,12 @@ export async function cancelRide({ data, socket, res}) {
       getRideTransaction.status = 'Failed'
       await getRideTransaction.save()
 
+      //new notification
+      await NotificationModel.create({
+        accountId: passengerId,
+        message: `You cancel you ride. ${getRide?.rideId}`
+      })
+
       //alreat driver
       const driverId = getRide.driverId
       const driverSocketId = driverConnections.get(driverId)
@@ -1239,6 +1321,12 @@ export async function cancelRide({ data, socket, res}) {
       
       getRideTransaction.status = 'Failed'
       await getRideTransaction.save()
+
+      //new notification
+      await NotificationModel.create({
+        accountId: passengerId,
+        message: `You cancel you ride. ${getRide?.rideId}`
+      })
 
       //alreat driver
       const driverId = getRide.driverId

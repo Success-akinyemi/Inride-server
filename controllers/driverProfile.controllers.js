@@ -52,3 +52,16 @@ export async function updateProfile(req, res) {
         sendResponse(res, 500, false, 'An error occurred while updating the profile');
     }
 }
+
+export async function getProfile(req, res) {
+    const { driverId } = req.user
+    try {
+        const getDriver = await DriverModel.findOne({ driverId })
+
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = getDriver._doc;
+        sendResponse(res, 200, true, userData)
+    } catch (error) {
+        console.log('UNABLE TO GET DRIVER PROFILE', error)
+        sendResponse(res, 500, false, 'Unable to get driver profile')
+    }
+}

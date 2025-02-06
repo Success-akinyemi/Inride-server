@@ -10,5 +10,6 @@ router.post('/updateProfile', uploadImages, AuthenticateDriver, controllers.upda
 
 
 //GET
+router.get('/getProfile', AuthenticateDriver, controllers.getProfile)
 
 export default router

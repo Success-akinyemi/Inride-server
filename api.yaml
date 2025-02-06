@@ -1257,6 +1257,18 @@ paths:
         500:
           description: Server error
 
+  /passenger/profile/getProfile:
+    get:
+      tags:
+        - Passenger
+      summary: Get passenger profile
+      description: TO get passenger profile
+      responses:
+        200:
+          description: Success
+        500:
+          description: Server error
+
   /passenger/card/getPaymentCards:
     get:
       tags:
@@ -1857,6 +1869,18 @@ paths:
           description: Profile updated succesful
         400:
           description: User error
+        500:
+          description: Server error
+
+  /driver/profile/getProfile:
+    get:
+      tags:
+        - Driver
+      summary: Get driver profile
+      description: TO get driver profile
+      responses:
+        200:
+          description: Success
         500:
           description: Server error
 

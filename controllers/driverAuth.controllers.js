@@ -5,6 +5,7 @@ import { matchFace, verifyDriverLicense } from "../middlewares/verificationServi
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js"
 import DriverLocationModel from "../model/DriverLocation.js";
+import NotificationModel from "../model/Notifications.js";
 import OtpModel from "../model/Otp.js";
 import PassengerModel from "../model/Passenger.js";
 import RefreshTokenModel from "../model/RefreshToken.js";
@@ -222,6 +223,12 @@ export async function completeDriverRegistration(req, res) {
                 refreshToken: refreshToken
             })
         }
+
+        //new notification
+        await NotificationModel.create({
+            accountId: `${driver.driverId}`,
+            message: `${driver.firstName} ${driver.lastName}, welcome to your new driver account. Its time to earn more money`
+        })
 
         //send welcome email to user
         sendWelcomeEmail({
@@ -511,6 +518,13 @@ export async function completeNewDriverRegistration(req, res) {
         })
 
         //const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
+        
+        //new Notification
+        await NotificationModel.create({
+            accountId: `${newDriver?.driverId}`,
+            message: `Welcome to a new Era. Get ride orders get money`
+        })
+        
         //send welcome email to user
         sendWelcomeEmail({
             email: newDriver.email,
@@ -642,15 +656,42 @@ export async function signinWithGoogle(req, res) {
             return sendResponse(res, 403, false, 'register driver information')
         }
 
-        const otpCode = await generateOtp(numberExist.mobileNumber, 4, 'driver' )
-        console.log('OTP CODE', otpCode)
-        
-        if(otpCode){
-            
-            return sendResponse(res, 201, true, `Signin verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber} code: ${otpCode}`)
+        numberExist.status = 'online'
+        numberExist.otpCode = ''
+        await numberExist.save()
+        const getDriverLocation = await DriverLocationModel.findOne({ driverId: numberExist?.driverId })
+        getDriverLocation.status = 'online'
+        getDriverLocation.isActive = true
+        getDriverLocation.location = location
+        await getDriverLocation.save()
+
+        // Generate Tokens
+        const accessToken = numberExist.getAccessToken()
+        const refreshToken = numberExist.getRefreshToken()
+        const getRefreshToken = await RefreshTokenModel.findOne({ accountId: numberExist?.driverId })
+        if(!getRefreshToken){
+            const newRefreshToken = await RefreshTokenModel.create({
+                accountId: numberExist.driverId,
+                refreshToken: refreshToken
+            })
         }
 
+        // Set cookies
+        res.cookie('inrideaccesstoken', accessToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 15 * 60 * 1000, // 15 minutes
+        });
+        res.cookie('inrideaccessid', numberExist?.driverId, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        });
 
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = numberExist._doc;
+        return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.log('UNABLE TO SIGNIN DRIVER', error)
         return sendResponse(res, 500, false, 'Unable to signin driver')

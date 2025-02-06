@@ -1,6 +1,7 @@
 import { sendResponse } from "../middlewares/utils.js"
 import DriverModel from "../model/Driver.js"
 import DriverBankDetailModel from "../model/DriverBankDetails.js"
+import NotificationModel from "../model/Notifications.js";
 import PayoutModel from "../model/Payout.js"
 import crypto from "crypto"; // Import crypto module for hashing
 
@@ -42,7 +43,13 @@ export async function payoutRequest(req, res) {
 
         const getDriver = await DriverModel.findOne({ driverId })
         getDriver.earnings -= fullAmount
-        await getDriver.save()        
+        await getDriver.save()  
+        
+        //new notification
+        await NotificationModel.create({
+            accountId: driverId,
+            message: `New Payout for ${newPayoutRequest?.amount} to ${newPayoutRequest?.accountNumber} has been submitted`
+        })
 
         sendResponse(res, 201, false, 'Payout requested successful')
     } catch (error) {

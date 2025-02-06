@@ -155,6 +155,49 @@ export async function endCall({ data, socket, res }) {
     }
 }
 
+export async function webrtcOffer({ data, socket, res }) {
+    const { rideId, offer } = data
+    try {
+        const { caller, receiver } = activeCalls[rideId] || {};
+        const targetSocketId = socket.id === caller ? receiver : caller;
+
+        if (targetSocketId) {
+            generalNamespace.to(targetSocketId).emit("webrtcOffer", { offer });
+        }
+    } catch (error) {
+        console.log('UNABLE TO MAKE WEB RTC OFFER', error)
+    }
+}
+
+export async function webrtcAnswer({ data, socket, res }) {
+    const { rideId, answer } = data
+    try {
+        const { caller, receiver } = activeCalls[rideId] || {};
+        const targetSocketId = socket.id === caller ? receiver : caller;
+
+        if (targetSocketId) {
+            generalNamespace.to(targetSocketId).emit("webrtcAnswer", { answer });
+        }
+    } catch (error) {
+        console.log('UNABLE TO MAKE WEB RTC ANSWER')
+    }
+}
+
+export async function iceCandidate({ data, socket, res }) {
+    const { rideId, candidate } = data
+    console.log('CANDIDATE', candidate)
+    try {
+        const { caller, receiver } = activeCalls[rideId] || {};
+        const targetSocketId = socket.id === caller ? receiver : caller;
+
+        if (targetSocketId) {
+            generalNamespace.to(targetSocketId).emit("iceCandidate", { candidate });
+        }
+    } catch (error) {
+        console.log('UANBLE TO ESTABLISH CANDITATE', error)
+    }
+}
+
 // Utility functions for handling errors and responses
 function handleUnauthorized(socket, res) {
     const message = "Not allowed to make this call";

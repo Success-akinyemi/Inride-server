@@ -177,6 +177,10 @@ generalNamespace.on('connection', (socket) => {
   socket.on('acceptCall', (data) => generalLiveCallController.acceptCall({ data, socket }));
   socket.on('rejectCall', (data) => generalLiveCallController.rejectCall({ data, socket }));
   socket.on('endCall', (data) => generalLiveCallController.endCall({ data, socket }));
+  socket.on('webrtcOffer', (data) => generalLiveCallController.webrtcOffer({ data, socket }));
+  socket.on('webrtcAnswer', (data) => generalLiveCallController.webrtcAnswer({ data, socket }));
+  socket.on('iceCandidate', (data) => generalLiveCallController.iceCandidate({ data, socket }));
+
 
   //sockets for live call
   socket.on('videocallUser', (data) => generalLiveVideoCallController.videocallUser({ data, socket }));

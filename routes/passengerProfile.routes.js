@@ -10,6 +10,7 @@ router.post('/updateProfile', uploadImages, AuthenticatePassenger, controllers.u
 
 
 //GET
+router.get('/getProfile', AuthenticatePassenger, controllers.getProfile)
 router.get('/getAPassenger', controllers.getAPassenger)
 
 export default router

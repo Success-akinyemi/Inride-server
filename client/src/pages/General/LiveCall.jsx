@@ -97,18 +97,62 @@ export default function LiveCall({ }) {
 
   const startVoiceStream = async () => {
     try {
-      const userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setStream(userStream);
-      audioRef.current.srcObject = userStream;
+        const userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setStream(userStream);
+        audioRef.current.srcObject = userStream;
 
-      peerConnection.current = new RTCPeerConnection();
-      userStream.getTracks().forEach((track) => peerConnection.current.addTrack(track, userStream));
+        // ✅ Create a new WebRTC peer connection
+        peerConnection.current = new RTCPeerConnection();
 
-      socket.emit("startWebRTC", { rideId });
+        // ✅ Add local audio track to WebRTC connection
+        userStream.getTracks().forEach((track) => peerConnection.current.addTrack(track, userStream));
+
+        // ✅ Send ICE candidates to the other peer
+        peerConnection.current.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit("iceCandidate", { rideId, candidate: event.candidate });
+            }
+        };
+
+        // ✅ Handle incoming audio stream from remote user
+        peerConnection.current.ontrack = (event) => {
+            audioRef.current.srcObject = event.streams[0];
+        };
+
+        // ✅ Create WebRTC offer
+        const offer = await peerConnection.current.createOffer();
+        await peerConnection.current.setLocalDescription(offer);
+
+        // ✅ Send offer to the other user via Socket.IO
+        socket.emit("startWebRTC", { rideId, offer });
+
     } catch (error) {
-      console.error("Error accessing microphone:", error);
+        console.error("Error accessing microphone:", error);
     }
-  };
+};
+
+  // ✅ Listen for WebRTC signaling messages
+  socket.on("webrtcOffer", async ({ offer }) => {
+      try {
+          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+          const answer = await peerConnection.current.createAnswer();
+          await peerConnection.current.setLocalDescription(answer);
+          socket.emit("webrtcAnswer", { rideId, answer });
+      } catch (error) {
+          console.error("Error handling WebRTC offer:", error);
+      }
+  });
+
+  socket.on("webrtcAnswer", async ({ answer }) => {
+      await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+  });
+
+  // ✅ Handle incoming ICE candidates
+  socket.on("iceCandidate", ({ candidate }) => {
+      console.log('CANDIDATE', candidate)
+      peerConnection?.current?.addIceCandidate(new RTCIceCandidate(candidate));
+  });
+
 
   const endCall = () => {
     socket.emit("endCall", { rideId });

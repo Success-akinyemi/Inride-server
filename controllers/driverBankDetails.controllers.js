@@ -1,5 +1,6 @@
 import { sendResponse } from "../middlewares/utils.js"
 import DriverBankDetailModel from "../model/DriverBankDetails.js"
+import NotificationModel from "../model/Notifications.js"
 
 export async function newBankDetails(req, res) {
     const { accountName, accountNumber, bankName } =  req.body
@@ -24,12 +25,25 @@ export async function newBankDetails(req, res) {
                 bankDetails: [{accountName, accountNumber, bankName}]
             })
             await newBankDetails.save()
+
+            //new notification
+            await NotificationModel.create({
+                accountId: driverId,
+                message: `New Bank Details Added`
+            })
+
             sendResponse(res, 201, true, 'Bank details added successfully')
             return
         } else {
             const bankDetails = {accountName, accountNumber, bankName}
             getBankDetails.bankDetails.push(bankDetails)
             await getBankDetails.save()
+
+            //new notification
+            await NotificationModel.create({
+                accountId: driverId,
+                message: `New Bank Details Added`
+            })
             sendResponse(res, 201, true, 'Bank details added successfully')
             return
         }
@@ -123,6 +137,13 @@ export async function deleteBankDetails(req, res) {
         const bankDetails = getBankDetails.bankDetails.filter(bank => (bank._id).toString() !== bankId)
         getBankDetails.bankDetails = bankDetails
         await getBankDetails.save()
+
+        //new notification
+        await NotificationModel.create({
+            accountId: driverId,
+            message: `Bank Details Deleted`
+        })
+
         sendResponse(res, 200, true, 'Bank details deleted successfully')
 
     } catch (error) {
