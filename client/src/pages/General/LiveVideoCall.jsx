@@ -39,22 +39,26 @@ export default function LiveVideoCall() {
         endCall();
       });
 
-      socket.on("videoCallOffer", async (offer) => {
+      socket.on("videoCallOffer", async ({ offer, rideId }) => {
         if (!peerConnection.current) {
-          await startWebRTC();
+            await startWebRTC();
         }
-        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await peerConnection.current.createAnswer();
-        await peerConnection.current.setLocalDescription(answer);
-        socket.emit("answerVideoCall", { rideId, answer });
+    
+        if (peerConnection.current.signalingState !== "stable") {
+            await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+    
+            const answer = await peerConnection.current.createAnswer();
+            await peerConnection.current.setLocalDescription(answer);
+            socket.emit("answerVideoCall", { rideId, answer });
+        }
       });
 
-      socket.on("answerVideoCall", async (answer) => {
-        if (peerConnection.current) {
-          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+      socket.on("answerVideoCall", async ({ answer }) => {
+        if (peerConnection.current.signalingState === "have-local-offer") {
+            await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
         }
       });
-      
+
       socket.on("videoCallIceCandidate", async (candidate) => {
         if (peerConnection.current) {
           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));

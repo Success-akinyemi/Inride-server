@@ -156,43 +156,62 @@ export async function endVideoCall({ data, socket, res }) {
 }
 
 export async function videoCallOffer({ data, socket, res }) {
-    const { rideId, offer } = data
+    const { rideId, offer } = data;
     try {
         if (activeCalls[rideId]) {
-            generalNamespace.to(activeCalls[rideId].receiver).emit("videoCallOffer", offer);
+            const { receiver } = activeCalls[rideId];
+
+            // Ensure the receiver can accept the offer
+            generalNamespace.to(receiver).emit("videoCallOffer", {
+                success: true,
+                offer,
+                rideId
+            });
         }
     } catch (error) {
-        const message = 'Unable to make video call offer'
-        if(res) sendResponse(res, 500, false, message)
-        if(socket) socket.emit('videoCallOffer', { success: false, message })
+        const message = "Unable to send video call offer";
+        if (res) sendResponse(res, 500, false, message);
+        if (socket) socket.emit("videoCallOffer", { success: false, message });
     }
 }
 
 export async function answerVideoCall({ data, socket, res }) {
-    const { rideId, answer  } = data
+    const { rideId, answer } = data;
     try {
         if (activeCalls[rideId]) {
-            generalNamespace.to(activeCalls[rideId].caller).emit("answerVideoCall", answer);
+            const { caller } = activeCalls[rideId];
+
+            // Only emit answer if the caller is in 'have-local-offer' state
+            generalNamespace.to(caller).emit("answerVideoCall", {
+                success: true,
+                answer,
+                rideId
+            });
         }
     } catch (error) {
-        const message = 'Unable to answer video call offer'
-        if(res) sendResponse(res, 500, false, message)
-        if(socket) socket.emit('answerVideoCall', { success: false, message })
+        const message = "Unable to answer video call offer";
+        if (res) sendResponse(res, 500, false, message);
+        if (socket) socket.emit("answerVideoCall", { success: false, message });
     }
 }
 
 export async function videoCallIceCandidate({ data, socket, res }) {
-    const { rideId, candidate  } = data
+    const { rideId, candidate } = data;
     try {
         if (activeCalls[rideId]) {
-            generalNamespace.to(activeCalls[rideId].receiver).emit("videoCallIceCandidate", candidate);
+            const { caller, receiver } = activeCalls[rideId];
+
+            // Relay ICE candidates between both peers
+            generalNamespace.to(caller).emit("videoCallIceCandidate", candidate);
+            generalNamespace.to(receiver).emit("videoCallIceCandidate", candidate);
         }
     } catch (error) {
-        const message = 'Unable to exchange ice candidate'
-        if(res) sendResponse(res, 500, false, message)
-        if(socket) socket.emit('videoCallIceCandidate', { success: false, message })
+        const message = "Unable to exchange ICE candidate";
+        if (res) sendResponse(res, 500, false, message);
+        if (socket) socket.emit("videoCallIceCandidate", { success: false, message });
     }
 }
+
 
 // Utility functions for handling errors and responses
 function handleUnauthorized(socket, res) {
