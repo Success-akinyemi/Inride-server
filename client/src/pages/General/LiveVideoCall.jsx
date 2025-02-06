@@ -44,14 +44,15 @@ export default function LiveVideoCall() {
             await startWebRTC();
         }
     
-        if (peerConnection.current.signalingState !== "stable") {
+        // Ensure we are in the correct state before setting remote description
+        if (peerConnection.current.signalingState === "stable") {
             await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
     
             const answer = await peerConnection.current.createAnswer();
             await peerConnection.current.setLocalDescription(answer);
             socket.emit("answerVideoCall", { rideId, answer });
         }
-      });
+    });
 
       socket.on("answerVideoCall", async ({ answer }) => {
         if (peerConnection.current.signalingState === "have-local-offer") {
@@ -61,9 +62,16 @@ export default function LiveVideoCall() {
 
       socket.on("videoCallIceCandidate", async (candidate) => {
         if (peerConnection.current) {
-          await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+            try {
+                await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (error) {
+                console.error("Error adding ICE candidate:", error);
+            }
+        } else {
+            console.warn("PeerConnection not initialized yet, skipping ICE candidate.");
         }
-      });
+    });
+    
 
       
   useEffect(() => {
@@ -150,10 +158,15 @@ export default function LiveVideoCall() {
   };
 
   const startWebRTC = async () => {
-    if (peerConnection.current) return; // Prevent duplicate WebRTC connections
+    if (peerConnection.current) return;
 
     try {
         localStream.current = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        if (!localVideoRef.current) {
+            console.warn("Local video ref is null");
+            return;
+        }
 
         localVideoRef.current.srcObject = localStream.current;
 
@@ -161,7 +174,7 @@ export default function LiveVideoCall() {
             iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
         });
 
-        localStream.current.getTracks().forEach((track) => peerConnection.current.addTrack(track, localStream.current));
+        localStream.current.getTracks().forEach(track => peerConnection.current.addTrack(track, localStream.current));
 
         peerConnection.current.ontrack = (event) => {
             console.log("Receiving remote stream...");
@@ -182,25 +195,28 @@ export default function LiveVideoCall() {
 
     } catch (error) {
         console.error("Error accessing camera/microphone:", error);
+        alert("Failed to access camera/microphone. Please allow permissions.");
     }
 };
+
 
 const endCall = () => {
-    socket.emit("endVideoCall", { rideId });
+  socket.emit("endVideoCall", { rideId });
 
-    if (localStream.current) {
-        localStream.current.getTracks().forEach(track => track.stop());
-        localStream.current = null;
-    }
+  if (localStream.current) {
+      localStream.current.getTracks().forEach(track => track.stop());
+      localStream.current = null;
+  }
 
-    if (peerConnection.current) {
-        peerConnection.current.close();
-        peerConnection.current = null;
-    }
+  if (peerConnection.current) {
+      peerConnection.current.close();
+      peerConnection.current = null;  // ✅ Ensure it's reset
+  }
 
-    setCallStatus(null);
-    setCaller(null);
+  setCallStatus(null);
+  setCaller(null);
 };
+
 
   return (
     <div className="video-call">
