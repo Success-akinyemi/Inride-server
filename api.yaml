@@ -963,6 +963,29 @@ paths:
         - Driver Socket.io Request
       summary: Update driver online status - socket.io request - socket.emit('goOnline', data) socket.on('statusUpdated', serverResponse)
       description: This endpoint update the driver online status to true for passenger to see
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - type
+              - coordinates
+            properties:
+              type:
+                type: string
+                value: Point
+              coordinates:
+                type: array
+                required:
+                  - longitude
+                  - latitude
+                properties:
+                  - longitude:
+                    type: number
+                  - latitude:
+                    type: number
       responses:
         201:
           description: Drive online

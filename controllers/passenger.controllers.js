@@ -362,8 +362,8 @@ export async function requestRide({ socket, data, res }) {
           .slice(0, 3);
 
           //Arange Result
-          const results = await Promise.all(
-            topPrices.map(async (priceEntry) => {
+          const results = await Promise?.all(
+            topPrices?.map(async (priceEntry) => {
               const { driverId, price } = priceEntry;
               
               // Fetch driver details

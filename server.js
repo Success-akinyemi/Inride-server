@@ -29,6 +29,7 @@ import './connection/db.js';
 import * as driverController from './controllers/driver.controllers.js';
 import * as passengerController from './controllers/passenger.controllers.js';
 import * as generalLiveCallController from './controllers/liveCall.controllers.js';
+import * as generalLiveVideoCallController from './controllers/liveVideoCall.controllers.js';
 
 import { AuthenticateDriverSocket, AuthenticatePassengerSocket, AuthenticateUserSocket } from './middlewares/auth.js'; 
 
@@ -171,12 +172,21 @@ generalNamespace.on('connection', (socket) => {
   }
   console.log('CONNECTING USER ID TO SOCKET ID', generalConnections)
 
-  //sockets
+  //sockets for live call
   socket.on('callUser', (data) => generalLiveCallController.callUser({ data, socket }));
   socket.on('acceptCall', (data) => generalLiveCallController.acceptCall({ data, socket }));
   socket.on('rejectCall', (data) => generalLiveCallController.rejectCall({ data, socket }));
   socket.on('endCall', (data) => generalLiveCallController.endCall({ data, socket }));
 
+  //sockets for live call
+  socket.on('videocallUser', (data) => generalLiveVideoCallController.videocallUser({ data, socket }));
+  socket.on('acceptVideoCall', (data) => generalLiveVideoCallController.acceptVideoCall({ data, socket }));
+  socket.on('rejectVideoCall', (data) => generalLiveVideoCallController.rejectVideoCall({ data, socket }));
+  socket.on('endVideoCall', (data) => generalLiveVideoCallController.endVideoCall({ data, socket }));
+  socket.on('videoCallOffer', (data) => generalLiveVideoCallController.videoCallOffer({ data, socket }));
+  socket.on('answerVideoCall', (data) => generalLiveVideoCallController.answerVideoCall({ data, socket }));
+  socket.on('videoCallIceCandidate', (data) => generalLiveVideoCallController.videoCallIceCandidate({ data, socket }));
+  
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     if(accountId){

@@ -11,6 +11,7 @@ import RideChat from './pages/Passenger/RideChat'
 import DriverRideChat from './pages/Driver/DriverRideChat'
 import LiveCall from './pages/General/LiveCall'
 import './App.css'
+import LiveVideoCall from './pages/General/LiveVideoCall'
 
 function App() {
 
@@ -33,6 +34,7 @@ function App() {
 
         <Route path='/' element={<Test />} />
         <Route path='/general/liveCall' element={<LiveCall />} />
+        <Route path='/general/liveVideo' element={<LiveVideoCall />} />
 
         
       </Routes>
