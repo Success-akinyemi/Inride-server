@@ -354,6 +354,7 @@ export async function requestRide({ socket, data, res }) {
             const message = 'Could not get drivers for your ride request. Please try again';
             if (res) return sendResponse(res, 404, false, message);
             if (socket) socket.emit('rideRequested', { success: false, message });
+            return
           }
 
           // Get top 3 lowest prices
@@ -362,61 +363,68 @@ export async function requestRide({ socket, data, res }) {
           .slice(0, 3);
 
           //Arange Result
-          const results = await Promise?.all(
-            topPrices?.map(async (priceEntry) => {
-              const { driverId, price } = priceEntry;
-              
-              // Fetch driver details
-              const driver = await DriverModel.findOne({ driverId });
-              if (!driver) return null;
-        
-              // Fetch driver location
-              const driverLocation = await DriverLocationModel.findOne({ driverId });
-              const distance = driverLocation && ride.fromCoordinates.coordinates
-                ? calculateDistanceInMiles(ride.fromCoordinates.coordinates, driverLocation.location.coordinates)
-                : null;
-        
-              // Fetch car details, select active car or the first one if only one car exists
-              const carDetails = await CarDetailModel.findOne({ driverId });
-              const activeCar = carDetails?.cars.find(car => car.active) || carDetails?.cars[0];
-              
-              //Avearge time to reach
-              const averageSpeed = 30;
-              let estimatedTimeToPickup = null;
-              if (distance !== null) {
-                // Time in hours = distance / speed
-                const timeInHours = distance / averageSpeed;
-                // Convert time in hours to minutes
-                estimatedTimeToPickup = timeInHours * 60;
-                // Round the result to a reasonable number of minutes
-                estimatedTimeToPickup = Math.round(estimatedTimeToPickup); // Round to nearest minute
-              }
-
-              return {
-                driver: {
-                  firstName: driver.firstName,
-                  lastName: driver.lastName,
-                  email: driver.email,
-                  mobileNumber: driver.mobileNumber,
-                  totalRides: driver.totalRides,
-                  ratings: calculateAverageRating(driver.ratings),
-                  driverId: driver.driverId
-                },
-                car: activeCar ? {
-                  model: activeCar.model,
-                  year: activeCar.year,
-                  color: activeCar.color,
-                  registrationNumber: activeCar.registrationNumber,
-                  noOfSeats: activeCar.noOfSeats,
-                  carImgUrl: activeCar.carImgUrl,
-                } : null,
-                distanceToPickupPoint: distance !== null ? distance.toFixed(2) : 'Unknown',
-                estimatedTimeToPickup: estimatedTimeToPickup !== null ? `${estimatedTimeToPickup}` : 'Unknown',
-                price,
-                rideId
-              };
-            })
-          );
+          if(topPrices?.length > 0){
+            const results = await Promise?.all(
+              topPrices?.map(async (priceEntry) => {
+                const { driverId, price } = priceEntry;
+                
+                // Fetch driver details
+                const driver = await DriverModel.findOne({ driverId });
+                if (!driver) return null;
+          
+                // Fetch driver location
+                const driverLocation = await DriverLocationModel.findOne({ driverId });
+                const distance = driverLocation && ride.fromCoordinates.coordinates
+                  ? calculateDistanceInMiles(ride.fromCoordinates.coordinates, driverLocation.location.coordinates)
+                  : null;
+          
+                // Fetch car details, select active car or the first one if only one car exists
+                const carDetails = await CarDetailModel.findOne({ driverId });
+                const activeCar = carDetails?.cars.find(car => car.active) || carDetails?.cars[0];
+                
+                //Avearge time to reach
+                const averageSpeed = 30;
+                let estimatedTimeToPickup = null;
+                if (distance !== null) {
+                  // Time in hours = distance / speed
+                  const timeInHours = distance / averageSpeed;
+                  // Convert time in hours to minutes
+                  estimatedTimeToPickup = timeInHours * 60;
+                  // Round the result to a reasonable number of minutes
+                  estimatedTimeToPickup = Math.round(estimatedTimeToPickup); // Round to nearest minute
+                }
+  
+                return {
+                  driver: {
+                    firstName: driver.firstName,
+                    lastName: driver.lastName,
+                    email: driver.email,
+                    mobileNumber: driver.mobileNumber,
+                    totalRides: driver.totalRides,
+                    ratings: calculateAverageRating(driver.ratings),
+                    driverId: driver.driverId
+                  },
+                  car: activeCar ? {
+                    model: activeCar.model,
+                    year: activeCar.year,
+                    color: activeCar.color,
+                    registrationNumber: activeCar.registrationNumber,
+                    noOfSeats: activeCar.noOfSeats,
+                    carImgUrl: activeCar.carImgUrl,
+                  } : null,
+                  distanceToPickupPoint: distance !== null ? distance.toFixed(2) : 'Unknown',
+                  estimatedTimeToPickup: estimatedTimeToPickup !== null ? `${estimatedTimeToPickup}` : 'Unknown',
+                  price,
+                  rideId
+                };
+              })
+            );
+          } else {
+            const message = 'No Drivers Available '
+            if (res) return sendResponse(res, 404, false, message);
+            if (socket) socket.emit('rideRequested', { success: false, message });
+            return
+          }
 
           let passengerSocketId = passengerConnections.get(passenger.passengerId); // Fetch socket ID
           console.log('object driver connections:', passengerConnections);

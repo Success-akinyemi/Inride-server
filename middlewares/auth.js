@@ -296,7 +296,7 @@ export const AuthenticateDriverSocket = async (socket, next) => {
         const accountId = cookieObj['inrideaccessid'];
 
         //console.log('Cookies:', cookies);
-        console.log('AccessToken:', accessToken, 'AccountId:', accountId);
+        console.log('DRIVER','AccessToken:', accessToken, 'AccountId:', accountId);
 
         if (accessToken) {
             try {
