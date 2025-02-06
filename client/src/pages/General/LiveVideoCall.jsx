@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:10000/general", { 
+const socket = io(`${import.meta.env.VITE_APP_BASE_URL}/general`, { 
     transports: ["websocket"],
     withCredentials: true 
 });
@@ -136,15 +136,16 @@ export default function LiveVideoCall() {
     if (peerConnection.current) return; // Prevent duplicate WebRTC connections
 
     try {
-        localStream.current = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        // Request new media stream for each connection
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
-        localVideoRef.current.srcObject = localStream.current;
+        localVideoRef.current.srcObject = newStream;
 
         peerConnection.current = new RTCPeerConnection({
             iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
         });
 
-        localStream.current.getTracks().forEach((track) => peerConnection.current.addTrack(track, localStream.current));
+        newStream.getTracks().forEach((track) => peerConnection.current.addTrack(track, newStream));
 
         peerConnection.current.ontrack = (event) => {
             remoteVideoRef.current.srcObject = event.streams[0];
@@ -164,7 +165,6 @@ export default function LiveVideoCall() {
         console.error("Error accessing camera/microphone:", error);
     }
 };
-
 
 const endCall = () => {
     socket.emit("endVideoCall", { rideId });
