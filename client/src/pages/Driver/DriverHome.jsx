@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import io from 'socket.io-client';
 
-const socket = io(`${import.meta.env.VITE_APP_BASE_URL}/driver`, {
+const socket = io(`${import.meta.env.VITE_SOCKET_BASE_URL}/driver`, {
   transports: ['websocket'],
   withCredentials: true,
 });

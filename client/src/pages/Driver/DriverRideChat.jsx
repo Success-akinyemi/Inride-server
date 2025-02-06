@@ -8,7 +8,7 @@ const DriverRideChat = () => {
   const fileInputRef = useRef(null);
 
   // Connect to passenger namespace
-  const socket = io(`${import.meta.env.VITE_APP_BASE_URL}/driver`, {
+  const socket = io(`${import.meta.env.VITE_SOCKET_BASE_URL}/driver`, {
     transports: ["websocket"],
     withCredentials: true,
   });
