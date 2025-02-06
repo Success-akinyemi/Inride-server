@@ -17,70 +17,74 @@ export default function LiveVideoCall() {
   const peerConnection = useRef(null);
   const localStream = useRef(null);
 
-  //SOCKETS
-  socket.on("incomingVideoCall", (data) => {
-    console.log('INCOMING CALL', data)
-    setCaller(data?.message);
-    setProfileImg(data?.profileImg);
-    setCallStatus("Incoming call");
-  });
+      // Attach socket listeners
+      socket.on("incomingVideoCall", (data) => {
+        console.log("INCOMING CALL", data);
+        setCaller(data?.message);
+        setProfileImg(data?.profileImg);
+        setCallStatus("Incoming call");
+      });
 
-  socket.on("videoCallAccepted", async () => {
-    setCallStatus("Connected");
-    await startWebRTC();
-  });
+      socket.on("videoCallAccepted", async () => {
+        setCallStatus("Connected");
+        await startWebRTC();
+      });
 
-  socket.on("rejectVideoCall", () => {
-    setCallStatus("Rejected");
-    setTimeout(() => setCallStatus(null), 3000);
-  });
+      socket.on("videoCallRejected", () => {
+        setCallStatus("Rejected");
+        setTimeout(() => setCallStatus(null), 3000);
+      });
 
-  socket.on("videoCallEnded", () => {
-    endCall();
-  });
+      socket.on("videoCallEnded", () => {
+        endCall();
+      });
 
-  socket.on("videoCallOffer", async (offer) => {
-    if (!peerConnection.current) {
-      await startWebRTC();
-    }
-    await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
-    const answer = await peerConnection.current.createAnswer();
-    await peerConnection.current.setLocalDescription(answer);
-    socket.emit("answerVideoCall", { rideId, answer });
-  });
+      socket.on("videoCallOffer", async (offer) => {
+        if (!peerConnection.current) {
+          await startWebRTC();
+        }
+        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.current.createAnswer();
+        await peerConnection.current.setLocalDescription(answer);
+        socket.emit("answerVideoCall", { rideId, answer });
+      });
 
-  socket.on("answerVideoCall", async (answer) => {
-    await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
-  });
+      socket.on("answerVideoCall", async (answer) => {
+        if (peerConnection.current) {
+          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+        }
+      });
+      
+      socket.on("videoCallIceCandidate", async (candidate) => {
+        if (peerConnection.current) {
+          await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+      });
 
-  socket.on("videoCallIceCandidate", async (candidate) => {
-    if (peerConnection.current) {
-      await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
-    }
-  });
-
+      
   useEffect(() => {
-    socket.on("incomingVideoCall", (data) => {
+    const handleIncomingCall = (data) => {
+      console.log("INCOMING CALL", data);
       setCaller(data?.message);
       setProfileImg(data?.profileImg);
       setCallStatus("Incoming call");
-    });
+    };
 
-    socket.on("videoCallAccepted", async () => {
+    const handleCallAccepted = async () => {
       setCallStatus("Connected");
       await startWebRTC();
-    });
+    };
 
-    socket.on("videoCallRejected", () => {
+    const handleCallRejected = () => {
       setCallStatus("Rejected");
       setTimeout(() => setCallStatus(null), 3000);
-    });
+    };
 
-    socket.on("rejectVideoCall", () => {
+    const handleCallEnded = () => {
       endCall();
-    });
+    };
 
-    socket.on("videoCallOffer", async (offer) => {
+    const handleOffer = async (offer) => {
       if (!peerConnection.current) {
         await startWebRTC();
       }
@@ -88,26 +92,38 @@ export default function LiveVideoCall() {
       const answer = await peerConnection.current.createAnswer();
       await peerConnection.current.setLocalDescription(answer);
       socket.emit("answerVideoCall", { rideId, answer });
-    });
+    };
 
-    socket.on("answerVideoCall", async (answer) => {
-      await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
-    });
+    const handleAnswer = async (answer) => {
+      if (peerConnection.current) {
+        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    };
 
-    socket.on("videoCallIceCandidate", async (candidate) => {
+    const handleIceCandidate = async (candidate) => {
       if (peerConnection.current) {
         await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
       }
-    });
+    };
+
+    // Attach socket listeners
+    socket.on("incomingVideoCall", handleIncomingCall);
+    socket.on("videoCallAccepted", handleCallAccepted);
+    socket.on("videoCallRejected", handleCallRejected);
+    socket.on("videoCallEnded", handleCallEnded);
+    socket.on("videoCallOffer", handleOffer);
+    socket.on("answerVideoCall", handleAnswer);
+    socket.on("videoCallIceCandidate", handleIceCandidate);
 
     return () => {
-      socket.off("incomingVideoCall");
-      socket.off("videoCallAccepted");
-      socket.off("videoCallRejected");
-      socket.off("videoCallEnded");
-      socket.off("videoCallOffer");
-      socket.off("answerVideoCall");
-      socket.off("videoCallIceCandidate");
+      // Cleanup socket listeners when component unmounts
+      socket.off("incomingVideoCall", handleIncomingCall);
+      socket.off("videoCallAccepted", handleCallAccepted);
+      socket.off("videoCallRejected", handleCallRejected);
+      socket.off("videoCallEnded", handleCallEnded);
+      socket.off("videoCallOffer", handleOffer);
+      socket.off("answerVideoCall", handleAnswer);
+      socket.off("videoCallIceCandidate", handleIceCandidate);
     };
   }, []);
 
@@ -115,10 +131,6 @@ export default function LiveVideoCall() {
     socket.emit("videocallUser", { rideId });
     setCallStatus("Ringing");
   };
-
-  socket.on('videocallUser', (data) => {
-    console.log('videocallUser', data)
-  })
 
   const acceptCall = async () => {
     setCallStatus("Connected");
@@ -136,19 +148,21 @@ export default function LiveVideoCall() {
     if (peerConnection.current) return; // Prevent duplicate WebRTC connections
 
     try {
-        // Request new media stream for each connection
-        const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localStream.current = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
-        localVideoRef.current.srcObject = newStream;
+        localVideoRef.current.srcObject = localStream.current;
 
         peerConnection.current = new RTCPeerConnection({
             iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
         });
 
-        newStream.getTracks().forEach((track) => peerConnection.current.addTrack(track, newStream));
+        localStream.current.getTracks().forEach((track) => peerConnection.current.addTrack(track, localStream.current));
 
         peerConnection.current.ontrack = (event) => {
-            remoteVideoRef.current.srcObject = event.streams[0];
+            console.log("Receiving remote stream...");
+            if (remoteVideoRef.current) {
+                remoteVideoRef.current.srcObject = event.streams[0];
+            }
         };
 
         peerConnection.current.onicecandidate = (event) => {
@@ -171,6 +185,7 @@ const endCall = () => {
 
     if (localStream.current) {
         localStream.current.getTracks().forEach(track => track.stop());
+        localStream.current = null;
     }
 
     if (peerConnection.current) {

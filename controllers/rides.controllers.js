@@ -468,3 +468,20 @@ export async function reportForgotItem(req, res) {
     sendResponse(res, 500, false, 'Unable to report forgotten item')
   }
 }
+
+//ADMIN
+export async function getARide(req, res) {
+  const { rideId } = req.body
+  if(!rideId){
+    sendResponse(res, 400, false, 'Provide an Id')
+    return
+  }
+  try {
+    const getRide = await RideModel.findOne({ rideId })
+
+    sendResponse(res, 200, true, getRide)
+  } catch (error) {
+    console.log('UNABLE TO GET RIDE', error)
+    sendResponse(res, 500, false, 'Unable to get ride details')
+  }
+}

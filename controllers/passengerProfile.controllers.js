@@ -55,3 +55,21 @@ export async function updateProfile(req, res) {
         sendResponse(res, 500, false, 'An error occurred while updating the profile');
     }
 }
+
+
+//ADMIN
+export async function getAPassenger(req, res) {
+    const { passengerId } = req.body
+  if(!passengerId){
+    sendResponse(res, 400, false, 'Provide an Id')
+    return
+  }
+    try {
+      const getPassenger = await PassengerModel.findOne({ passengerId })
+  
+      sendResponse(res, 200, true, getPassenger)
+    } catch (error) {
+      console.log('UNABLE TO GET PASSENGER', error)
+      sendResponse(res, 500, false, 'Unable to get passenger details')
+    }
+  }
