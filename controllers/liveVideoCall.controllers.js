@@ -6,6 +6,7 @@ const activeCalls = {}; // Track video ongoing calls
 
 export async function videocallUser({ data, socket, res }) {
     const { rideId } = data;
+    console.log('RIDE CALL VIDEO', rideId)
     const { userType, accountId, firstName, lastName, profileImg } = socket.user;
 
     if (!rideId) {

@@ -132,6 +132,7 @@ export default function LiveVideoCall() {
   }, []);
 
   const startCall = () => {
+    console.log('START CALLL')
     socket.emit("videocallUser", { rideId });
     setCallStatus("Ringing");
   };
