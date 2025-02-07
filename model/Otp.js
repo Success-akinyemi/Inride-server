@@ -15,11 +15,11 @@ const OtpSchema = new mongoose.Schema(
       type: String,
       required: [true, "Account type is required"],
     },
-    createdAt: {
-      type: Date,
-      default: Date.now, // ✅ Correct way to set default
-      expires: 3600, // ✅ Expiry after 1 hour
-    },
+    createdAt:{
+        type: Date,
+        default: Date.now(),
+        expires: 3600 //1Hour
+    }
   },
   { timestamps: true }
 );
