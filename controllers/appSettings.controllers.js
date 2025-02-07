@@ -1,4 +1,5 @@
 import { sendResponse } from "../middlewares/utils.js"
+import AboutModel from "../model/About.js"
 import AppSettingsModel from "../model/AppSettings.js"
 import appSettingsModel from "../model/AppSettings.js"
 import FaqModel from "../model/Faq.js"
