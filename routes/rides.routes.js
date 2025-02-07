@@ -18,7 +18,7 @@ router.get('/getPassengerRides', AuthenticatePassenger, controllers.getPassenger
 router.get('/getUpcomingPassengerRides', AuthenticatePassenger, controllers.getUpcomingPassengerRides)
 router.get('/getPassengerRide', AuthenticatePassenger, controllers.getPassengerRide)
 
-router.get('/getARide', controllers.getARide)
+router.get('/getARide/:rideId', controllers.getARide)
 
 
 export default router

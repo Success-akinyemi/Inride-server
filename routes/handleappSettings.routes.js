@@ -12,9 +12,9 @@ router.post('/updateAbout', controllers.updateAbout)
 
 
 //GET
-router.post('/getAppSettings', controllers.getAppSettings)
-router.post('/getFaqs', controllers.getFaqs)
-router.post('/getAbout', controllers.getAbout)
+router.get('/getAppSettings', controllers.getAppSettings)
+router.get('/getFaqs', controllers.getFaqs)
+router.get('/getAbout', controllers.getAbout)
 
 
 export default router

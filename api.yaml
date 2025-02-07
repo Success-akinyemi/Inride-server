@@ -1406,11 +1406,13 @@ paths:
       tags:
         - Driver 
       summary: Update a car by driver
-      description: This endpoint update a car for driver
+      description: This endpoint update a car for driver. cardId is the Id of the car to be updated
       parameters:
         - name: body
           in: body
             properties:
+              carId:
+                type: string
               registrationNumber:
                 type: string
               year:

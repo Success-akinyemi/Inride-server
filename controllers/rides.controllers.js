@@ -469,9 +469,32 @@ export async function reportForgotItem(req, res) {
   }
 }
 
+//SAFTEY
+export async function saftey(req, res) {
+  const { safteyIssue, rideId } = req.body
+  const { passengerId } = req.user
+  if(!safteyIssue){
+    sendResponse(res, false, 400, 'Saftey Issue is required')
+    return
+  }
+  if(!rideId){
+    sendResponse(res, false, 400, 'Ride Id is required')
+    return
+  }
+  try {
+    const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      sendResponse(res, false, 404, 'Ride with this Id does not exist')
+      return
+    }
+  } catch (error) {
+    console.log('UNABEL TO REPORT RIDE SAFTEY ISSUSES', error)
+    sendResponse(res, 500, false, 'Unable to report ride saftey issues')
+  }
+}
 //ADMIN
 export async function getARide(req, res) {
-  const { rideId } = req.body
+  const { rideId } = req.params
   if(!rideId){
     sendResponse(res, 400, false, 'Provide an Id')
     return
