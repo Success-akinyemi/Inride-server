@@ -105,7 +105,7 @@ export async function completeDriverRegistration(req, res) {
     
 
     const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg } = req.files;
-    console.log('COMPLETE RETURNING DRIVER REG', req?.files)
+    console.log('COMPLETE RETURNING DRIVER REG', req.body, req?.files)
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
     if (!driverLincenseImgBack || !driverLincenseImgBack[0]) return sendResponse(res, 400, false, `Provide a valid photo of the back image of driver lincense`);
     if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
@@ -203,10 +203,11 @@ export async function completeDriverRegistration(req, res) {
         newCarDetails.cars.push(carData)
         await newCarDetails.save()
 
+        const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
         const newDriverLocation = await DriverLocationModel.create({
             driverId: driver?.driverId,
             name: `${driver?.firstName} ${driver?.lastName}`,
-            location: { type: 'Point', coordinates: coordinates },  //longitude first for GeoJSON
+            location: { type: 'Point', coordinates: parsedCoordinates },  //longitude first for GeoJSON
             isActive: true,
             status: 'online'
         })
@@ -407,7 +408,7 @@ export async function completeNewDriverRegistration(req, res) {
     //if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
 
     const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg, } = req.files;
-    console.log('COMPLETE NEW DRIVER REG', req?.files)
+    console.log('COMPLETE NEW DRIVER REG',req.body, req?.files)
 
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
     if (!driverLincenseImgBack || !driverLincenseImgBack[0]) return sendResponse(res, 400, false, `Provide a valid photo of the back image of driver lincense`);
@@ -512,10 +513,11 @@ export async function completeNewDriverRegistration(req, res) {
         newCarDetails.cars.push(carData)
         await newCarDetails.save()
 
+        const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
         const newDriverLocation = await DriverLocationModel.create({
             driverId: newDriver?.driverId,
             name: `${newDriver?.firstName} ${newDriver?.lastName}`,
-            location: { type: 'Point', coordinates: coordinates },  //longitude first for GeoJSON
+            location: { type: 'Point', coordinates: parsedCoordinates },  //longitude first for GeoJSON
             isActive: true,
             status: 'online'
         })
