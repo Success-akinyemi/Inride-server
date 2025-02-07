@@ -94,7 +94,7 @@ export async function verifyPassengerToDriverAccountOtp(req, res) {
 
 //Complete registration for driver who created account with passenger account
 export async function completeDriverRegistration(req, res) {
-    const {ssn, opreatingCity, carDetails, mobileNumber, pricePerKm, coordinates } = req.body
+    const {ssn, opreatingCity, carDetails, mobileNumber, pricePerKm, coordinates, email } = req.body
     //const accountId = req.cookies.inrideaccessid;
 
     if(!opreatingCity){
@@ -191,6 +191,7 @@ export async function completeDriverRegistration(req, res) {
         driver.driverLincenseImgBack = driverLicenseImgBackUrl
         driver.profileImg = profileImgUrl
         driver.pricePerKm = pricePerKm,
+        driver.email = email
         driver.status = 'online'
         driver.otpCode = ''
 
