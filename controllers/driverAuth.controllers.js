@@ -254,6 +254,9 @@ export async function completeDriverRegistration(req, res) {
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.log('UNABLE TO COMPLETE PASSENGER TO DRIVER REGISTRATION', error)
+        if (error.code === 11000 && error.keyPattern && error.keyPattern['cars.registrationNumber']) {
+            return sendResponse(res, 400, false, 'Car registration number already exists. Please use a different one.');
+        }
         sendResponse(res, 500, false, 'Uanble to complete driver registration')
     }
 }
@@ -560,6 +563,9 @@ export async function completeNewDriverRegistration(req, res) {
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.log('UNABLE TO COMPLETE NEW DRIVER REGISTRATION', error)
+        if (error.code === 11000 && error.keyPattern && error.keyPattern['cars.registrationNumber']) {
+            return sendResponse(res, 400, false, 'Car registration number already exists. Please use a different one.');
+        }
         return sendResponse(res, 500, false, 'Unable to complete driver registration')
     }
 }
@@ -830,6 +836,7 @@ export async function del(req, res) {
         //const deletecars = await CarDetailModel.deleteMany() 
         const deleteOtp = await OtpModel.deleteMany()
         const getOtp = await OtpModel.find()
+        const deleteCars = await CarDetailModel.deleteMany()
         res.status(200).json({ success: true, getOtp })
     } catch (error) {
         console.log('object', error)
