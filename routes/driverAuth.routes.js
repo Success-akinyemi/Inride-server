@@ -31,7 +31,7 @@ router.post('/verifyLoginOtp', controllers.verifyLoginOtp)
 router.post('/verifyToken', controllers.verifyToken)
 
 
-//router.post('/del', controllers.del)
+router.post('/del', controllers.del)
 router.post('/createnew', controllers.createnew)
 
 

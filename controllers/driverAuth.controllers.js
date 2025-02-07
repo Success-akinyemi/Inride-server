@@ -826,10 +826,11 @@ export async function verifyToken(req, res) {
  */
 export async function del(req, res) {
     try {
-        const deletepas = await DriverModel.deleteMany() 
-        const deletecars = await CarDetailModel.deleteMany() 
-
-        res.status(200).json({ success: true})
+        //const deletepas = await DriverModel.deleteMany() 
+        //const deletecars = await CarDetailModel.deleteMany() 
+        const deleteOtp = await OtpModel.deleteMany()
+        const getOtp = await OtpModel.find()
+        res.status(200).json({ success: true, getOtp })
     } catch (error) {
         console.log('object', error)
     }

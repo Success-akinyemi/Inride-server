@@ -1,27 +1,28 @@
 import mongoose from "mongoose";
 
-const OtpSchema = new mongoose.Schema({
+const OtpSchema = new mongoose.Schema(
+  {
     otp: {
-        type: String,
-        required: [true, 'Otp code is required'],
-        unique: [true, 'Otp code already exist']
+      type: String,
+      required: [true, "Otp code is required"],
+      unique: [true, "Otp code already exists"],
     },
     mobileNumber: {
-        type: String,
-        required: [true, 'Mobile number is required']
+      type: String,
+      required: [true, "Mobile number is required"],
     },
     accountType: {
-        type: String,
-        required: [ true, 'Accout type is required' ]
+      type: String,
+      required: [true, "Account type is required"],
     },
-    createdAt:{
-        type: Date,
-        default: Date.now(),
-        expires: 3600 //10 minutes
+    createdAt: {
+      type: Date,
+      default: Date.now, // ✅ Correct way to set default
+      expires: 3600, // ✅ Expiry after 1 hour
     },
-},
-{ timestamps: true }
-)
+  },
+  { timestamps: true }
+);
 
-const OtpModel = mongoose.model('otp', OtpSchema)
-export default OtpModel
+const OtpModel = mongoose.model("Otp", OtpSchema);
+export default OtpModel;
