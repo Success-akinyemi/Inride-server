@@ -236,13 +236,13 @@ export async function getCarDetail(req, res) {
       if(!getCarDetails){
           sendResponse(res, 404, false, 'Car details not found')
           return
-      }
-      const carDetail = getCarDetails.cars.find(car => car._id === carId)
+        }
+      const carDetail = getCarDetails.cars.find(car => car._id.toString() === carId)
       if(!carDetail){
-          sendResponse(res, 404, false, 'Car details not found')
+          sendResponse(res, 404, false, 'Car detail not found')
           return
       }
-      sendResponse(res, 200, true, 'Car details fetched successfully', carDetail)
+      sendResponse(res, 200, true, carDetail, 'Car details fetched successfully')
   } catch (error) {
       console.log('ERROR FETCHING CAR DETAILS', error)
       sendResponse(res, 500, false, 'Unable to fetch car details')
@@ -366,10 +366,125 @@ export async function unBlockCar(req, res) {
 
 //GET CAR STATS ALL RENTAL CARS ALL PERSONAL CARS COMPARE TO LAST MONTH
 export async function carStats(req, res) {
+    const { stats = '30days' } = req.params;
+
+    const getFilterDates = (value) => {
+        const today = new Date();
+        let startDate, endDate, previousStartDate, previousEndDate;
+
+        switch (value) {
+            case 'today':
+                endDate = new Date(today);
+                startDate = new Date(today);
+                startDate.setDate(startDate.getDate() - 1);
+                previousEndDate = new Date(startDate);
+                previousStartDate = new Date(previousEndDate);
+                previousStartDate.setDate(previousStartDate.getDate() - 1);
+                break;
+
+            case '7days':
+                endDate = new Date(today);
+                startDate = new Date(today);
+                startDate.setDate(startDate.getDate() - 7);
+                previousEndDate = new Date(startDate);
+                previousStartDate = new Date(previousEndDate);
+                previousStartDate.setDate(previousStartDate.getDate() - 7);
+                break;
+
+            case '30days':
+                endDate = new Date(today);
+                startDate = new Date(today);
+                startDate.setDate(startDate.getDate() - 30);
+                previousEndDate = new Date(startDate);
+                previousStartDate = new Date(previousEndDate);
+                previousStartDate.setDate(previousStartDate.getDate() - 30);
+                break;
+
+            case '1year':
+                endDate = new Date(today);
+                startDate = new Date(today);
+                startDate.setFullYear(startDate.getFullYear() - 1);
+                previousEndDate = new Date(startDate);
+                previousStartDate = new Date(previousEndDate);
+                previousStartDate.setFullYear(previousStartDate.getFullYear() - 1);
+                break;
+
+            case 'alltime':
+                startDate = new Date(0); // Unix epoch start
+                endDate = new Date();
+                previousStartDate = null;
+                previousEndDate = null;
+                break;
+
+            default:
+                throw new Error('Invalid stats value');
+        }
+
+        return { startDate, endDate, previousStartDate, previousEndDate };
+    };
+
+    const calculatePercentageChange = (current, previous) => {
+        if (previous === 0) return { change: 100, percentage: '+' }; // Handle division by zero
+        const change = ((current - previous) / previous) * 100;
+        return {
+            change: parseFloat(change.toFixed(2)),
+            percentage: change >= 0 ? '+' : '-',
+        };
+    };
+
     try {
-        
+        const { startDate, endDate, previousStartDate, previousEndDate } = getFilterDates(stats);
+
+        // Aggregation pipeline with `$unwind` to extract individual cars
+        const aggregateCars = async (start, end) => {
+            return await CarDetailModel.aggregate([
+                { $unwind: "$cars" }, // Flatten the cars array
+                { $match: { "cars.createdAt": { $gte: start, $lte: end } } },
+                {
+                    $group: {
+                        _id: "$cars.method",
+                        totalCars: { $sum: 1 },
+                    },
+                },
+            ]);
+        };
+
+        const currentCarData = await aggregateCars(startDate, endDate);
+        let previousCarData = [];
+        if (previousStartDate && previousEndDate) {
+            previousCarData = await aggregateCars(previousStartDate, previousEndDate);
+        }
+
+        const getCarCount = (data, method) => {
+            const entry = data.find(item => item._id === method);
+            return entry ? entry.totalCars : 0;
+        };
+
+        const currentPersonalCarCount = getCarCount(currentCarData, 'Personal');
+        const previousPersonalCarCount = getCarCount(previousCarData, 'Personal');
+        const currentRentalCarCount = getCarCount(currentCarData, 'Rental');
+        const previousRentalCarCount = getCarCount(previousCarData, 'Rental');
+
+        const statsComparison = [
+            {
+                current: currentPersonalCarCount,
+                previous: previousPersonalCarCount,
+                id: 'totalpersonnalcar',
+                name: 'Personal cars',
+                ...calculatePercentageChange(currentPersonalCarCount, previousPersonalCarCount),
+            },
+            {
+                current: currentRentalCarCount,
+                previous: previousRentalCarCount,
+                id: 'totalrentalcar',
+                name: 'Rental cars',
+                ...calculatePercentageChange(currentRentalCarCount, previousRentalCarCount),
+            },
+        ];
+
+        sendResponse(res, 200, true, statsComparison);
     } catch (error) {
-        console.log('UNABLE TO GET CAR STATS', error)
-        sendResponse(res, 500, false, 'Unable to get cars stats')
+        console.error('UNABLE TO GET CAR STATS', error);
+        sendResponse(res, 500, false, 'Unable to get cars stats');
     }
 }

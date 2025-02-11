@@ -6,7 +6,7 @@ import { AuthenticateAdmin, VerifyAdminAccount } from '../middlewares/auth.js'
 const router = express.Router()
 
 //GET
-router.get('/activeUsers', AuthenticateAdmin, VerifyAdminAccount, controllers.activeUsers)
+router.get('/activeUsers/:stats', AuthenticateAdmin, VerifyAdminAccount, controllers.activeUsers)
 router.get('/getTopLocations', AuthenticateAdmin, VerifyAdminAccount, controllers.getTopLocations)
 
 

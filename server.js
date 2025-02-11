@@ -22,6 +22,8 @@ import driverProfileRoutes from './routes/driverProfile.routes.js';
 import carRoutes from './routes/car.routes.js';
 import adminAuthRoutes from './routes/adminAuth.routes.js';
 import statsRoutes from './routes/stats.routes.js';
+import adminStaffRoutes from './routes/adminStaffs.routes.js';
+
 
 
 
@@ -96,6 +98,8 @@ app.use('/api/driver', driverRoutes);
 
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/admin/staff', adminStaffRoutes);
+
 
 
 

@@ -11,7 +11,7 @@ import axios from 'axios';
 function stringToNumberArray(code) {
     return code.split('').map(Number);
 }
-const MAX_LOGIN_ATTEMPTS = 2
+const MAX_LOGIN_ATTEMPTS = 4
 const BLOCK_DURATION_HOURS = 6
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 

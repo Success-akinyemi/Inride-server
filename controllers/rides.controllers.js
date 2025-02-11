@@ -2,6 +2,7 @@ import { sendResponse } from "../middlewares/utils.js";
 import AppSettingsModel from "../model/AppSettings.js";
 import ForgotItemModel from "../model/ForgotItem.js";
 import RideModel from "../model/Rides.js";
+import RideTransactionModel from "../model/RideTransactions.js";
 import SafteyModel from "../model/Saftey.js";
 
 // GET ALL RIDES OF A DRIVER
@@ -585,5 +586,226 @@ export async function getARide(req, res) {
   } catch (error) {
     console.log('UNABLE TO GET RIDE', error)
     sendResponse(res, 500, false, 'Unable to get ride details')
+  }
+}
+
+//GET RIDES AND TRANSACTION STATS
+export async function getRideStats(req, res) {
+  const { stats = '30days' } = req.params;
+
+  const getFilterDates = (value) => {
+      const today = new Date();
+      let startDate, endDate, previousStartDate, previousEndDate;
+
+      switch (value) {
+          case 'today':
+              endDate = new Date(today);
+              startDate = new Date(today);
+              startDate.setDate(startDate.getDate() - 1);
+              previousEndDate = new Date(startDate);
+              previousStartDate = new Date(previousEndDate);
+              previousStartDate.setDate(previousStartDate.getDate() - 1);
+              break;
+
+          case '7days':
+              endDate = new Date(today);
+              startDate = new Date(today);
+              startDate.setDate(startDate.getDate() - 7);
+              previousEndDate = new Date(startDate);
+              previousStartDate = new Date(previousEndDate);
+              previousStartDate.setDate(previousStartDate.getDate() - 7);
+              break;
+
+          case '30days':
+              endDate = new Date(today);
+              startDate = new Date(today);
+              startDate.setDate(startDate.getDate() - 30);
+              previousEndDate = new Date(startDate);
+              previousStartDate = new Date(previousEndDate);
+              previousStartDate.setDate(previousStartDate.getDate() - 30);
+              break;
+
+          case '1year':
+              endDate = new Date(today);
+              startDate = new Date(today);
+              startDate.setFullYear(startDate.getFullYear() - 1);
+              previousEndDate = new Date(startDate);
+              previousStartDate = new Date(previousEndDate);
+              previousStartDate.setFullYear(previousStartDate.getFullYear() - 1);
+              break;
+
+          case 'alltime':
+              startDate = new Date(0); // Unix epoch start
+              endDate = new Date();
+              previousStartDate = null;
+              previousEndDate = null;
+              break;
+
+          default:
+              throw new Error('Invalid stats value');
+      }
+
+      return { startDate, endDate, previousStartDate, previousEndDate };
+  };
+
+  const calculatePercentageChange = (current, previous) => {
+      if (previous === 0) return { change: 100, percentage: '+' }; // Handle division by zero
+      const change = ((current - previous) / previous) * 100;
+      return {
+          change: parseFloat(change.toFixed(2)),
+          percentage: change >= 0 ? '+' : '-',
+      };
+  };
+
+  try {
+      const { startDate, endDate, previousStartDate, previousEndDate } = getFilterDates(stats);
+              //FOR RIDES
+              const selectedRidesPeriodData = await RideModel.aggregate([
+                { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+                {
+                    $group: {
+                        _id: null,
+                        totalRide: { $sum: 1 },
+                        activeRide: { $sum: { $cond: [{ $eq: ["$status", 'Active'] }, 1, 0] } },
+                        completedRide: { $sum: { $cond: [{ $eq: ["$status", 'Complete'] }, 1, 0] } },
+                        canceledRide: { $sum: { $cond: [{ $eq: ["$status", 'Canceled'] }, 1, 0] } },
+                    },
+                },
+            ]);
+    
+            let ridesPreviousPeriodData = [];
+            if (previousStartDate && previousEndDate) {
+              ridesPreviousPeriodData = await RideModel.aggregate([
+                    { $match: { createdAt: { $gte: previousStartDate, $lte: previousEndDate } } },
+                    {
+                      $group: {
+                        _id: null,
+                        totalRide: { $sum: 1 },
+                        activeRide: { $sum: { $cond: [{ $eq: ["$status", 'Active'] }, 1, 0] } },
+                        completedRide: { $sum: { $cond: [{ $eq: ["$status", 'Complete'] }, 1, 0] } },
+                        canceledRide: { $sum: { $cond: [{ $eq: ["$status", 'Canceled'] }, 1, 0] } },
+                    },
+                    },
+                ]);
+            }
+    
+            //FOR TRANSACTIONS
+            const selectedTransactionPeriodData = await RideTransactionModel.aggregate([
+                { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+                {
+                    $group: {
+                        _id: null,
+                        totalTransaction: { $sum: 1 },
+                        successFulTransaction: { $sum: { $cond: [{ $eq: ["$status", 'Successful'] }, 1, 0] } },
+                        pendingTransaction: { $sum: { $cond: [{ $eq: ["$status", 'Pending'] }, 1, 0] } },
+                        failedTransaction: { $sum: { $cond: [{ $eq: ["$status", 'Failed'] }, 1, 0] } },
+                    },
+                },
+            ]);
+    
+            let transactionPreviousPeriodData = [];
+            if (previousStartDate && previousEndDate) {
+                transactionPreviousPeriodData = await RideTransactionModel.aggregate([
+                    { $match: { createdAt: { $gte: previousStartDate, $lte: previousEndDate } } },
+                    {
+                      $group: {
+                        _id: null,
+                        totalTransaction: { $sum: 1 },
+                        successFulTransaction: { $sum: { $cond: [{ $eq: ["$status", 'Successful'] }, 1, 0] } },
+                        pendingTransaction: { $sum: { $cond: [{ $eq: ["$status", 'Pending'] }, 1, 0] } },
+                        failedTransaction: { $sum: { $cond: [{ $eq: ["$status", 'Failed'] }, 1, 0] } },
+                    },
+                    },
+                ]);
+            }
+
+        // Ensure data structure
+        //for Rides
+        const currentRideData = selectedRidesPeriodData[0] || { totalRide: 0, activeRide: 0, completedRide: 0, canceledRide: 0 };
+        const previousRideData = ridesPreviousPeriodData[0] || { totalRide: 0, activeRide: 0, completedRide: 0, canceledRide: 0 };
+
+        //for Transactions
+        const currentTransactionDriverData = selectedTransactionPeriodData[0] || { totalTransaction: 0, successFulTransaction: 0, pendingTransaction: 0, failedTransaction: 0 };
+        const previousTransactionDriverData = transactionPreviousPeriodData[0] || { totalTransaction: 0, successFulTransaction: 0, pendingTransaction: 0, failedTransaction: 0 };
+        
+        const statsComparison = [
+          {
+              totalCurrentRide: currentRideData.totalRide,
+              totalPreviousRide: previousRideData.totalRide,
+              id: 'totalride',
+              name: 'Total ride',
+              ...calculatePercentageChange(currentRideData.totalRide, previousRideData.totalRide),
+          },
+          {
+              totalCurrentTransaction: currentTransactionDriverData.totalTransaction,
+              totalPreviousTransaction: previousTransactionDriverData.totalTransaction,
+              id: 'totaltransaction',
+              name: 'Total transaction volume',
+              ...calculatePercentageChange(currentTransactionDriverData.totalTransaction, previousTransactionDriverData.totalTransaction),
+          },
+        ]
+
+      sendResponse(res, 200, true, statsComparison);
+  } catch (error) {
+      console.error('UNABLE TO GET CAR STATS', error);
+      sendResponse(res, 500, false, 'Unable to get cars stats');
+  }
+}
+
+//GET ALL TRANSACTIONS
+export async function getTransactions(req, res) {
+  const { limit = 10, page = 1, startDate, endDate, status } = req.query;
+
+  try {
+    // Build the query object
+    const query = { };
+
+    // Handle date filtering
+    if (startDate && endDate) {
+      query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    } else if (startDate) {
+      query.createdAt = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      query.createdAt = { $lte: new Date(endDate) };
+    }
+
+    // Handle ride type filtering
+    if (status === 'Pending') {
+      query.status = 'Pending';
+    }
+    if (status === 'Successful') {
+      query.status = 'Successful';
+    }
+    if (status === 'Failed') {
+      query.status = 'Failed';
+    }
+    if (!status) {
+      
+    }
+
+    // Calculate the number of documents to skip
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Fetch rides from the database
+    const transactionData = await RideTransactionModel.find(query)
+      .sort({ createdAt: -1 }) // Sort by latest transactions
+      .skip(skip) // Skip the documents for pagination
+      .limit(Number(limit)); // Limit the results for pagination
+
+
+    // Get the total count of transactions for pagination metadata
+    const totalTransactions = await RideTransactionModel.countDocuments(query);
+
+    return sendResponse(res, 200, true, {
+      transaction: transactionData,
+      totalTransactions,
+      totalPages: Math.ceil(totalTransactions / limit),
+      currentPage: Number(page),
+      },
+      'Transaction fetched successfully',
+    );
+  } catch (error) {
+    console.error('UNABLE TO GET TRANSACTIONS DATA', error);
+    return sendResponse(res, 500, false, 'Unable to get transaction data');
   }
 }

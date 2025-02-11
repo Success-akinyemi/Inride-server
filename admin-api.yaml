@@ -281,7 +281,7 @@ paths:
         - name: stats
           in: path
           required: false
-          description: The type of stats to fetch (e.g., today, 7days, 30days). 30days by default
+          description: The type of stats to fetch (e.g., today, 7days, 30days, 1year, alltime). 30days by default
           schema:
             type: string
         - name: accountType
@@ -416,7 +416,73 @@ paths:
           description: user error
         500: 
           description: server error
-                
+
+  /api/rides/getRideStats/{stats}:
+    get:
+      tags:
+        - Stats
+      summary: Get Stats of ride and transactions
+      description: The endpoint provides stats on rides and transactions
+      parameters:
+        - name: stats
+          in: path
+          required: false
+          description: The type of stats to fetch (e.g., today, 7days, 30days, 1year, alltime). 30days by default
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/rides/getTransactions:
+    get:
+      tags:
+        - Transactions / Rides
+      summary: Get transaction data
+      description: The endpoint provides transaction data based on the given criteria.
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          description: start date to begin fetching data
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          description: end date to stop fetching data
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: status of transaction (Pending, Successful, Failed). leave blank to get all
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
 #PASSENGERS
   /api/passenger/profile/getPassengers:
     get:
@@ -794,3 +860,24 @@ paths:
           description: User error
         500:
           description: Server error
+
+  /api/driver/car/carStats/{stats}:
+    get:
+      tags:
+        - Stats
+      summary: Get Stats of cars
+      description: The endpoint provides stats cars.
+      parameters:
+        - name: stats
+          in: path
+          required: false
+          description: The type of stats to fetch (e.g., today, 7days, 30days, 1year, alltime). 30days by default
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error

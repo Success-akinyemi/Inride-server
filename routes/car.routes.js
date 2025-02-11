@@ -21,7 +21,9 @@ router.get('/getCarDetails', AuthenticateDriver, VerifyAccount, controllers.getC
 
 router.get('/getAllCar', AuthenticateAdmin, VerifyAdminAccount, controllers.getAllCar);
 router.get('/getACarDetail/:carId/:driverId', AuthenticateAdmin, VerifyAdminAccount, controllers.getCarDetail);
-router.get('/getDriverCarDetails/:driverId', AuthenticateAdmin, VerifyAdminAccount, controllers.getCarDetail);
+router.get('/getDriverCarDetails/:driverId', AuthenticateAdmin, VerifyAdminAccount, controllers.getCarDetails);
+router.get('/carStats/:stats', AuthenticateAdmin, VerifyAdminAccount, controllers.carStats);
+
 
 
 
