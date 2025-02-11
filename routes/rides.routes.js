@@ -24,7 +24,7 @@ router.get('/getRides', AuthenticateAdmin, VerifyAdminAccount, controllers.getAR
 router.get('/getARide/:rideId', AuthenticateAdmin, VerifyAdminAccount, controllers.getARide)
 router.get('/passengerRides/:passengerId', AuthenticateAdmin, VerifyAdminAccount, controllers.getPassengerRides)
 router.get('/driverRides/:driverId', AuthenticateAdmin, VerifyAdminAccount, controllers.getDriverRides)
-router.get('/getRideStats', AuthenticateAdmin, VerifyAdminAccount, controllers.getRideStats)
+router.get('/getRideStats/:stats', AuthenticateAdmin, VerifyAdminAccount, controllers.getRideStats)
 router.get('/getTransactions', AuthenticateAdmin, VerifyAdminAccount, controllers.getTransactions)
 
 

@@ -98,6 +98,10 @@ const DriverSchema = new mongoose.Schema({
     activeRide: {
         type: String
     },
+    warningCount: {
+        type: Number,
+        default: 0 //max 3
+    },
 
     password: {
         type: String

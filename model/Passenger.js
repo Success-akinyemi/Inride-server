@@ -37,6 +37,10 @@ const PassengerSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    warningCount: {
+        type: Number,
+        default: 0 //max 3
+    },
 
     password: {
         type: String

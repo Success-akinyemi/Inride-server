@@ -37,6 +37,10 @@ tags:
     description: Endpoints for driver
   - name: Car
     description: Endpoints for car
+  - name: Ride chat
+    description: Endpoints for ride chats
+  - name: Staff
+    description: Endpoints for staff
 
 
 paths:
@@ -313,8 +317,8 @@ paths:
     get:
       tags:
         - Transactions / Rides
-      summary: Get Stats of active users
-      description: The endpoint provides stats on active users based on the given criteria.
+      summary: Get All rides
+      description: The endpoint provides all ride data based on the given criteria.
       parameters:
         - name: limit
           in: query
@@ -881,3 +885,209 @@ paths:
           description: user error
         500: 
           description: server error
+
+#RIDE CHATS
+  /api/rideChat/getChats:
+    get:
+      tags:
+        - Ride chat
+      summary: Get chats
+      description: The endpoint get all chats messages. Passing in possible queries
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          description: start date to begin fetching data
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          description: end date to stop fetching data
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: to get all chats based on status ('Active', 'Complete', 'inProgress', 'Canceled')
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/rideChat/getAchat/{rideId}:
+    get:
+      tags:
+        - Ride chat
+      summary: Get a specific ride chat details
+      description: The endpoint provides details on a ride chat messages.
+      parameters:
+        - name: rideId
+          in: path
+          required: false
+          description: The rideId 
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/rideChat/sendChatWarning:
+    post:
+      tags:
+        - Ride chat
+      summary: send warning to either party (passenger/driver) of a chat
+      description: Endpoint to send warning to either passenger or driver of a chat. accountType options, accountType =('Passenger', 'Driver')
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - accountId
+              - reason
+              - accountType
+            properties:
+              accountId:
+                type: string
+              reason:
+                type: string
+              accountType:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+#STAFFS
+  /api/admin/staff/getProfile:
+    get:
+      tags:
+        - Staff
+      summary: Get staff profile
+      description: Endpoint to get staff profile
+      responses:
+        200:
+          description: Success - true
+        400:
+          description: error - false
+        500:
+          description: Server error
+
+  /api/admin/staff/getAStaff/{adminId}:
+    get:
+      tags:
+        - Staff
+      summary: Get a specific staff
+      description: The endpoint provides details on a staff
+      parameters:
+        - name: adminId
+          in: path
+          required: false
+          description: The adminId of te staff
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/admin/staff/updateProfile:
+    post:
+      tags:
+        - Staff
+      summary: Staff update profile
+      description: Endpoint for staff to update account.
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: firstName
+          in: formData
+          required: false
+          type: string
+        - name: lastName
+          in: formData
+          required: false
+          type: string
+        - name: bio
+          in: formData
+          required: fasle
+          type: string
+        - name: country
+          in: formData
+          required: fasle
+          type: string
+        - name: timezone
+          in: formData
+          required: fasle
+          type: string
+        - name: profileImg
+          in: formData
+          required: fasle
+          type: file
+      responses:
+        200:
+          description: success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/staff/updatePassword:
+    post:
+      tags:
+        - Staff
+      summary: Update account password 
+      description: Endpoint to update account password
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - password
+              - confirmPassword
+              - oldPassword
+            properties:
+              password:
+                type: string
+              confirmPassword:
+                type: string
+              oldPassword:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error

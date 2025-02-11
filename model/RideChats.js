@@ -22,7 +22,9 @@ const RideChatSchema = new mongoose.Schema({
             },
         }
     ]
-})
+},
+{ timestamps: true }
+)
 
 const RideChatModel = mongoose.model('RideChat', RideChatSchema)
 export default RideChatModel

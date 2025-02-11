@@ -251,7 +251,7 @@ export async function login(req, res) {
 
         //const comparePassword = password
         const isMatch  = await getUser.matchPassword(req.body.password)
-        console.log('MATCH', isMatch, req.body.password)
+        //console.log('MATCH', isMatch, req.body.password)
         if(!isMatch){
             if(getUser?.noOfLoginAttempts !== MAX_LOGIN_ATTEMPTS){
                 getUser.noOfLoginAttempts += 1

@@ -35,10 +35,19 @@ const AdminUserSchema = new mongoose.Schema({
         type: String,
         default: 'Staff',
     },
+    roleDescription:{
+        type: String
+    },
     permissions: {
         type: Array,
     },
     bio:{
+        type: String
+    },
+    country:{
+        type: String
+    },
+    timezone:{
         type: String
     },
     lastLogin:{

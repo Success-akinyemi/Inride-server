@@ -24,6 +24,10 @@ const AppSettingsSchema = new mongoose.Schema({
         type: String,
         default: 'USD'
     },
+    warningCount: {
+        type: Number,
+        default: 3 //max number of warning before a account is banned
+    },
 },
 { timestamps: true}
 )
