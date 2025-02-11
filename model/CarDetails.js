@@ -33,7 +33,16 @@ const CarDetailSchema = new mongoose.Schema({
             },
             active: {
                 type: Boolean,
-                default: false
+                default: true
+            },
+            approved: {
+                type: Boolean,
+                default: true
+            },
+            method: {
+                type: String,
+                default: 'Personal',
+                enum: ['Personal', 'Rental']
             }
         }
     ]

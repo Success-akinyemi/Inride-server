@@ -21,7 +21,7 @@ export async function updateLocation({ data, socket, res }) {
       { driverId },
       {
         location: data,
-        isActive: true,
+        //isActive: true,
       },
       { upsert: true }
     );
@@ -39,13 +39,13 @@ export async function updateLocation({ data, socket, res }) {
 // GO ONLINE
 export async function goOnline({ data, socket, res }) {
   const { driverId, locationData } = socket.user;
-
+  console.log('object')
   try {
     const driverLoc = await DriverLocationModel.findOne({ driverId })
     if(driverLoc){
       driverLoc.isActive = true
       driverLoc.status = 'online'
-      if(locationData) driverLoc.location = locationData
+      //if(locationData) driverLoc.location = locationData
       await driverLoc.save()
     }
     const driverStats = await DriverModel.findOne({ driverId })

@@ -75,10 +75,8 @@ function DriverHome() {
   }, []);
 
   const goOnline = () => {
-    socket.emit('goOnline',(data) => {
-      console.log(data.message);
-      alert(data.message);
-    });
+    console.log('ONLINe')
+    socket.emit('goOnline');
   }
 
   const goOffline = () => {

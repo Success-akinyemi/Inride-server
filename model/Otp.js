@@ -17,7 +17,7 @@ const OtpSchema = new mongoose.Schema(
     },
     createdAt:{
         type: Date,
-        default: Date.now(),
+        default: () => Date.now(),
         expires: 3600 //1Hour
     }
   },

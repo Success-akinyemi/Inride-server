@@ -44,6 +44,7 @@ export async function newCar(req, res) {
               color,
               noOfSeats,
               carImgUrl,
+              active: false
           });
           await findCars.save();
       } else {
@@ -97,6 +98,10 @@ export async function newCar(req, res) {
               return sendResponse(res, 404, false, 'Car not found');
           }
   
+          if(!carIdDetails.approved){
+            return sendResponse(res, 403, false, 'This car has been Deactivated by admin')
+          }
+
           // Upload image if provided
           let carImgUrl = '';
           if (carImg) {
@@ -141,6 +146,10 @@ export async function activateCar(req, res) {
       // Check if the car exists
       if (!carToActivate) {
         return sendResponse(res, 404, false, 'Car not found');
+      }
+
+      if(!carToActivate.approved){
+        return sendResponse(res, 403, false, 'This car has been Deactivated by admin')
       }
   
       // Deactivate any currently active car
@@ -198,7 +207,11 @@ export async function deleteCarDetails(req, res) {
 
 //GET CARS
 export async function getCarDetails(req, res) {
-  const { driverId } = req.user
+  const { driverId: userId } = req.user
+  const { driverId: queryId } = req.params
+
+  let driverId = userId ? userId : queryId
+
   try {
       const getCarDetails = await CarDetailModel.findOne({driverId})
       if(!getCarDetails){
@@ -214,8 +227,10 @@ export async function getCarDetails(req, res) {
 
 //GET SPECIFIC CAR DEATILS
 export async function getCarDetail(req, res) {
-  const { driverId } = req.user
-  const { carId } = req.params
+  const { driverId: userId } = req.user
+  const { carId, driverId: ownerId } = req.params
+
+  let driverId = userId ? userId : ownerId
   try {
       const getCarDetails = await CarDetailModel.findOne({driverId})
       if(!getCarDetails){
@@ -233,3 +248,120 @@ export async function getCarDetail(req, res) {
       sendResponse(res, 500, false, 'Unable to fetch car details')
   }   
 }
+
+//ADMIN
+//GET ALL CARS
+export async function getAllCar(req, res) {
+    const { limit = 10, page = 1, active, approved } = req.query;
+  
+    try {
+      // Fetch all car details
+      const carDetails = await CarDetailModel.find();
+  
+      let allCars = [];
+  
+      carDetails.forEach((detail) => {
+        detail.cars.forEach((car) => {
+          // Apply active filter if explicitly provided
+          if (active !== undefined && car.active !== (active === "true")) {
+            return; // Skip this car
+          }
+  
+          // Apply approved filter if explicitly provided
+          if (approved !== undefined && car.approved !== (approved === "true")) {
+            return; // Skip this car
+          }
+  
+          // Add each car as a separate object with driverId
+          allCars.push({
+            driverId: detail.driverId,
+            car: car.toObject(), // Convert Mongoose object to plain JavaScript object
+          });
+        });
+      });
+  
+      // Pagination logic
+      const startIndex = (Number(page) - 1) * Number(limit);
+      const paginatedCars = allCars.slice(startIndex, startIndex + Number(limit));
+  
+      sendResponse(res, 200, true, "Cars fetched successfully", {
+        cars: paginatedCars,
+        totalCars: allCars.length,
+        totalPages: Math.ceil(allCars.length / limit),
+        currentPage: Number(page),
+      });
+    } catch (error) {
+      console.error("UNABLE TO GET ALL CARS", error);
+      sendResponse(res, 500, false, "Unable to get all cars");
+    }
+  }
+  
+//BLOCK CAR
+export async function blockCar(req, res) {
+    const { _id, driverId } = req.body;  // Car's unique ID
+  
+    try {
+      // Find the driver's car details
+      const findCars = await CarDetailModel.findOne({ driverId });
+  
+      // Check if the driver has any cars
+      if (!findCars) {
+        return sendResponse(res, 404, false, 'Cars not found for this driver');
+      }
+  
+      // Find the car that needs to be blocked
+      const carToActivate = findCars.cars.find(car => car._id.toString() === _id);
+  
+      // Check if the car exists
+      if (!carToActivate) {
+        return sendResponse(res, 404, false, 'Car not found');
+      }
+  
+      // Block the selected car
+      carToActivate.approved = false;
+  
+      // Save the updated car details
+      await findCars.save();
+  
+      return sendResponse(res, 200, true, 'Car blocked successfully');
+    } catch (error) {
+      console.log('UNABLE TO BLOCK CAR', error);
+      return sendResponse(res, 500, false, 'Unable to block car');
+    }
+  }
+
+//UNBLOCK CAR
+export async function unBlockCar(req, res) {
+    const { _id, driverId } = req.body;  // Car's unique ID
+  
+    try {
+      // Find the driver's car details
+      const findCars = await CarDetailModel.findOne({ driverId });
+  
+      // Check if the driver has any cars
+      if (!findCars) {
+        return sendResponse(res, 404, false, 'Cars not found for this driver');
+      }
+  
+      // Find the car that needs to be unblocked
+      const carToActivate = findCars.cars.find(car => car._id.toString() === _id);
+  
+      // Check if the car exists
+      if (!carToActivate) {
+        return sendResponse(res, 404, false, 'Car not found');
+      }
+  
+      // Unblock the selected car
+      carToActivate.approved = true;
+  
+      // Save the updated car details
+      await findCars.save();
+  
+      return sendResponse(res, 200, true, 'Car unblock successfully');
+    } catch (error) {
+      console.log('UNABLE TO UNBLOCK CAR', error);
+      return sendResponse(res, 500, false, 'Unable to unblock car');
+    }
+  }
+
+//GET CAR STATS ALL RENTAL CARS ALL PERSONAL CARS COMPARE TO LAST MONTH

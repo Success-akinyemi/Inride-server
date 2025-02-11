@@ -1,0 +1,772 @@
+swagger: '2.0'
+info:
+  title: Inride API Documentation
+  description: API documentation Inride. Authentications are handled with cookies set from the server.
+  version: 1.0
+  contact:
+    email: successakinyemi365@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://apache.org/'
+host: inride-server.onrender.com
+basePath: /
+schemes:
+  - https
+
+tags:
+  - name: General
+    description: General
+  - name: Auth
+    description: Endpoints for authentication
+  - name: Stats
+    description: Endpoints for statistics data
+  - name: Transactions / Rides
+    description: Endpoints for ride and transactions data
+  - name: Passengers
+    description: Endpoints for pasengers
+  - name: Driver
+    description: Endpoints for driver
+  - name: Car
+    description: Endpoints for car
+
+
+paths:
+#AUTH
+  /:
+    get:
+      tags:
+        - General
+      summary: Home GET request
+      description: The first request to check server
+      responses:
+        200:
+          description: Success
+
+  /api/admin/auth/createAccount:
+    post:
+      tags:
+        - Auth
+      summary: Register new user   
+      description: Endpoint to register user
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - firstName
+              - lastName
+              - email
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
+                type: string
+      responses:
+        200:
+          description: Success - OTP sent to registered email address
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/auth/resendOtp:
+    post:
+      tags:
+        - Auth
+      summary: Resend Verification OTP 
+      description: Endpoint to resend verifcation OTP
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+      responses:
+        200:
+          description: Success - OTP resent to registered email address
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/auth/verifyOtp:
+    post:
+      tags:
+        - Auth
+      summary: Verify OTP code 
+      description: Endpoint to verify OTP code
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - otp
+            properties:
+              otp:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/auth/createPassword:
+    post:
+      tags:
+        - Auth
+      summary: Create account password 
+      description: Endpoint to create account password
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - password
+              - confirmPassword
+            properties:
+              password:
+                type: string
+              confirmPassword:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login to account
+      description: Endpoint to login to account. Login attempst is 3 times after wnhich the account would be block for 6hrs
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - password
+              - email
+            properties:
+              password:
+                type: string
+              email:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/auth/forgotPassword:
+    post:
+      tags:
+        - Auth
+      summary: Forgot password
+      description: Endpoint to enable user provide email for forgot password
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/auth/resetPassword/{resetToken}:
+    post:
+      tags:
+        - Auth
+      summary: Reset password
+      description: Endpoint to enable user reset their new password after providing the resetToken, password, confirmPassword
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - password
+              - confirmPassword
+            properties:
+              password:
+                type: string
+              confirmPassword:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/auth/signout:
+    post:
+      tags:
+        - Auth
+      summary: Signout of Account
+      description: Endpoint to enable user signout of account
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+#STATS
+  /api/stats/activeUsers/{stats}:
+    get:
+      tags:
+        - Stats
+      summary: Get Stats of active users
+      description: The endpoint provides stats on active users based on the given criteria.
+      parameters:
+        - name: stats
+          in: path
+          required: false
+          description: The type of stats to fetch (e.g., today, 7days, 30days). 30days by default
+          schema:
+            type: string
+        - name: accountType
+          in: query
+          required: false
+          description: Filter results by account type (e.g., passenger, driver) or leave blank to get all
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/stats/getTopLocations:
+    get:
+      tags:
+        - Stats
+      summary: Get top travel destination 
+      description: The get the top 5 travel destination
+      responses:
+        200:
+          description: Success
+
+#TRANSACTION / RIDES
+  /api/rides/getRides:
+    get:
+      tags:
+        - Transactions / Rides
+      summary: Get Stats of active users
+      description: The endpoint provides stats on active users based on the given criteria.
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          description: start date to begin fetching data
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          description: end date to stop fetching data
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: status of ride/transaction 'Complete' to get only completed rides
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/rides/getARide/{rideId}:
+    get:
+      tags:
+        - Transactions / Rides
+      summary: Get Info on a specific ride
+      description: The endpoint provides data on a specific ride
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          description: The rideId of the ride
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/rides/passengerRides/{passengerId}:
+    get:
+      tags:
+        - Transactions / Rides
+      summary: Get all rides of a passenger
+      description: The endpoint provides data on all ride of a passenger
+      parameters:
+        - name: passengerId
+          in: path
+          required: true
+          description: The passengerId to get all rides of
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+        
+  /api/rides/driverRides/{driverId}:
+    get:
+      tags:
+        - Transactions / Rides
+      summary: Get all rides of a driver
+      description: The endpoint provides data on all ride of a driver
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          description: The driverId to get all rides of
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+                
+#PASSENGERS
+  /api/passenger/profile/getPassengers:
+    get:
+      tags:
+        - Passengers
+      summary: Get passengers
+      description: The endpoint get all passengers passing in possible queries
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          description: start date to begin fetching data
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          description: end date to stop fetching data
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: status of the passengers. possible status are - 'active', 'inactive', 'pending', 'deactivated', 'all'
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/passenger/profile/getAPassenger/{passengerId}:
+    get:
+      tags:
+        - Passenger
+      summary: Get Info on a specific passenger
+      description: The endpoint provides data on a specific passenger
+      parameters:
+        - name: passengerId
+          in: path
+          required: true
+          description: The passengerId of the passenger
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/passenger/profile/blockPassenger:
+    post:
+      tags:
+        - Passenger
+      summary: Block Passenger account
+      description: Endpoint to block passenger account
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - passengerId
+            properties:
+              passengerId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/passenger/profile/unBlockPassenger:
+    post:
+      tags:
+        - Passenger
+      summary: UnBlock Passenger account
+      description: Endpoint to unblock passenger account
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - passengerId
+            properties:
+              passengerId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+        
+#DRIVER
+  /api/driver/profile/getDrivers:
+    get:
+      tags:
+        - Driver
+      summary: Get drivers
+      description: The endpoint get all drivers passing in possible queries
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          description: start date to begin fetching data
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          description: end date to stop fetching data
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: status of the driver. possible status are - 'active', 'inactive', 'pending', 'deactivated', 'all'
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/driver/profile/getADriver/{driverId}:
+    get:
+      tags:
+        - Driver
+      summary: Get Info on a specific driver
+      description: The endpoint provides data on a specific driver
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          description: The driverId of the driver
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/driver/profile/blockPassenger:
+    post:
+      tags:
+        - Driver
+      summary: Block driver account
+      description: Endpoint to block driver account
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - driverId
+            properties:
+              driverId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/profile/unBlockPassenger:
+    post:
+      tags:
+        - Driver
+      summary: UnBlock driver account
+      description: Endpoint to unblock driver account
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - driverId
+            properties:
+              driverId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+#CAR
+  /api/driver/car/getAllCar:
+    get:
+      tags:
+        - Car
+      summary: Get cars
+      description: The endpoint get all drivers cars. Passing in possible queries
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: active
+          in: query
+          required: false
+          description: to get all active or inactive cars. active value is either true or false
+          schema:
+            type: string
+        - name: approved
+          in: query
+          required: false
+          description: to get all approved or blocked cars by admin. approved value is either true or false
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/driver/car/getACarDetail/{carId}/{driverId}:
+    get:
+      tags:
+        - Car
+      summary: Get Info on a specific driver car
+      description: The endpoint provides data on a specific driver car
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          description: The driverId of the driver
+          schema:
+            type: string
+        - name: carId
+          in: path
+          required: true
+          description: The carId (_id) of the car
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/driver/car/getDriverCarDetails/{driverId}:
+    get:
+      tags:
+        - Car
+      summary: Get a driver cars
+      description: The endpoint provides data on a driver car
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          description: The driverId of the driver
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/driver/car/blockCar:
+    post:
+      tags:
+        - Car
+      summary: Block a driver car
+      description: Endpoint to block a driver car
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - driverId
+              - carId
+            properties:
+              driverId:
+                type: string
+              carId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/car/unBlockCar:
+    post:
+      tags:
+        - Car
+      summary: UnBlock a driver car
+      description: Endpoint to unblock a driver car
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - driverId
+              - carId
+            properties:
+              driverId:
+                type: string
+              carId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error

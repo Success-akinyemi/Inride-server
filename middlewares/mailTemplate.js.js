@@ -65,17 +65,17 @@ export async function sendWelcomeEmail({
             <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
-            <div style="display: flex; gap: 40px; align-items: center; justify-content: center;">
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
               <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <a href="${twUrl}" style="text-decoration: none; color: inherit;">
-                  <img src=${twImg} style="width: 50px; height: auto;" />
+                  <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
                 </a>
                 <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
-                  <img src=${fbImg} style="width: 50px; height: auto;" />
+                  <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
                 </a>
                 <a href="${igUrl}" style="text-decoration: none; color: inherit;">
-                  <img src=${igImg} style="width: 50px; height: auto;" />
+                  <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
                 </a>
               </div>
             </div>
@@ -99,13 +99,23 @@ export async function sendWelcomeEmail({
 export async function sendOtpEmail({
   email,
   name = "",
+  code = [],
   buttonLink = "#",
-  buttonText = "Get Started",
-  title = "Login OTP code",
+  buttonText = "Verify Email",
+  title = "Verification OTP code",
 }) {
   if (!email) {
     throw new Error("Email is required to send a welcome email.");
   }
+
+  const otpCodeHtml = code
+  .map(
+    (i) =>
+      `<div style="height: 64px; weight: 64px; display: flex; align-items: center; justify-content: center; border: 2px solid #0062CC; border-radius: 8px; padding: 2px 8px; font-weight: 500px; font-size: 48px; color: #0062CC; text-align: center; margin-left: 4px; margin-right: 4px;">
+      ${i}
+      </div>`
+  )
+  .join("");
 
   const emailContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
@@ -116,31 +126,20 @@ export async function sendOtpEmail({
         <br />
         <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Welcome to the RideFuze family! We're excited to have you on board and can’t wait to help you get to where you need to go—smoothly, safely, and conveniently.
+           This your verification code:
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Now that you're all set up, here's a quick overview of what you can expect from our app:
-        </p>
-        <ul style="color: #344054; font-size: 16px; font-weight: 400; padding-left: 20px;">
-            <li>Effortless Booking: Book a ride with just a few taps.</li>
-            <li>Ride Tracking: See the exact location of your driver in real-time.</li>
-            <li>Safe & Reliable Drivers: All drivers are thoroughly vetted for your safety and comfort.</li>
-            <li>Flexible Payments: Pay seamlessly via card, wallet, or other options.</li>
-        </ul>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">What's Next?</p>
-        <ul style="color: #344054; font-size: 16px; font-weight: 400; padding-left: 20px;">
-            <li>Open the app and set your pickup location.</li>
-            <li>Choose your preferred ride type (we’ve got options to fit your needs!).</li>
-            <li>Sit back, relax, and enjoy the ride!</li>
-        </ul>
-        <br />
-        <br />
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;" >
+        ${otpCodeHtml}
+        </div>
+
         <div style="text-align: center; margin: 20px 0; background: #007BFF; padding: 10px 20px; border-radius: 8px;">
             <a href="${buttonLink}" style="display: inline-block; background-color: #007BFF; color: white; text-decoration: none;">${buttonText}</a>
         </div>
+
         <br />
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
+            This code will only be valid for the next 1 hour. If the code does not work, you can use this login verification link:
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
             Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
@@ -150,17 +149,17 @@ export async function sendOtpEmail({
             <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
-            <div style="display: flex; gap: 40px; align-items: center; justify-content: center;">
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
               <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <a href="${twUrl}" style="text-decoration: none; color: inherit;">
-                  <img src=${twImg} style="width: 50px; height: auto;" />
+                  <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
                 </a>
                 <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
-                  <img src=${fbImg} style="width: 50px; height: auto;" />
+                  <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
                 </a>
                 <a href="${igUrl}" style="text-decoration: none; color: inherit;">
-                  <img src=${igImg} style="width: 50px; height: auto;" />
+                  <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
                 </a>
               </div>
             </div>
@@ -177,6 +176,215 @@ export async function sendOtpEmail({
     console.log(`OTP email sent to ${email}`);
   } catch (error) {
     console.error(`Failed to send OTP email to ${email}:`, error.message);
+    throw error;
+  }
+}
+
+export async function sendNewLoginEmail({
+  email,
+  name = "",
+  time = Date.now(),
+  device = {},
+  title = "Account Login",
+}) {
+  if (!email) {
+    throw new Error("Email is required to send a welcome email.");
+  }
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <div style="display: flex; align-items: left; margin-bottom: 20px;">
+            <img src="${logourl}" alt="Logo" style="width: 100px; height: auto; margin-right: 20px;">
+        </div>
+        <br />
+        <br />
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            A new Login attempt was successfully on your account.
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            <strong>Time</strong>: ${time}
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            <strong>Device</strong>: ${device?.device} <br> ${device?.location}
+        </p>
+
+        <br />
+        <br />
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            If this was not you. Quickly contact the admin support team.
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p style="text-align: center;">© ${currentYear} RideFuze</p>
+            <br />
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
+              <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="${twUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${igUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+              </div>
+            </div>
+        </footer>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: title,
+      html: emailContent,
+    });
+    console.log(`Login attempt email sent to ${email}`);
+  } catch (error) {
+    console.error(`Failed to send email to ${email}:`, error.message);
+    throw error;
+  }
+}
+
+export async function sendAccountSuspendedEmail({
+  email,
+  name = "",
+  time = Date.now(),
+  device = "",
+  title = "Account Suspended",
+}) {
+  if (!email) {
+    throw new Error("Email is required to send a welcome email.");
+  }
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <div style="display: flex; align-items: left; margin-bottom: 20px;">
+            <img src="${logourl}" alt="Logo" style="width: 100px; height: auto; margin-right: 20px;">
+        </div>
+        <br />
+        <br />
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Your account has been suspended after failed multiple login
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Account has been suspended for: <strong><b>${time}</b></strong>
+        </p>
+
+        <br />
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            If this was not you. Quickly contact the admin support team.
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p style="text-align: center;">© ${currentYear} RideFuze</p>
+            <br />
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
+              <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="${twUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${igUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+              </div>
+            </div>
+        </footer>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: title,
+      html: emailContent,
+    });
+    console.log(`Account suspended email sent to ${email}`);
+  } catch (error) {
+    console.error(`Failed to send email to ${email}:`, error.message);
+    throw error;
+  }
+}
+
+export async function sendForgotPasswordEmail({
+  email,
+  name = "",
+  buttonLink = "#",
+  buttonText = "Reset Password",
+  title = "Forgot Password request",
+}) {
+  if (!email) {
+    throw new Error("Email is required to send a welcome email.");
+  }
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <div style="display: flex; align-items: left; margin-bottom: 20px;">
+            <img src="${logourl}" alt="Logo" style="width: 100px; height: auto; margin-right: 20px;">
+        </div>
+        <br />
+        <br />
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Reset password request
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            You request for a reset password request click on the button below to finish you reset password
+        </p>
+        <br />
+        <div style="text-align: center; margin: 20px 0; background: #007BFF; padding: 10px 20px; border-radius: 8px;">
+            <a href="${buttonLink}" style="display: inline-block; background-color: #007BFF; color: white; text-decoration: none;">${buttonText}</a>
+        </div>
+        <br />
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Need Help? click on the link below to continue if unable to use the button. <br />
+            <a href="${buttonLink}" style="display: inline-block; color: #007BFF; text-decoration: none;">${buttonLink}</a>
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p style="text-align: center;">© ${currentYear} RideFuze</p>
+            <br />
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
+              <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="${twUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${igUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+              </div>
+            </div>
+        </footer>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: title,
+      html: emailContent,
+    });
+    console.log(`reset email email sent to ${email}`);
+  } catch (error) {
+    console.error(`Failed to send email to ${email}:`, error.message);
     throw error;
   }
 }

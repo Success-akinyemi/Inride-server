@@ -3,6 +3,8 @@ import PassengerModel from "../model/Passenger.js";
 import { sendResponse } from "./utils.js";
 import RefreshTokenModel from "../model/RefreshToken.js";
 import DriverModel from "../model/Driver.js";
+import AdminUserModel from "../model/Admin.js";
+import moment from 'moment';
 
 // VERIFY PASSENGER
 export const AuthenticatePassenger = async (req, res, next) => {
@@ -138,10 +140,11 @@ export const AuthenticateUser = async (req, res, next) => {
     const accessToken = req.cookies.inrideaccesstoken;
     const accountId = req.cookies.inrideaccessid;
 
+    let decoded
     try {
         if (accessToken) {
-            try {
-                const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
+            try { 
+                decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
                 let user;
                 const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: decoded.id })
                 if (decoded.accountType === 'passenger') {
@@ -419,5 +422,115 @@ export const AuthenticateUserSocket = async (socket, next) => {
     } catch (error) {
         console.error('Authentication error:', error);
         return next(new Error('Server error during authentication'));
+    }
+};
+
+//Authenticate admin
+export const AuthenticateAdmin = async (req, res, next) => {
+    const accessToken = req.cookies.inrideauthtoken;
+    const accountId = req.cookies.inrideauthid;
+    console.log('ADMIN','accessToken', accessToken, 'accountId', accountId)
+
+    try {
+        if (accessToken) {
+            try {
+                const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
+                let user;
+                const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: decoded.id })
+                if (decoded.accountType === 'admin') {
+                    user = await AdminUserModel.findOne({ adminId: decoded.id });
+                }
+                if (!user) {
+                    return sendResponse(res, 404, false, 'User not found');
+                }
+                if (!refreshTokenExist) {
+                    return sendResponse(res, 403, false, 'UnAuthenicated');
+                }
+                if(!user?.verified){
+                    sendResponse(res, 403, false, user?.verified, 'Account is not yet verified')
+                    return
+                }
+                if(user?.blocked){
+                    sendResponse(res, 403, false, 'Account has been blocked')
+                    return
+                }
+                const blockExpiration = moment(user.temporaryAccountBlockTime);
+                const currentTime = moment();
+                
+                if (currentTime.isBefore(blockExpiration)) {
+                    // User is still blocked
+                    return sendResponse(res, 403, false, `Your account is suspended until ${blockExpiration.format('YYYY-MM-DD HH:mm:ss')}`);
+                }
+                req.user = user;
+                return next();
+            } catch (error) {
+                if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+                    if (accountId) {
+                        let user = await AdminUserModel.findOne({ adminId: accountId });
+                        const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId })
+                        if (user && refreshTokenExist) {
+                            if(!user?.verified){
+                                sendResponse(res, 403, false, user?.verified, 'Account is not yet verified')
+                                return
+                            }
+                            if(user?.blocked){
+                                sendResponse(res, 403, false, 'Account has been blocked')
+                                return
+                            }
+                            const blockExpiration = moment(user.temporaryAccountBlockTime);
+                            const currentTime = moment();
+                            
+                            if (currentTime.isBefore(blockExpiration)) {
+                                // User is still blocked
+                                return sendResponse(res, 403, false, `Your account is suspended until ${blockExpiration.format('YYYY-MM-DD HH:mm:ss')}`);
+                            }
+                            const accessToken = user.getAccessToken()
+                            res.cookie('inrideauthtoken', accessToken, {
+                                httpOnly: true,
+                                sameSite: 'None',
+                                secure: true,
+                                maxAge: 15 * 60 * 1000, // 15 minutes
+                            });
+                            req.user = user;
+                            return next();
+                        }
+                    }
+                    return sendResponse(res, 403, false, 'UnAuthenicated');
+                }
+            }
+        } else if (accountId) {
+            const user = await AdminUserModel.findOne({ adminId: accountId });
+            const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId })
+            if (user && refreshTokenExist) {
+                if(!user?.verified){
+                    sendResponse(res, 403, false, user?.verified, 'Account is not yet verified')
+                    return
+                }
+                if(user?.blocked){
+                    sendResponse(res, 403, false, 'Account has been blocked')
+                    return
+                }
+                const blockExpiration = moment(user.temporaryAccountBlockTime);
+                const currentTime = moment();
+                
+                if (currentTime.isBefore(blockExpiration)) {
+                    // User is still blocked
+                    return sendResponse(res, 403, false, `Your account is suspended until ${blockExpiration.format('YYYY-MM-DD HH:mm:ss')}`);
+                }
+                const accessToken = user.getAccessToken()
+                res.cookie('inrideauthtoken', accessToken, {
+                    httpOnly: true,
+                    sameSite: 'None',
+                    secure: true,
+                    maxAge: 15 * 60 * 1000, // 15 minutes
+                });
+                req.user = user;
+                return next();
+            }
+        }
+        return sendResponse(res, 403, false, 'UnAuthenicated');
+    } catch (error) {
+        console.error('Authentication error:', error);
+        return sendResponse(res, 500, false, 'Server error during authentication');
     }
 };

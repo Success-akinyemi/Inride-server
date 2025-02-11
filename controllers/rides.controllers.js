@@ -2,11 +2,15 @@ import { sendResponse } from "../middlewares/utils.js";
 import AppSettingsModel from "../model/AppSettings.js";
 import ForgotItemModel from "../model/ForgotItem.js";
 import RideModel from "../model/Rides.js";
+import SafteyModel from "../model/Saftey.js";
 
 // GET ALL RIDES OF A DRIVER
 export async function getDriverRides(req, res) {
   const { limit = 10, page = 1, startDate, endDate, rideType } = req.query;
-  const { driverId, earnings } = req.user;
+  const { driverId: userID, earnings } = req.user;
+  const { driverId: paramsId } = req.params;
+
+  let driverId = userID ? userID : paramsId 
 
   try {
     // Build the query object
@@ -63,7 +67,7 @@ export async function getDriverRides(req, res) {
       totalRides,
       totalPages: Math.ceil(totalRides / limit),
       currentPage: Number(page),
-      earningsBalance: earnings,
+      earningsBalance: earnings ? earnings : '',
     });
   } catch (error) {
     console.error('UNABLE TO GET DRIVERS RIDES', error);
@@ -170,7 +174,10 @@ export async function getUpcomingDriverRides(req, res) {
 // GET ALL RIDES OF A PASSENGER
 export async function getPassengerRides(req, res) {
   const { limit = 10, page = 1, startDate, endDate, rideType } = req.query;
-  const { passengerId } = req.user;
+  const { passengerId: userID } = req.user;
+  const { passengerId: paramsId } = req.params;
+
+  let passengerId = userID ? userID : paramsId 
 
   try {
     // Build the query object
@@ -473,26 +480,93 @@ export async function reportForgotItem(req, res) {
 export async function saftey(req, res) {
   const { safteyIssue, rideId } = req.body
   const { passengerId } = req.user
+  const { driverId } = req.user
   if(!safteyIssue){
-    sendResponse(res, false, 400, 'Saftey Issue is required')
+    sendResponse(res, 400, false, 'Saftey Issue is required')
     return
   }
   if(!rideId){
-    sendResponse(res, false, 400, 'Ride Id is required')
+    sendResponse(res, 400, false, 'Ride Id is required')
     return
   }
   try {
     const getRide = await RideModel.findOne({ rideId })
     if(!getRide){
-      sendResponse(res, false, 404, 'Ride with this Id does not exist')
+      sendResponse(res, 404, false, 'Ride with this Id does not exist')
       return
     }
+
+    await SafteyModel.create({
+      accountId: passengerId ?passengerId : driverId,
+      rideId,
+      safteyIssue
+    })
+
+    sendResponse(res, 201, true, 'Your Saftey Issue has been submitted' )
   } catch (error) {
     console.log('UNABEL TO REPORT RIDE SAFTEY ISSUSES', error)
     sendResponse(res, 500, false, 'Unable to report ride saftey issues')
   }
 }
+
 //ADMIN
+//GET ALL RIDES
+export async function getRides(req, res) {
+  const { limit = 10, page = 1, startDate, endDate, status } = req.query;
+
+  try {
+    // Build the query object
+    const query = {};
+
+    // Handle date filtering
+    if (startDate && endDate) {
+      query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    } else if (startDate) {
+      query.createdAt = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      query.createdAt = { $lte: new Date(endDate) };
+    }
+
+    // Handle status filtering
+    if (status === "Complete") {
+      query.status = "Complete"; // Fetch only completed rides
+    }
+
+    // Calculate the number of documents to skip
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Fetch rides from the database
+    const rides = await RideModel.find(query)
+      .sort({ createdAt: -1 }) // Sort by latest rides
+      .skip(skip) // Skip the documents for pagination
+      .limit(Number(limit)); // Limit the results for pagination
+
+    // Get the total count of rides for pagination metadata
+    const totalRides = await RideModel.countDocuments(query);
+
+    // Transform rides data
+    const transformedRides = rides.map((ride) => ({
+      rideId: ride.rideId,
+      from: ride.from,
+      to: ride.to.map(({ place }) => ({ place })), // Only sending place from `to` array
+      amount: ride.charge,
+      createdAt: ride.createdAt,
+      status: ride.status
+    }));
+
+    return sendResponse(res, 200, true, 'Rides fetched successfully', {
+      rides: transformedRides,
+      totalRides,
+      totalPages: Math.ceil(totalRides / limit),
+      currentPage: Number(page),
+    });
+  } catch (error) {
+    console.error('UNABLE TO GET RIDES', error);
+    return sendResponse(res, 500, false, 'Unable to get rides');
+  }
+}
+
+//GET A RIDE
 export async function getARide(req, res) {
   const { rideId } = req.params
   if(!rideId){
@@ -501,6 +575,11 @@ export async function getARide(req, res) {
   }
   try {
     const getRide = await RideModel.findOne({ rideId })
+    if(!getRide){
+      sendResponse(res, 404, false, 'Ride with this Id does not exist')
+      return
+    }
+
 
     sendResponse(res, 200, true, getRide)
   } catch (error) {

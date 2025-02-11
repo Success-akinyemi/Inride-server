@@ -20,7 +20,8 @@ import driverBankDetailsRoutes from './routes/driverBankDetails.routes.js';
 import driverPayoutRoutes from './routes/driverPayout.routes.js';
 import driverProfileRoutes from './routes/driverProfile.routes.js';
 import carRoutes from './routes/car.routes.js';
-
+import adminAuthRoutes from './routes/adminAuth.routes.js';
+import statsRoutes from './routes/stats.routes.js';
 
 
 
@@ -57,7 +58,11 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 import swaggerUI from 'swagger-ui-express';
 import YAML from 'yamljs';
 const swaggerJSDocs = YAML.load('./api.yaml');
+const swaggerAdminJSDocs = YAML.load('./admin-api.yaml');
+
 app.use('/api-doc', swaggerUI.serve, swaggerUI.setup(swaggerJSDocs));
+app.use('/api/admin-doc', swaggerUI.serve, swaggerUI.setup(swaggerAdminJSDocs));
+
 
 // Routes
 app.use('/api/auth', authRoute);
@@ -75,11 +80,12 @@ app.use('/api/driver/bank', driverBankDetailsRoutes);
 app.use('/api/driver/payout', driverPayoutRoutes);
 app.use('/api/driver/car', carRoutes);
 app.use('/api/driver/profile', driverProfileRoutes);
-
-
-
-
 app.use('/api/driver', driverRoutes);
+
+app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/stats', statsRoutes);
+
+
 
 // Namespaces for Driver and Passenger
 export const driverNamespace = io.of('/driver');
