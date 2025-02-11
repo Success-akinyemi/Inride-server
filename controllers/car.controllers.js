@@ -365,6 +365,11 @@ export async function unBlockCar(req, res) {
   }
 
 //GET CAR STATS ALL RENTAL CARS ALL PERSONAL CARS COMPARE TO LAST MONTH
-export async function name(params) {
-    
+export async function carStats(req, res) {
+    try {
+        
+    } catch (error) {
+        console.log('UNABLE TO GET CAR STATS', error)
+        sendResponse(res, 500, false, 'Unable to get cars stats')
+    }
 }

@@ -225,6 +225,10 @@ export async function login(req, res) {
             sendResponse(res, 403, false, getUser?.verified, 'Account is not yet verified')
             return
         }
+        if(getUser?.status !== 'Active'){
+            sendResponse(res, 403, false, getUser?.verified, 'Account is not active')
+            return
+        }
         if (getUser?.accountSuspended && getUser?.temporaryAccountBlockTime) {
             const blockExpiration = moment(getUser.temporaryAccountBlockTime);
             const currentTime = moment();
@@ -347,7 +351,7 @@ export async function login(req, res) {
         });
         
         const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = getUser._doc;
-        return sendResponse(res, 200, true, userData, accessToken);
+        return sendResponse(res, 200, true, userData, { accessId: getUser?.adminId });
     } catch (error) {
         console.log('UNABLE TO LOGIN USER', error)
         sendResponse(res, 500, false, 'Unable to login user')
