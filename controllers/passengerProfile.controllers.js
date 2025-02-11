@@ -135,7 +135,7 @@ export async function getPassengers(req, res) {
         status = "Blocked";
       } else if (!passenger.verified) {
         status = "Inactive";
-      } else if (passenger.verified && !passenger.active) {
+      } else if (!passenger.verified && !passenger.active) {
         status = "Pending";
       } else if (passenger.verified && passenger.active) {
         status = "Active";

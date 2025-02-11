@@ -68,15 +68,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-//DOCs
+// DOCs
 import swaggerUI from 'swagger-ui-express';
 import YAML from 'yamljs';
+
 const swaggerJSDocs = YAML.load('./api.yaml');
 const swaggerAdminJSDocs = YAML.load('./admin-api.yaml');
 
-app.use('/api-doc', swaggerUI.serve, swaggerUI.setup(swaggerJSDocs));
-app.use('/api/admin-doc', swaggerUI.serve, swaggerUI.setup(swaggerAdminJSDocs));
+// Serve Swagger UI correctly for each route
+// Serve Swagger UI correctly for each route
+const swaggerApiUI = swaggerUI.serveFiles(swaggerJSDocs, { explorer: true });
+const swaggerAdminUI = swaggerUI.serveFiles(swaggerAdminJSDocs, { explorer: true });
 
+app.use('/api-doc', swaggerApiUI, swaggerUI.setup(swaggerJSDocs, { explorer: true }));
+app.use('/api/admin-doc', swaggerAdminUI, swaggerUI.setup(swaggerAdminJSDocs, { explorer: true }))
 
 // Routes
 app.use('/api/auth', authRoute);
