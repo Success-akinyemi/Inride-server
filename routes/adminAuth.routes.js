@@ -15,6 +15,9 @@ router.post('/forgotPassword', controllers.forgotPassword)
 router.post('/resetPassword/:resetToken', controllers.resetPassword)
 router.post('/signout', AuthenticateAdmin, controllers.signout)
 
+//GET
+router.get('/verifyToken', controllers.verifyToken)
+
 
 
 

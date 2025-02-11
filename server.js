@@ -38,14 +38,26 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [process.env.CLIENT_URL, process.env.ADMIN_URL, process.env.SERVER_URL, '*'],
+    origin: [
+      process.env.CLIENT_URL, 
+      process.env.CLIENT_TWO_URL,
+      process.env.ADMIN_URL, 
+      process.env.SERVER_URL, 
+      '*'
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
 app.use(cors({
-  origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
+  origin: [
+    process.env.CLIENT_URL, 
+    process.env.CLIENT_TWO_URL, 
+    process.env.ADMIN_URL,
+    process.env.SERVER_URL,
+    '*'
+  ],
   credentials: true,
 }));
 app.use(cookieParser());

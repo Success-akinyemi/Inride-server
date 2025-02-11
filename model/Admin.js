@@ -103,11 +103,11 @@ AdminUserSchema.methods.matchPassword = async function(password) {
 }
 
 AdminUserSchema.methods.getAccessToken = function(){
-    return jsonwebtoken.sign({ id: this.newAdminId, accountType: this?.accountType }, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRE})
+    return jsonwebtoken.sign({ id: this.adminId, accountType: this?.accountType }, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRE})
 }
 
 AdminUserSchema.methods.getRefreshToken = function(){
-    return jsonwebtoken.sign({ id: this.newAdminId, email: this.email, _id: this._id }, process.env.JWT_REFRESH_TOKEN_SECRET, { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRE})
+    return jsonwebtoken.sign({ id: this.adminId, email: this.email, _id: this._id }, process.env.JWT_REFRESH_TOKEN_SECRET, { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRE})
 }
 
 AdminUserSchema.methods.getResetPasswordToken = function(){

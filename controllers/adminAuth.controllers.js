@@ -42,9 +42,9 @@ export async function createAccount(req, res) {
         console.log('OTP CODE', otpCode)
         if(otpCode){
 
-            const passengerId = await generateUniqueCode(8)
-            console.log('ADMIN ID', `RF${passengerId}AD`)
-            const newAdminId = `RF${passengerId}AD`    
+            const adminId = await generateUniqueCode(8)
+            console.log('ADMIN ID', `RF${adminId}AD`)
+            const newAdminId = `RF${adminId}AD`    
             
             const newUser = await AdminUserModel.create({
                 adminId: newAdminId,
@@ -445,6 +445,68 @@ export async function resetPassword(req, res){
     } catch (error) {
         console.log('UANBLE TO RESET PASSWORD', error)
         sendResponse(res, 500, false, 'Unable to reset password')
+    }
+}
+
+//VERIFY TOKEN
+export async function verifyToken(req, res) {
+    const accessToken = req.cookies.inrideauthtoken;
+    const accountId = req.cookies.inrideauthid;
+    try {
+        if (accessToken) {
+            try {
+                const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
+                let user;
+                if (decoded.accountType === 'admin') {
+                    user = await AdminUserModel.findOne({ adminId: decoded.id });
+                }
+                if (!user) {
+                    return sendResponse(res, 404, false, 'User not found');
+                }
+                if (!user.refreshToken) {
+                    return sendResponse(res, 403, false, 'UnAuthenicated');
+                }
+                const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = user._doc;
+                return sendResponse(res, 200, true, userData, accessToken);
+            } catch (error) {
+                if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+                    if (accountId) {
+                        let user = await AdminUserModel.findOne({ adminId: accountId });
+                        const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId })
+                        if (user && refreshTokenExist) {
+                            const accessToken = user.getAccessToken()
+                            res.cookie('inrideauthtoken', accessToken, {
+                                httpOnly: true,
+                                sameSite: 'None',
+                                secure: true,
+                                maxAge: 15 * 60 * 1000, // 15 minutes
+                            });
+                            const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = user._doc;
+                            return sendResponse(res, 200, true, userData, accessToken);
+                        }
+                    }
+                    return sendResponse(res, 403, false, 'UnAuthenicated');
+                }
+            }
+        } else if (accountId) {
+            const user = await AdminUserModel.findOne({ adminId: accountId });
+            const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId })
+            if (user && refreshTokenExist) {
+                const accessToken = user.getAccessToken()
+                res.cookie('inrideauthtoken', accessToken, {
+                    httpOnly: true,
+                    sameSite: 'None',
+                    secure: true,
+                    maxAge: 15 * 60 * 1000, // 15 minutes
+                });
+                const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = user._doc;
+                return sendResponse(res, 200, true, userData, accessToken);
+            }
+        }
+        return sendResponse(res, 403, false, 'UnAuthenicated');
+    } catch (error) {
+        console.log('UNABLE TO VERIFY TOKEN', error)   
+        return sendResponse(res, 500, false, 'Unable to verify token')
     }
 }
 

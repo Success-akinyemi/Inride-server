@@ -136,6 +136,24 @@ export const AuthenticateDriver = async (req, res, next) => {
     }
 };
 
+export const VerifyAccount = async (req, res, next) => {
+    const { verified, isBlocked } = req.user
+    try {
+        if(!verified){
+            sendResponse(res, 401, false, 'You acount is not verified')
+            return
+        }
+        if(isBlocked){
+            sendResponse(res, 401, false, 'You acount has been blocked. contact admin for support')
+            return
+        }
+        return next();
+    } catch (error) {
+        console.log('UNABLE TO VERIFY USER ACCOUNT', error)
+        return sendResponse(res, 500, false, 'Unable to verify user account')
+    }
+}
+
 export const AuthenticateUser = async (req, res, next) => {
     const accessToken = req.cookies.inrideaccesstoken;
     const accountId = req.cookies.inrideaccessid;
@@ -534,3 +552,29 @@ export const AuthenticateAdmin = async (req, res, next) => {
         return sendResponse(res, 500, false, 'Server error during authentication');
     }
 };
+
+export const VerifyAdminAccount = async (req, res, next) => {
+    const { verified, blocked, accountSuspended, status } = req.user
+    try {
+        if(!verified){
+            sendResponse(res, 401, false, 'You acount is not verified')
+            return
+        }
+        if(accountSuspended){
+            sendResponse(res, 401, false, 'You acount has been suspended. contact admin for support')
+            return
+        }
+        if(blocked){
+            sendResponse(res, 401, false, 'You acount has been blocked')
+            return
+        }
+        if(status !== 'Active'){
+            sendResponse(res, 401, false, `You access to this account has been revoked. Account: ${status} `)
+            return
+        }
+        return next();
+    } catch (error) {
+        console.log('UNABLE TO VERIFY USER ACCOUNT', error)
+        return sendResponse(res, 500, false, 'Unable to verify user account')
+    }
+}

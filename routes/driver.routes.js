@@ -1,15 +1,15 @@
 import express from 'express';
 import * as controllers from '../controllers/driver.controllers.js';
-import { AuthenticateDriver } from '../middlewares/auth.js';
+import { AuthenticateDriver, VerifyAccount } from '../middlewares/auth.js';
 
 const router = express.Router();
 
 //POST
-router.post('/updateLocation', AuthenticateDriver, controllers.updateLocation);
-router.post('/goOnline', AuthenticateDriver, controllers.goOnline);
-router.post('/goOffline', AuthenticateDriver, controllers.goOffline);
-router.post('/acceptRideRequest', AuthenticateDriver, controllers.acceptRideRequest);
-router.post('/homeBreak', AuthenticateDriver, controllers.homeBreak);
+router.post('/updateLocation', AuthenticateDriver, VerifyAccount, controllers.updateLocation);
+router.post('/goOnline', AuthenticateDriver, VerifyAccount, controllers.goOnline);
+router.post('/goOffline', AuthenticateDriver, VerifyAccount, controllers.goOffline);
+router.post('/acceptRideRequest', AuthenticateDriver, VerifyAccount, controllers.acceptRideRequest);
+router.post('/homeBreak', AuthenticateDriver, VerifyAccount, controllers.homeBreak);
 
 
 

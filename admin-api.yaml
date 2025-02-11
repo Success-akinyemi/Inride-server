@@ -31,7 +31,7 @@ tags:
 
 
 paths:
-#AUTH
+#GENERAL
   /:
     get:
       tags:
@@ -42,6 +42,7 @@ paths:
         200:
           description: Success
 
+#AUTH
   /api/admin/auth/createAccount:
     post:
       tags:
@@ -229,6 +230,20 @@ paths:
           description: Success
         400:
           description: User error
+        500:
+          description: Server error
+
+  /api/admin/auth/verifyToken:
+    get:
+      tags:
+        - Auth
+      summary: Verify if user auth is still valid
+      description: Endpoint to is user auth is still valid
+      responses:
+        200:
+          description: Success - true
+        400:
+          description: error - false
         500:
           description: Server error
 
