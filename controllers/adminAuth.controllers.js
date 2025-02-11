@@ -136,6 +136,7 @@ export async function verifyOtp(req, res) {
 
         const getUser = await AdminUserModel.findOne({ email: getOtp?.mobileNumber })
         getUser.verified = true
+        getUser.status = 'Active'
         await getUser.save()
 
         const deleteOtp = await OtpModel.findByIdAndDelete({ _id: getOtp?._id })
