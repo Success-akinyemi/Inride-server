@@ -31,7 +31,7 @@ tags:
     description: Endpoints for statistics data
   - name: Transactions / Rides
     description: Endpoints for ride and transactions data
-  - name: Passengers
+  - name: Passenger
     description: Endpoints for pasengers
   - name: Driver
     description: Endpoints for driver
@@ -487,7 +487,7 @@ paths:
   /api/passenger/profile/getPassengers:
     get:
       tags:
-        - Passengers
+        - Passenger
       summary: Get passengers
       description: The endpoint get all passengers passing in possible queries
       parameters:
