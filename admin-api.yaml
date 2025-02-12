@@ -1091,3 +1091,123 @@ paths:
           description: User error
         500:
           description: Server error
+
+  /api/admin/staff/getAllStaffs:
+    get:
+      tags:
+        - Staff
+      summary: Get All Staffs
+      description: The endpoint get all staffs passing in possible queries
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          description: start date to begin fetching data
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          description: end date to stop fetching data
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: status of the staffs. possible status are - 'active', 'inactive', 'pending', 'sacked', 'blocked' 'all'. blank would get all
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/admin/staff/activateStaff:
+    post:
+      tags:
+        - Staff
+      summary: Activate staff account
+      description: Endpoint to activate staff account
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - adminId
+            properties:
+              adminId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/staff/sackStaff:
+    post:
+      tags:
+        - Staff
+      summary: Sack staff account
+      description: Endpoint to sack staff account
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - adminId
+            properties:
+              adminId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/staff/deactivateStaff:
+    post:
+      tags:
+        - Staff
+      summary: deactivate staff account
+      description: Endpoint to dectivate staff account
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - adminId
+            properties:
+              adminId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error

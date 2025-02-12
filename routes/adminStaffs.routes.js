@@ -9,6 +9,10 @@ const router = express.Router()
 router.post('/del', controllers.dele);
 router.post('/updateProfile', AuthenticateAdmin, VerifyAdminAccount, uploadImages, VerifyAdminAccount, controllers.updateProfile);
 router.post('/updatePassword', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.updatePassword);
+router.post('/activateStaff', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.activateStaff);
+router.post('/sackStaff', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.sackStaff);
+router.post('/deactivateStaff', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.deactivateStaff);
+
 
 
 

@@ -107,13 +107,13 @@ export async function getDrivers(req, res) {
       // Calculate the number of documents to skip
       const skip = (Number(page) - 1) * Number(limit);
   
-      // Fetch rides from the database
+      // Fetch drivers from the database
       const driver = await DriverModel.find(query)
-        .sort({ createdAt: -1 }) // Sort by latest rides
+        .sort({ createdAt: -1 }) // Sort by latest drivers
         .skip(skip) // Skip the documents for pagination
         .limit(Number(limit)); // Limit the results for pagination
   
-      // Get the total count of rides for pagination metadata
+      // Get the total count of drivers for pagination metadata
       const totalDriver = await DriverModel.countDocuments(query);
   
       // Transform driver data
@@ -125,15 +125,15 @@ export async function getDrivers(req, res) {
         status: `${driver.verified && driver.active ? 'Active' : driver.verified && !driver.active ? 'Pending' : !driver.verified ? 'In active' : driver.isBlocked ? 'Blocked' : ''}`
       }));
   
-      return sendResponse(res, 200, true, 'Rides fetched successfully', {
+      return sendResponse(res, 200, true, 'Drivers fetched successfully', {
         driver: transformedDriver,
         totalDriver,
         totalPages: Math.ceil(totalDriver / limit),
         currentPage: Number(page),
       });
     } catch (error) {
-      console.error('UNABLE TO GET RIDES', error);
-      return sendResponse(res, 500, false, 'Unable to get rides');
+      console.error('UNABLE TO GET DRIVERS', error);
+      return sendResponse(res, 500, false, 'Unable to get drivers');
     }
   }
   

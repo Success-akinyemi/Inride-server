@@ -10,68 +10,71 @@ import WarningMessageModel from "../model/WarningMessages.js";
 
 //GET ALL CHATS
 export async function getChats(req, res) {
-    const { limit = 10, page = 1, startDate, endDate, status } = req.query
+    const { limit = 10, page = 1, startDate, endDate, status } = req.query;
 
     try {
-    // Build the query object
-      const query = {};
-  
-      // Handle date filtering
-      if (startDate && endDate) {
-        query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
-      } else if (startDate) {
-        query.createdAt = { $gte: new Date(startDate) };
-      } else if (endDate) {
-        query.createdAt = { $lte: new Date(endDate) };
-      }
+        // Build the query object
+        const query = {};
 
-    // Handle status filtering
-    if (status.toLowercase() === "active") {
-        query.status = "Active";
-    }
-    if (status.toLowercase() === "complete") {
-      query.status = "Complete";
-    }
-    if (status.toLowercase() === "inprogress") {
-        query.status = "In progress";
-    }
-    if (status.toLowercase() === "canceled") {
-        query.status = "Canceled";
-    }
+        // Handle date filtering
+        if (startDate && endDate) {
+            query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+        } else if (startDate) {
+            query.createdAt = { $gte: new Date(startDate) };
+        } else if (endDate) {
+            query.createdAt = { $lte: new Date(endDate) };
+        }
 
-    // Calculate the number of documents to skip
-    const skip = (Number(page) - 1) * Number(limit);
+        // Handle status filtering
+        if (status) {
+            const formattedStatus = status.toLowerCase();
+            const validStatuses = ["active", "complete", "in progress", "canceled"];
+            if (validStatuses.includes(formattedStatus)) {
+                query.status = formattedStatus.charAt(0).toUpperCase() + formattedStatus.slice(1);
+            }
+        }
 
-    // Fetch rides from the database
-    const rides = await RideModel.find(query)
-      .sort({ createdAt: -1 }) // Sort by latest rides
-      .skip(skip) // Skip the documents for pagination
-      .limit(Number(limit)); // Limit the results for pagination
+        // Calculate pagination
+        const skip = (Number(page) - 1) * Number(limit);
 
-    // Get the total count of rides for pagination metadata
-    const totalRides = await RideModel.countDocuments(query);
-    
-    //using the rideId gotten from each rides use the rideId to get ride chats RideChatModel
-    //also using the passengerId and driverId form each rides get the driver firstName and lastName also the passenger firstName and lastName 
+        // Fetch rides from the database
+        const rides = await RideModel.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(Number(limit));
 
-    /**
-     final data look like:
-     {
-        rideId,
-        messageId //also the rideId
-        passengerName,
-        driverName,
-        startDate: createdAt of the specific RideChatModel
-        endDate: updateAt of the specific RideChatModel
-        status: //ride.status of the ride from the RideModel
-        currentPage //for the ride chats RideChatModel
-        totalPages  //for the ride chats RideChatModel
-    } 
-     */
+        const totalRides = await RideModel.countDocuments(query);
+
+        // Fetch ride chats and user details
+        const rideData = await Promise.all(rides.map(async (ride) => {
+            const rideChat = await RideChatModel.findOne({ rideId: ride.rideId });
+
+            const passenger = await PassengerModel.findById(ride.passengerId).select("firstName lastName");
+            const driver = ride.driverId ? await DriverModel.findById(ride.driverId).select("firstName lastName") : null;
+
+            return {
+                rideId: ride.rideId,
+                messageId: ride.rideId,
+                passengerName: passenger ? `${passenger.firstName} ${passenger.lastName}` : "Unknown",
+                driverName: driver ? `${driver.firstName} ${driver.lastName}` : "Unknown",
+                startDate: rideChat ? rideChat.createdAt : null,
+                endDate: rideChat ? rideChat.updatedAt : null,
+                status: ride.status,
+                currentPage: page,
+                totalPages: Math.ceil(totalRides / limit)
+            };
+        }));
+
+        sendResponse(res, 200, true, "Ride chats fetched successfully", {
+            currentPage: page,
+            totalPages: Math.ceil(totalRides / limit),
+            totalRides,
+            rides: rideData
+        });
 
     } catch (error) {
-       console.log('UANBLE TO GET RIDE CHATS', error)
-       sendResponse(res, 500, false, 'Unable to get ride chats') 
+        console.error('UNABLE TO GET RIDE CHATS:', error);
+        sendResponse(res, 500, false, 'Unable to get ride chats');
     }
 }
 
