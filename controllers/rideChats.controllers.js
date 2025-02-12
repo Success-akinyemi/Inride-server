@@ -45,36 +45,51 @@ export async function getChats(req, res) {
 
         const totalRides = await RideModel.countDocuments(query);
 
-        // Fetch ride chats and user details
-        const rideData = await Promise.all(rides.map(async (ride) => {
-            const rideChat = await RideChatModel.findOne({ rideId: ride.rideId });
+        // Fetch ride chats and filter out rides without chats
+        const rideData = await Promise.all(
+            rides.map(async (ride) => {
+                console.log('RDIE', ride?.rideId)
+                const rideChat = await RideChatModel.findOne({ rideId: ride.rideId });
 
-            const passenger = await PassengerModel.findById(ride.passengerId).select("firstName lastName");
-            const driver = ride.driverId ? await DriverModel.findById(ride.driverId).select("firstName lastName") : null;
+                console.log('rideChat',rideChat, ride?.rideId)
+                if (!rideChat) return null; // Skip rides with no chat
+                let passenger = null;
+                let driver = null;
 
-            return {
-                rideId: ride.rideId,
-                messageId: ride.rideId,
-                passengerName: passenger ? `${passenger.firstName} ${passenger.lastName}` : "Unknown",
-                driverName: driver ? `${driver.firstName} ${driver.lastName}` : "Unknown",
-                startDate: rideChat ? rideChat.createdAt : null,
-                endDate: rideChat ? rideChat.updatedAt : null,
-                status: ride.status,
-                currentPage: page,
-                totalPages: Math.ceil(totalRides / limit)
-            };
-        }));
+                if (ride.passengerId) {
+                    passenger = await PassengerModel.findOne({ passengerId: ride.passengerId }).select("firstName lastName");
+                }
+                if (ride.driverId) {
+                    driver = await DriverModel.findOne({ driverId: ride.driverId }).select("firstName lastName");
+                }
+
+                return {
+                    rideId: ride.rideId,
+                    messageId: ride.rideId,
+                    passengerName: passenger ? `${passenger.firstName} ${passenger.lastName}` : "Unknown",
+                    driverName: driver ? `${driver.firstName} ${driver.lastName}` : "Unknown",
+                    startDate: rideChat.createdAt,
+                    endDate: rideChat.updatedAt,
+                    status: ride.status,
+                    currentPage: page,
+                    totalPages: Math.ceil(totalRides / limit),
+                };
+            })
+        );
+
+        // Remove null values (rides without chat)
+        const filteredRideData = rideData.filter((ride) => ride !== null);
 
         sendResponse(res, 200, true, "Ride chats fetched successfully", {
             currentPage: page,
-            totalPages: Math.ceil(totalRides / limit),
-            totalRides,
-            rides: rideData
+            totalPages: Math.ceil(filteredRideData.length / limit),
+            totalRides: filteredRideData.length,
+            rides: filteredRideData,
         });
 
     } catch (error) {
-        console.error('UNABLE TO GET RIDE CHATS:', error);
-        sendResponse(res, 500, false, 'Unable to get ride chats');
+        console.error("UNABLE TO GET RIDE CHATS:", error);
+        sendResponse(res, 500, false, "Unable to get ride chats");
     }
 }
 
