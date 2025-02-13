@@ -588,25 +588,6 @@ export async function signin(req, res) {
             return sendResponse(res, 403, false, 'Unverified account')
         }
 
-        //check
-        if(
-            !numberExist?.email || 
-            numberExist?.email === '' ||
-            !numberExist?.firstName ||
-            numberExist?.firstName === '' ||
-            !numberExist?.lastName ||
-            numberExist?.lastName === '' ||
-            !numberExist?.ssn ||
-            !numberExist?.profileImg ||
-            !numberExist?.idCardImgFront ||
-            !numberExist?.idCardImgBack ||
-            !numberExist?.opreatingCity ||
-            !numberExist?.driverLincenseImgFront ||
-            !numberExist?.driverLincenseImgBack
-        ){
-            return sendResponse(res, 403, false, 'register driver information')
-        }
-
         const otpCode = await generateOtp(mobileNumber, 4, 'driver' )
         console.log('OTP CODE', otpCode)
         

@@ -152,13 +152,6 @@ export async function activeUsers(req, res) {
                     ...calculatePercentageChange(currentData.totalPassenger, previousData.totalPassenger),
                 },
                 {
-                    current: currentData.activePassenger,
-                    previous: previousData.activePassenger,
-                    id: 'totalactivepassenger',
-                    name: 'Total Active Passenger',
-                    ...calculatePercentageChange(currentData.activePassenger, previousData.activePassenger),
-                },
-                {
                     current: currentData.inactivePassenger,
                     previous: previousData.inactivePassenger,
                     id: 'totalinactivepassenger',
@@ -166,12 +159,22 @@ export async function activeUsers(req, res) {
                     ...calculatePercentageChange(currentData.inactivePassenger, previousData.inactivePassenger),
                 },
                 {
+                    current: currentData.activePassenger,
+                    previous: previousData.activePassenger,
+                    id: 'totalactivepassenger',
+                    name: 'Total Active Passenger',
+                    ...calculatePercentageChange(currentData.activePassenger, previousData.activePassenger),
+                },
+                /**
+                 * 
+                {
                     current: currentData.blacklistPassenger,
                     previous: previousData.blacklistPassenger,
                     id: 'totalblacklistpassenger',
                     name: 'Total Blacklist Passenger',
                     ...calculatePercentageChange(currentData.blacklistPassenger, previousData.blacklistPassenger),
                 },
+                 */
             ];
 
             sendResponse(res, 200, true, statsComparison)
@@ -186,13 +189,6 @@ export async function activeUsers(req, res) {
                     ...calculatePercentageChange(currentDriverData.totalDriver, previousDriverData.totalDriver),
                 },
                 {
-                    current: currentDriverData.activeDriver,
-                    previous: previousDriverData.activeDriver,
-                    id: 'totalactivedriver',
-                    name: 'Total Active Driver',
-                    ...calculatePercentageChange(currentDriverData.activeDriver, previousDriverData.activeDriver),
-                },
-                {
                     current: currentDriverData.inactiveDriver,
                     previous: previousDriverData.inactiveDriver,
                     id: 'totalinactivedriver',
@@ -200,19 +196,22 @@ export async function activeUsers(req, res) {
                     ...calculatePercentageChange(currentDriverData.inactiveDriver, previousDriverData.inactiveDriver),
                 },
                 {
-                    current: currentDriverData.blacklistDriver,
-                    previous: previousDriverData.blacklistDriver,
-                    id: 'totalblacklistdriver',
-                    name: 'Total Blacklist Driver',
-                    ...calculatePercentageChange(currentDriverData.blacklistDriver, previousDriverData.blacklistDriver),
+                    current: currentDriverData.activeDriver,
+                    previous: previousDriverData.activeDriver,
+                    id: 'totalactivedriver',
+                    name: 'Total Active Driver',
+                    ...calculatePercentageChange(currentDriverData.activeDriver, previousDriverData.activeDriver),
                 },
-                {
-                    current: activeNowCurrent,
-                    previous: activeNowPrevious,
-                    id: 'activenow',
-                    name: 'Active Now',
-                    ...calculatePercentageChange(activeNowCurrent, activeNowPrevious),
-                }
+                /**
+                 {
+                     current: currentDriverData.blacklistDriver,
+                     previous: previousDriverData.blacklistDriver,
+                     id: 'totalblacklistdriver',
+                     name: 'Total Blacklist Driver',
+                     ...calculatePercentageChange(currentDriverData.blacklistDriver, previousDriverData.blacklistDriver),
+                 },
+                 * 
+                 */
             ];
 
             sendResponse(res, 200, true, statsComparison)
@@ -226,6 +225,8 @@ export async function activeUsers(req, res) {
                     name: 'Total Passenger',
                     ...calculatePercentageChange(currentData.totalPassenger, previousData.totalPassenger),
                 },
+                /**
+                 * 
                 {
                     current: currentData.activePassenger,
                     previous: previousData.activePassenger,
@@ -247,6 +248,7 @@ export async function activeUsers(req, res) {
                     name: 'Total Blacklist Passenger',
                     ...calculatePercentageChange(currentData.blacklistPassenger, previousData.blacklistPassenger),
                 },
+                 */
                 {
                     current: currentDriverData.totalDriver,
                     previous: previousDriverData.totalDriver,
@@ -254,27 +256,30 @@ export async function activeUsers(req, res) {
                     name: 'Total Driver',
                     ...calculatePercentageChange(currentDriverData.totalDriver, previousDriverData.totalDriver),
                 },
-                {
-                    current: currentDriverData.activeDriver,
-                    previous: previousDriverData.activeDriver,
-                    id: 'totalactivedriver',
-                    name: 'Total Active Driver',
-                    ...calculatePercentageChange(currentDriverData.activeDriver, previousDriverData.activeDriver),
-                },
-                {
-                    current: currentDriverData.inactiveDriver,
-                    previous: previousDriverData.inactiveDriver,
-                    id: 'totalinactivedriver',
-                    name: 'Total Inactive Driver',
-                    ...calculatePercentageChange(currentDriverData.inactiveDriver, previousDriverData.inactiveDriver),
-                },
-                {
-                    current: currentDriverData.blacklistDriver,
-                    previous: previousDriverData.blacklistDriver,
-                    id: 'totalblacklistdriver',
-                    name: 'Total Blacklist Driver',
-                    ...calculatePercentageChange(currentDriverData.blacklistDriver, previousDriverData.blacklistDriver),
-                },
+                /**
+                 {
+                     current: currentDriverData.activeDriver,
+                     previous: previousDriverData.activeDriver,
+                     id: 'totalactivedriver',
+                     name: 'Total Active Driver',
+                     ...calculatePercentageChange(currentDriverData.activeDriver, previousDriverData.activeDriver),
+                 },
+                 {
+                     current: currentDriverData.inactiveDriver,
+                     previous: previousDriverData.inactiveDriver,
+                     id: 'totalinactivedriver',
+                     name: 'Total Inactive Driver',
+                     ...calculatePercentageChange(currentDriverData.inactiveDriver, previousDriverData.inactiveDriver),
+                 },
+                 {
+                     current: currentDriverData.blacklistDriver,
+                     previous: previousDriverData.blacklistDriver,
+                     id: 'totalblacklistdriver',
+                     name: 'Total Blacklist Driver',
+                     ...calculatePercentageChange(currentDriverData.blacklistDriver, previousDriverData.blacklistDriver),
+                 },
+                 * 
+                 */
                 {
                     current: activeNowCurrent,
                     previous: activeNowPrevious,

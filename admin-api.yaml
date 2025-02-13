@@ -1211,3 +1211,39 @@ paths:
           description: User error
         500:
           description: Server error
+
+  /api/admin/staff/updateStaffAccount:
+    post:
+      tags:
+        - Staff
+      summary: Update staff Account
+      description: Endpoint to update staff account, role, role description, permissions. allowed Permissions = ['driver', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff']
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - adminId
+              - role
+              - roleDescription
+              - permissions
+            properties:
+              adminId:
+                type: string
+              role:
+                type: string
+              roleDescription:
+                type: string
+              permissions:
+                type: array
+                items: 
+                  type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error

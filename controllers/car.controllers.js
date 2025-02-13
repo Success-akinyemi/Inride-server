@@ -242,6 +242,7 @@ export async function getCarDetail(req, res) {
           sendResponse(res, 404, false, 'Car detail not found')
           return
       }
+
       sendResponse(res, 200, true, carDetail, 'Car details fetched successfully')
   } catch (error) {
       console.log('ERROR FETCHING CAR DETAILS', error)

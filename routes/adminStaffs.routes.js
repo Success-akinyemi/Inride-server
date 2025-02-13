@@ -12,7 +12,7 @@ router.post('/updatePassword', AuthenticateAdmin, VerifyAdminAccount, VerifyAdmi
 router.post('/activateStaff', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.activateStaff);
 router.post('/sackStaff', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.sackStaff);
 router.post('/deactivateStaff', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.deactivateStaff);
-
+router.post('/updateStaffAccount', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.updateStaffAccount);
 
 
 

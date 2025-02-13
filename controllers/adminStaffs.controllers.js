@@ -282,7 +282,44 @@ export async function deactivateStaff(req, res) {
     }
 }
 
-//
+//UPDATE STAFF ACCOUNT
+export async function updateStaffAccount(req, res) {
+    const { role, roleDescription, permissions, adminId } = req.body
+    if(!adminId){
+        return sendResponse(res, 400, false, 'Provide a staff Id')
+    }
+    if(permissions){
+        if (!Array.isArray(permissions)) {
+            return sendResponse(res, 400, false, 'Permissions must be an array');
+        }
+
+        // Allowed permissions
+        const allowedPermissions = ['driver', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff'];
+
+        // Check if all values in permissions are valid
+        const invalidPermissions = permissions.filter(p => !allowedPermissions.includes(p.toLowerCase()));
+
+        if (invalidPermissions.length > 0) {
+            return sendResponse(res, 400, false, `Invalid permissions: ${invalidPermissions.join(', ')}`);
+        }
+    }
+    try {
+        const getStaff = await AdminUserModel.findOne({ adminId })
+        if(!getStaff){
+            return sendResponse(res, 404, false, 'User with this Id does not exist')
+        }
+        if(role) getStaff.role = role
+        if(roleDescription) getStaff.roleDescription = roleDescription
+        if(permissions) getStaff.permissions = permissions
+
+        await getStaff.save()
+
+        sendResponse(res, 200, true, 'Staff Profile Updated')
+    } catch (error) {
+        console.log('UANBLE TO UPDATE STAFF ACCOUNT', error)
+        sendResponse(res, 500, false, 'Unable to update staff account')
+    }
+}
 
 export async function dele(req, res) {
     try {

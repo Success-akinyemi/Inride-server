@@ -39,7 +39,7 @@ const AdminUserSchema = new mongoose.Schema({
         type: String
     },
     permissions: {
-        type: Array,
+        type: Array, //drivers cars transactions messages bigtaxes cms staff
     },
     bio:{
         type: String
