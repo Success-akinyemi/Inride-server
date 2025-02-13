@@ -148,7 +148,7 @@ export async function registerUser(req, res) {
     if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
     if (!firstName) return sendResponse(res, 400, false, `Provide a first name`);
     if (!lastName) return sendResponse(res, 400, false, `Provide a last name`);
-    if (!ssn) return sendResponse(res, 400, false, `Provide a social security number`);
+    //if (!ssn) return sendResponse(res, 400, false, `Provide a social security number`);
     if (!["driverLicense", "internationalPassport", "voterCard"].includes(idCardType)) {
         return sendResponse(res, 400, false, `ID card type must be: Driver License, International Passport, or Voter's Card`);
     }

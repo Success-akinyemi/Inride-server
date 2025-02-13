@@ -43,6 +43,8 @@ tags:
     description: Endpoints for staff
   - name: Big taxes
     description: Endpoints for big taxes
+  - name: CMS
+    description: Endpoints for cms
 
 
 paths:
@@ -1406,3 +1408,5 @@ paths:
           description: user error
         500: 
           description: server error
+
+#CMS
