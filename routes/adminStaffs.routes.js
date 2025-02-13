@@ -18,7 +18,7 @@ router.post('/updateStaffAccount', AuthenticateAdmin, VerifyAdminAccount, Verify
 
 
 //GET
-router.get('/getAllStaffs', controllers.getAllStaffs);
+router.get('/getAllStaffs', AuthenticateAdmin, VerifyAdminAccount, controllers.getAllStaffs);
 router.get('/getProfile', AuthenticateAdmin, VerifyAdminAccount, controllers.getProfile);
 router.get('/getAStaff/:adminId', AuthenticateAdmin, VerifyAdminAccount, controllers.getAStaff);
 

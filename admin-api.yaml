@@ -41,6 +41,8 @@ tags:
     description: Endpoints for ride chats
   - name: Staff
     description: Endpoints for staff
+  - name: Big taxes
+    description: Endpoints for big taxes
 
 
 paths:
@@ -1008,7 +1010,7 @@ paths:
       parameters:
         - name: adminId
           in: path
-          required: false
+          required: true
           description: The adminId of te staff
           schema:
             type: string
@@ -1247,3 +1249,160 @@ paths:
           description: User error
         500:
           description: Server error
+
+#BIG TAXES
+  /api/bigTaxes/newBigTaxes:
+    post:
+      tags:
+        - Big taxes
+      summary: Create new big taxes
+      description: Endpoint to create new big taxes
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - stationName
+              - price
+              - from
+              - to
+              - miles
+              - time
+            properties:
+              stationName:
+                type: string
+              price:
+                type: number
+              from:
+                type: string
+              fromDescription:
+                type: string
+              to: 
+                type: string
+              toDescription:
+                type: string
+              miles:
+                type: number
+              time:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/bigTaxes/updateBigTaxes:
+    post:
+      tags:
+        - Big taxes
+      summary: update a big taxes
+      description: Endpoint to update a big taxes data passing taxId - _id
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              taxId:
+                type: string
+              stationName:
+                type: string
+              price:
+                type: number
+              from:
+                type: string
+              fromDescription:
+                type: string
+              to: 
+                type: string
+              toDescription:
+                type: string
+              miles:
+                type: number
+              time:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/bigTaxes/deleteBigTaxes:
+    post:
+      tags:
+        - Big taxes
+      summary: Delete a big taxes
+      description: Endpoint to delete big taxes
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - taxId
+            properties:
+              taxId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/bigTaxes/getAllBigTaxes:
+    get:
+      tags:
+        - Big taxes
+      summary: Get all big taxes
+      description: The endpoint get all big taxes passing in possible queries
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/bigTaxes/getABigTax/{taxId}:
+    get:
+      tags:
+        - Big taxes
+      summary: Get a specific big taxes
+      description: The endpoint provides details on a big taxes
+      parameters:
+        - name: taxId
+          in: path
+          required: true
+          description: The taxId of the big taxes
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error

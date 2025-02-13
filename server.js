@@ -24,6 +24,8 @@ import adminAuthRoutes from './routes/adminAuth.routes.js';
 import statsRoutes from './routes/stats.routes.js';
 import adminStaffRoutes from './routes/adminStaffs.routes.js';
 import rideChatsRoutes from './routes/rideChats.routes.js';
+import bigTaxesRoutes from './routes/bigTaxes.routes.js';
+
 
 
 
@@ -106,6 +108,8 @@ app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/admin/staff', adminStaffRoutes);
 app.use('/api/rideChat', rideChatsRoutes);
+app.use('/api/bigTaxes', bigTaxesRoutes);
+
 
 
 
