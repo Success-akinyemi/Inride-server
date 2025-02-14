@@ -17,6 +17,10 @@ export async function payoutRequest(req, res) {
         sendResponse(res, 400, false, 'Withdrawal amount is required')
         return
     }
+    if(isNaN(amount)){
+      sendResponse(res, 400, false, 'amount value must be a number')
+      return
+  }
     const fullAmount = Number(amount)
     if(fullAmount > earnings ){
         sendResponse(res, 500, false, 'Amount cannot be greater than current earnings')
@@ -28,7 +32,7 @@ export async function payoutRequest(req, res) {
             sendResponse(res, 404, false, 'Bank details not found. add a bank account')
             return
         }
-        const bankDetails = getBankDetails.bankDetails.find(bank => bank._id === bankId)
+        const bankDetails = getBankDetails.bankDetails.find(bank => bank._id.toString() === bankId)
         if(!bankDetails){
             sendResponse(res, 404, false, 'Bank Account details not found')
             return
@@ -215,13 +219,13 @@ export async function getAllPayouts(req, res) {
       const limitNumber = Number(limit)
       const query = {}
 
-      if(status.toLowercase() === 'pending'){
+      if(status?.toLowercase() === 'pending'){
           query.status = 'Pending'
       }
-      if(status.toLowercase() === 'succesful'){
+      if(status?.toLowercase() === 'succesful'){
           query.status = 'Succesful'
       }        
-      if(status.toLowercase() === 'canceled'){
+      if(status?.toLowercase() === 'canceled'){
           query.status = 'Canceled'
       }
 
@@ -235,7 +239,7 @@ export async function getAllPayouts(req, res) {
 
       // Add driver names
       const payoutsWithDriverNames = await Promise.all(data.map(async (payout) => {
-        const driver = await DriverModel.findById(payout.driverId, 'firstName lastName');
+        const driver = await DriverModel.findOne({driverId: payout.driverId});
         if (driver) {
             payout.driverName = `${driver.firstName} ${driver.lastName}`;
         }

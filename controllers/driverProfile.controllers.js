@@ -45,7 +45,7 @@ export async function updateProfile(req, res) {
         if (workAddress) getDriver.workAddress = workAddress;
         if (accountImgUrl) getDriver.accountImg = accountImgUrl;
         if (getEmail) getDriver.email = getEmail;
-
+          
         // Save changes
         await getDriver.save();
 

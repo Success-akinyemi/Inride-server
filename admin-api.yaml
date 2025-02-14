@@ -47,6 +47,8 @@ tags:
     description: Endpoints for cms
   - name: Payout
     description: Endpoints for payout
+  - name: Settings
+    description: Endpoints for settings
 
 
 paths:
