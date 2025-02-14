@@ -355,7 +355,8 @@ export async function getAllCms(req, res) {
         }
         if(status.toLowerCase()=== 'scheduled'){
             query.status = 'scheduled'
-        }        if(status.toLowerCase()=== 'published'){
+        }        
+        if(status.toLowerCase()=== 'published'){
             query.status = 'published'
         }
 

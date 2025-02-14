@@ -1,6 +1,7 @@
 import { sendResponse, uploadFile } from "../middlewares/utils.js"
 import DriverModel from "../model/Driver.js"
 import DriverBankDetailModel from "../model/DriverBankDetails.js";
+import NotificationModel from "../model/Notifications.js";
 import PayoutModel from "../model/Payout.js";
 
 export async function updateProfile(req, res) {
@@ -66,6 +67,19 @@ export async function getProfile(req, res) {
         console.log('UNABLE TO GET DRIVER PROFILE', error)
         sendResponse(res, 500, false, 'Unable to get driver profile')
     }
+}
+
+//GET DRIVER NOTIFICATIONS
+export async function getNotifications(req, res) {
+  const { driverId } = req.user
+  try {
+      const notifications = await NotificationModel.find({ accountId: driverId })
+
+      sendResponse(res, 200, true, notifications)
+  } catch (error) {
+      console.log('UNABLE TO GET DRIVER NOTIFICATIONS', error)
+      sendResponse(res, 500, false, 'Unable to get driver notifications')
+  }
 }
 
 //ADMIN

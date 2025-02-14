@@ -13,6 +13,8 @@ router.post('/unBlockDriver', AuthenticateAdmin, VerifyAdminAccount, controllers
 
 //GET
 router.get('/getProfile', AuthenticateDriver, VerifyAccount, controllers.getProfile)
+router.get('/getNotifications', AuthenticateDriver, VerifyAccount, controllers.getNotifications)
+
 
 router.get('/getDrivers', AuthenticateAdmin, VerifyAdminAccount, controllers.getDrivers)
 router.get('/getADriver/:driverId', AuthenticateAdmin, VerifyAdminAccount, controllers.getADriver)

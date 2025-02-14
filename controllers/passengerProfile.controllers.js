@@ -1,4 +1,5 @@
 import { sendResponse, uploadFile } from "../middlewares/utils.js"
+import NotificationModel from "../model/Notifications.js";
 import PassengerModel from "../model/Passenger.js"
 
 export async function updateProfile(req, res) {
@@ -66,6 +67,19 @@ export async function getProfile(req, res) {
   } catch (error) {
       console.log('UNABLE TO GET PASSENGER PROFILE', error)
       sendResponse(res, 500, false, 'Unable to get passenger profile')
+  }
+}
+
+//GET PASSNEGER NOTIFICATIONS
+export async function getNotifications(req, res) {
+  const { passengerId } = req.user
+  try {
+      const notifications = await NotificationModel.find({ accountId: passengerId })
+
+      sendResponse(res, 200, true, notifications)
+  } catch (error) {
+      console.log('UNABLE TO GET PASSENGER NOTIFICATIONS', error)
+      sendResponse(res, 500, false, 'Unable to get passenger notifications')
   }
 }
 

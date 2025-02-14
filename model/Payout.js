@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const PayoutSchema = new mongoose.Schema({
     driverId: {
         type: String,
-        required: [ true, 'Driver Is d is required']
+        required: [ true, 'Driver Id is required']
     },
     amount: {
         type: Number
@@ -12,6 +12,13 @@ const PayoutSchema = new mongoose.Schema({
         type: String,
         default: 'Pending',
         enum : ['Pending', 'Succesful', 'Canceled']
+    },
+    closed:{
+        type: Boolean,
+        default: false
+    },
+    reason:{
+        type: String
     },
     bankName: {
         type: String,

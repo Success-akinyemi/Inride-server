@@ -13,6 +13,8 @@ router.post('/unBlockPassenger', AuthenticateAdmin, VerifyAdminAccount, controll
 
 //GET
 router.get('/getProfile', AuthenticatePassenger, VerifyAccount, controllers.getProfile)
+router.get('/getNotifications', AuthenticatePassenger, VerifyAccount, controllers.getNotifications)
+
 
 router.get('/getPassengers', AuthenticateAdmin, VerifyAdminAccount, controllers.getPassengers)
 router.get('/getAPassenger/:passengerId', AuthenticateAdmin, VerifyAdminAccount, controllers.getAPassenger)

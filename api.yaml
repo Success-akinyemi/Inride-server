@@ -1269,6 +1269,18 @@ paths:
         500:
           description: Server error
 
+  /passenger/profile/getNotifications:
+    get:
+      tags:
+        - Passenger
+      summary: Get passenger notifications
+      description: To get passenger notifications
+      responses:
+        200:
+          description: Success
+        500:
+          description: Server error
+
   /passenger/card/getPaymentCards:
     get:
       tags:
@@ -1880,6 +1892,18 @@ paths:
         - Driver
       summary: Get driver profile
       description: TO get driver profile
+      responses:
+        200:
+          description: Success
+        500:
+          description: Server error
+
+  /driver/profile/getNotifications:
+    get:
+      tags:
+        - Driver
+      summary: Get driver notification
+      description: TO get driver notification
       responses:
         200:
           description: Success

@@ -655,3 +655,261 @@ export async function sendCMSEmail({
     throw error;
   }
 }
+
+export async function sendPayoutrequestSubmittedEmail({
+  email,
+  name = "",
+  amount = "",
+  bankName = "",
+  accountName = "",
+  accountNumber = "",
+  title = "Payout Request Submitted Successful",
+}) {
+  if (!email) {
+    throw new Error("Email is required to send payout request.");
+  }
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <div style="display: flex; align-items: left; margin-bottom: 20px;">
+            <img src="${logourl}" alt="Logo" style="width: 100px; height: auto; margin-right: 20px;">
+        </div>
+        <br />
+        <br />
+
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+       
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            You have succesful submitted a payout request. you request is beem recieved and awaiting further processing by support team.
+        </p>
+
+        <p style="color: #344054; font-size: 17px; font-weight: 600;">
+           Payout Details
+        </p>
+
+        <ul style="color: #344054; font-size: 16px; font-weight: 400; padding-left: 20px;">
+            <li><strong>Amount:</strong> ${amount}</li>
+            <li><strong>Bank Name:</strong> ${bankName}</li>
+            <li><strong>Account Name:</strong> ${accountName}</li>
+            <li><strong>Account Number:</strong> ${accountNumber}</li>
+            <li><strong>Status:</strong> <span style="color: #000000;">Pending</span></li>
+        </ul>
+
+        <br />
+        <br />
+
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p style="text-align: center;">© ${currentYear} RideFuze</p>
+            <br />
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
+              <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="${twUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${igUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+              </div>
+            </div>
+        </footer>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: title,
+      html: emailContent,
+    });
+    console.log(`payout request email sent to ${email}`);
+  } catch (error) {
+    console.error(`Failed to send email to ${email}:`, error.message);
+    throw error;
+  }
+}
+
+export async function sendPayoutRequestApprovedEmail({
+  email,
+  name = "",
+  amount = "",
+  bankName = "",
+  accountName = "",
+  accountNumber = "",
+  title = "Payout Request Approved",
+}) {
+  if (!email) {
+    throw new Error("Email is required to send payout approved.");
+  }
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <div style="display: flex; align-items: left; margin-bottom: 20px;">
+            <img src="${logourl}" alt="Logo" style="width: 100px; height: auto; margin-right: 20px;">
+        </div>
+        <br />
+        <br />
+
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+       
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+           Hurray! You payout request has been approved. by the support team
+        </p>
+
+        <p style="color: #344054; font-size: 17px; font-weight: 600;">
+           Payout Details
+        </p>
+
+        <ul style="color: #344054; font-size: 16px; font-weight: 400; padding-left: 20px;">
+            <li><strong>Amount:</strong> ${amount}</li>
+            <li><strong>Bank Name:</strong> ${bankName}</li>
+            <li><strong>Account Name:</strong> ${accountName}</li>
+            <li><strong>Account Number:</strong> ${accountNumber}</li>
+            <li><strong>Status:</strong> <span style="color: #007BFF;">Succesful</span></li>
+        </ul>
+
+        <br />
+        <br />
+
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p style="text-align: center;">© ${currentYear} RideFuze</p>
+            <br />
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
+              <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="${twUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${igUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+              </div>
+            </div>
+        </footer>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: title,
+      html: emailContent,
+    });
+    console.log(`payout approved email sent to ${email}`);
+  } catch (error) {
+    console.error(`Failed to send email to ${email}:`, error.message);
+    throw error;
+  }
+}
+
+export async function sendPayoutRequestRejectedEmail({
+  email,
+  name = "",
+  amount = "",
+  bankName = "",
+  accountName = "",
+  accountNumber = "",
+  reason = "", 
+  title = "Payout Request Approved",
+}) {
+  if (!email) {
+    throw new Error("Email is required to send payout approved.");
+  }
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <div style="display: flex; align-items: left; margin-bottom: 20px;">
+            <img src="${logourl}" alt="Logo" style="width: 100px; height: auto; margin-right: 20px;">
+        </div>
+        <br />
+        <br />
+
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+       
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+           Hurray! You payout request has been approved. by the support team
+        </p>
+
+        <p style="color: #344054; font-size: 17px; font-weight: 600;">
+           Payout Details
+        </p>
+
+        <ul style="color: #344054; font-size: 16px; font-weight: 400; padding-left: 20px;">
+            <li><strong>Amount:</strong> ${amount}</li>
+            <li><strong>Bank Name:</strong> ${bankName}</li>
+            <li><strong>Account Name:</strong> ${accountName}</li>
+            <li><strong>Account Number:</strong> ${accountNumber}</li>
+            <li><strong>Status:</strong> <span style="color:rgb(255, 0, 0);">Rejected</span></li>
+        </ul>
+
+        <p style="color: #344054; font-size: 17px; font-weight: 600;">
+           Reason: <br>
+           ${reason}
+        </p>
+
+        <br />
+        <br />
+
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p style="text-align: center;">© ${currentYear} RideFuze</p>
+            <br />
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
+              <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="${twUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${igUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+              </div>
+            </div>
+        </footer>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: title,
+      html: emailContent,
+    });
+    console.log(`payout approved email sent to ${email}`);
+  } catch (error) {
+    console.error(`Failed to send email to ${email}:`, error.message);
+    throw error;
+  }
+}

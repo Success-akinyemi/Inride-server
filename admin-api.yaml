@@ -45,6 +45,8 @@ tags:
     description: Endpoints for big taxes
   - name: CMS
     description: Endpoints for cms
+  - name: Payout
+    description: Endpoints for payout
 
 
 paths:
@@ -1725,3 +1727,108 @@ paths:
           description: user error
         500: 
           description: server error
+
+#PAYOUT
+  /api/driver/payout/getAllPayouts:
+    get:
+      tags:
+        - Payout
+      summary: Get all payout request
+      description: The endpoint get all payout request passing in possible queries
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: true
+          description: the status of the payout request - ['pending', 'succesful', 'canceled']
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/driver/payout/getAPayout/{payoutId}:
+    get:
+      tags:
+        - Payout
+      summary: Get a specific payout
+      description: The endpoint provides details on a specific payout request
+      parameters:
+        - name: payoutId
+          in: path
+          required: true
+          description: The payoutId of the payout data
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/driver/payout/approvePayout:
+    post:
+      tags:
+        - Payout
+      summary: Approve a payout request
+      description: Endpoint to approved a payout request
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - payoutId
+            properties:
+              payoutId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/driver/payout/rejectPayout:
+    post:
+      tags:
+        - Payout
+      summary: Reject a payout request
+      description: Endpoint to reject a payout request
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - payoutId
+            properties:
+              payoutId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
