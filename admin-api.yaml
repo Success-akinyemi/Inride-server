@@ -1834,3 +1834,194 @@ paths:
           description: User error
         500:
           description: Server error
+
+#SETTINGS
+  /api/appSettings/updateAppSettings:
+    post:
+      tags:
+        - Settings
+      summary: Handle app settings
+      description: Endpoint to handle and update app settings
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+            properties:
+              name:
+                type: string
+                description: Name of the app
+              pricePerKm:
+                type: number
+                description: the price per km set by admin
+              deliveryPricePerKm:
+                type: number
+                description: the price per km for delivery rides
+              earningCommission:
+                type: number
+                description: the earning coming of the app on every ride
+              cancelationRidePercent:
+                type: number
+                description: the Cancelation percentage fee for ride 
+              currency:
+                type: string
+                description: The default currency of the app defaul - USD
+              warningCount:
+                type: number
+                description: The Warning count given to a user before account get automatically blocked
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/appSettings/createFaq:
+    post:
+      tags:
+        - Settings
+      summary: New Faq
+      description: Endpoint to create a new faq
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - question
+              - answer
+            properties:
+              question:
+                type: string
+              answer:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/appSettings/updateFaq:
+    post:
+      tags:
+        - Settings
+      summary: Update Faq
+      description: Endpoint to update a faq
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - question
+              - answer
+              - faqId
+            properties:
+              faqId:
+                type: string
+              question:
+                type: string
+              answer:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/appSettings/deleteFaq/{faqId}:
+    post:
+      tags:
+        - Settings
+      summary: Delete a Faq
+      description: The endpoint to delete an Faq
+      parameters:
+        - name: faqId
+          in: path
+          required: true
+          description: The faqId of the faq data
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/appSettings/updateAbout:
+    post:
+      tags:
+        - Settings
+      summary: Write about app
+      description: Endpoint to to write about app
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - about
+            properties:
+              about:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/appSettings/getAppSettings:
+    get:
+      tags:
+        - Settings
+      summary: Get app settings
+      description: Endpoint to get app settings
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/appSettings/getFaqs:
+    get:
+      tags:
+        - Settings
+      summary: Get Faqs
+      description: Endpoint to get faq
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/appSettings/getAbout:
+    get:
+      tags:
+        - Settings
+      summary: Get about
+      description: Endpoint to get about
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error

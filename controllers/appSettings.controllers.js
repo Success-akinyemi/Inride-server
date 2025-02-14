@@ -5,7 +5,7 @@ import appSettingsModel from "../model/AppSettings.js"
 import FaqModel from "../model/Faq.js"
 
 export async function handleappSettings(req, res) {
-    const { pricePerKm, name, currency, cancelationRidePercent, deliveryPricePerKm } = req.body
+    const { name, pricePerKm, deliveryPricePerKm, earningCommission, cancelationRidePercent, currency, warningCount, } = req.body
     try {
         let getAppSettings
         getAppSettings = await appSettingsModel.findOne()
@@ -14,12 +14,15 @@ export async function handleappSettings(req, res) {
             if(name) getAppSettings.name =  name
             if(currency) getAppSettings.currency = currency
             if(cancelationRidePercent) getAppSettings.cancelationRidePercent = cancelationRidePercent
-            if(deliveryPricePerKm) getAppSettings.deliveryPricePerKm = deliveryPricePerKm, deliveryPricePerKm
+            if(deliveryPricePerKm) getAppSettings.deliveryPricePerKm = deliveryPricePerKm
+            if(earningCommission) getAppSettings.earningCommission = earningCommission
+            if(warningCount) getAppSettings.warningCount = warningCount,
+
             
             await getAppSettings.save()
         } else {
             getAppSettings = await appSettingsModel.create({
-                pricePerKm, name, currency, cancelationRidePercent,
+                pricePerKm, name, currency, cancelationRidePercent, deliveryPricePerKm, earningCommission, warningCount
             })
         }
 
@@ -68,8 +71,7 @@ export async function createFaq(req, res){
 // UPDATE FAQ
 export async function updateFaq(req, res){
   try {
-    const { faqId } = req.params; // ID of the FAQ inside the array
-    const { question, answer } = req.body;
+    const { question, answer, faqId } = req.body;
 
     const faqEntry = await FaqModel.findOne();
     if (!faqEntry) {
