@@ -10,7 +10,7 @@ export async function newBigTaxes(req, res) {
     if(!price){
         return sendResponse(res, 400, false, 'Price is required')
     }
-    if(NaN(price)){
+    if(isNaN(price)){
         return sendResponse(res, 400, false, 'Price must be a valid number')
     }
     if(!from){
@@ -22,7 +22,7 @@ export async function newBigTaxes(req, res) {
     if(!miles){
         return sendResponse(res, 400, false, 'Miles is required')
     }
-    if(NaN(miles)){
+    if(isNaN(miles)){
         return sendResponse(res, 400, false, 'Miles must be a valid number')
     }
     if(!time){
@@ -54,12 +54,12 @@ export async function updateBigTaxes(req, res) {
         return sendResponse(res, 400, false, 'Tax ID is required')
     }
     if(price){
-        if(NaN(price)){
+        if(isNaN(price)){
             return sendResponse(res, 400, false, 'Price must be a number')
         }
     }
     if(miles){
-        if(NaN(miles)){
+        if(isNaN(miles)){
             return sendResponse(res, 400, false, 'Miles must be a number')
         }
     }
@@ -111,10 +111,14 @@ export async function deleteBigTaxes(req, res) {
 export async function getAllBigTaxes(req, res) {
     const { page = 1, limit = 10 } = req.query
     try {
+        const query = {}
         // Convert limit and page to numbers
         const pageNumber = Number(page);
         const limitNumber = Number(limit);
 
+        // Calculate the number of documents to skip
+        const skip = (Number(page) - 1) * Number(limit);
+  
         // Fetch taxes from the database
         const taxes = await BigTaxesModel.find(query)
         .sort({ createdAt: -1 }) // Sort by latest taxes
@@ -124,7 +128,7 @@ export async function getAllBigTaxes(req, res) {
         // Get the total count of taxes for pagination metadata
         const totalTaxes = await BigTaxesModel.countDocuments(query);
 
-        return sendResponse(res, 200, true, "Passengers fetched successfully", {
+        return sendResponse(res, 200, true, "Big taxes fetched successfully", {
             taxes: taxes,
             totalTaxes,
             totalPages: Math.ceil(totalTaxes / limitNumber),

@@ -581,3 +581,77 @@ export async function sendStaffActivationEmail({
     throw error;
   }
 }
+
+export async function sendCMSEmail({
+  email,
+  name = "",
+  content = "",
+  image = "",
+  title = "RideFuze",
+}) {
+  if (!email) {
+    throw new Error("Email is required to send a welcome email.");
+  }
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <div style="display: flex; align-items: left; margin-bottom: 20px;">
+            <img src="${logourl}" alt="Logo" style="width: 100px; height: auto; margin-right: 20px;">
+        </div>
+        <br />
+        <br />
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+        
+        <div style="color: #344054; font-size: 16px; font-weight: 400;">
+            ${content}
+        </div>
+        
+        ${image && (
+          `
+            <img src="${image}" alt="${title}" style="width: 80%; height: auto;">
+          `  
+        )}
+
+        <br />
+        <br />
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p style="text-align: center;">© ${currentYear} RideFuze</p>
+            <br />
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
+              <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="${twUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+                <a href="${igUrl}" style="text-decoration: none; color: inherit;">
+                  <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                </a>
+              </div>
+            </div>
+        </footer>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: title,
+      html: emailContent,
+    });
+    console.log(`CMS email sent to ${email}`);
+  } catch (error) {
+    console.error(`Failed to send email to ${email}:`, error.message);
+    throw error;
+  }
+}

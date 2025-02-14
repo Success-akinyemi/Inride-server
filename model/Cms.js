@@ -7,14 +7,6 @@ const CmsSchema = new mongoose.Schema({
     message: {
         type: String
     },
-    type: {
-        type: String,
-        enum: [ 'pushnotification', 'promotionalmail' ]
-    },//push notification or promotional mail
-    status: {
-        type: String,
-        enum: [ 'Draft', 'Scheduled', 'Published' ]
-    }, //draft, published, scheduled
     image: {
         type: String
     },
@@ -24,31 +16,44 @@ const CmsSchema = new mongoose.Schema({
     caption: {
         type: String
     },
+    author: {
+        type: String
+    },
+    authorId: {
+        type: String
+    },
+    redirection: {
+        type: String,
+        enum: [ 'inapp', 'mail', 'pushnotification', 'inappandpushnotification', ]
+    },//in-app mail pushnotification 
+    status: {
+        type: String,
+        enum: [ 'draft', 'scheduled', 'published' ]
+    },//draft, published, scheduled
+    type: {
+        type: String,
+        enum: [ 'updates', 'offers' ]
+    },//updates, Offers
     scheduled: {
         type: Boolean,
         default: false
     }, //true if scheduled
-    users: {
-        type: Array
-    },//users ID
-    accountType: {
-        type: String
-    },
-    allUsers: {
-        type: Boolean,
-        default: true
-    },
     scheduledDate: [{
         day: { type: String, },
         time: { type: String, }, 
         date: { type: String, }, 
     }],
-    author: {
+
+    users: {
+        type: Array
+    },//users custom email if provided
+    accountType: {
         type: String
-    },
-    authorID: {
-        type: String
-    }
+    }, //driver passenger admin
+    allUsers: {
+        type: Boolean,
+        default: true
+    }, //true if no accountType passed
 },
 { timestamps: true }
 )

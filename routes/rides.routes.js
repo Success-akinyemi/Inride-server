@@ -20,7 +20,7 @@ router.get('/getPassengerRides', AuthenticatePassenger, VerifyAccount, controlle
 router.get('/getUpcomingPassengerRides', AuthenticatePassenger, VerifyAccount, controllers.getUpcomingPassengerRides)
 router.get('/getPassengerRide/:rideId', AuthenticatePassenger, VerifyAccount, controllers.getPassengerRide)
 
-router.get('/getRides', AuthenticateAdmin, VerifyAdminAccount, controllers.getARide)
+router.get('/getRides', AuthenticateAdmin, VerifyAdminAccount, controllers.getRides)
 router.get('/getARide/:rideId', AuthenticateAdmin, VerifyAdminAccount, controllers.getARide)
 router.get('/passengerRides/:passengerId', AuthenticateAdmin, VerifyAdminAccount, controllers.getPassengerRides)
 router.get('/driverRides/:driverId', AuthenticateAdmin, VerifyAdminAccount, controllers.getDriverRides)

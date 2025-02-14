@@ -1,6 +1,8 @@
 import { sendResponse } from "../middlewares/utils.js";
 import AppSettingsModel from "../model/AppSettings.js";
+import DriverModel from "../model/Driver.js";
 import ForgotItemModel from "../model/ForgotItem.js";
+import PassengerModel from "../model/Passenger.js";
 import RideModel from "../model/Rides.js";
 import RideTransactionModel from "../model/RideTransactions.js";
 import SafteyModel from "../model/Saftey.js";
@@ -580,9 +582,17 @@ export async function getARide(req, res) {
       sendResponse(res, 404, false, 'Ride with this Id does not exist')
       return
     }
+    const passenger = getRide?.passengerId
+    const driver = getRide?.driverId
+    const getPassenger = await PassengerModel.findOne({ passengerId: passenger })
+    const getDriver = await DriverModel.findOne({ driverId: driver })
 
-
-    sendResponse(res, 200, true, getRide)
+    const data = {
+      ...getRide.toObject(),
+      passengerName: `${getPassenger?.firstName} ${getPassenger?.lastName}`,
+      driverName: `${getDriver?.firstName} ${getDriver?.lastName}`,
+    }
+    sendResponse(res, 200, true, data)
   } catch (error) {
     console.log('UNABLE TO GET RIDE', error)
     sendResponse(res, 500, false, 'Unable to get ride details')

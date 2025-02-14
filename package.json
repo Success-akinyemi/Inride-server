@@ -43,6 +43,7 @@
     "tesseract.js": "^5.1.1",
     "twilio": "^5.4.0",
     "useragent": "^2.3.0",
+    "web-push": "^3.6.7",
     "yamljs": "^0.3.0"
   }
 }

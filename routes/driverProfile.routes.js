@@ -7,9 +7,8 @@ const router = express.Router()
 
 //POST
 router.post('/updateProfile', uploadImages, AuthenticateDriver, VerifyAccount, controllers.updateProfile)
-
-router.get('/blockDriver', AuthenticateAdmin, VerifyAdminAccount, controllers.blockDriver)
-router.get('/unBlockDriver', AuthenticateAdmin, VerifyAdminAccount, controllers.unBlockDriver)
+router.post('/blockDriver', AuthenticateAdmin, VerifyAdminAccount, controllers.blockDriver)
+router.post('/unBlockDriver', AuthenticateAdmin, VerifyAdminAccount, controllers.unBlockDriver)
 
 
 //GET
