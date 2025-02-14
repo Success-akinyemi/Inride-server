@@ -176,7 +176,9 @@ export async function getAPassenger(req, res) {
         sendResponse(res, 404, false, 'Passenger with this Id does not exist')
         return
       }
-      sendResponse(res, 200, true, getPassenger)
+
+      const { password, ...userData } = getPassenger._doc
+      sendResponse(res, 200, true, userData)
     } catch (error) {
       console.log('UNABLE TO GET PASSENGER', error)
       sendResponse(res, 500, false, 'Unable to get passenger details')

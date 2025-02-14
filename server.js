@@ -25,7 +25,7 @@ import statsRoutes from './routes/stats.routes.js';
 import adminStaffRoutes from './routes/adminStaffs.routes.js';
 import rideChatsRoutes from './routes/rideChats.routes.js';
 import bigTaxesRoutes from './routes/bigTaxes.routes.js';
-
+import cmsRoutes from './routes/cms.routes.js';
 
 
 
@@ -109,6 +109,8 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/admin/staff', adminStaffRoutes);
 app.use('/api/rideChat', rideChatsRoutes);
 app.use('/api/bigTaxes', bigTaxesRoutes);
+app.use('/api/cms', cmsRoutes);
+
 
 
 
@@ -237,8 +239,8 @@ generalNamespace.on('connection', (socket) => {
 
 //SCEHDULED functions
 import { scheduleRideAlerts } from './controllers/passenger.controllers.js'
-
 scheduleRideAlerts()
+import './controllers/scheduleCms.controllers.js'
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {

@@ -396,6 +396,36 @@ paths:
           description: The passengerId to get all rides of
           schema:
             type: string
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          description: start date to begin fetching data
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          description: end date to stop fetching data
+          schema:
+            type: string
+        - name: rideType
+          in: query
+          required: false
+          description: type of ride [ 'personal', 'group', 'delivery', 'schedule']
+          schema:
+            type: string
       responses:
         200:
           description: Success
@@ -415,6 +445,36 @@ paths:
           in: path
           required: true
           description: The driverId to get all rides of
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          description: start date to begin fetching data
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          description: end date to stop fetching data
+          schema:
+            type: string
+        - name: rideType
+          in: query
+          required: false
+          description: type of ride [ 'personal', 'group', 'delivery', 'schedule']
           schema:
             type: string
       responses:
@@ -1043,19 +1103,19 @@ paths:
           type: string
         - name: bio
           in: formData
-          required: fasle
+          required: false
           type: string
         - name: country
           in: formData
-          required: fasle
+          required: false
           type: string
         - name: timezone
           in: formData
-          required: fasle
+          required: false
           type: string
         - name: profileImg
           in: formData
-          required: fasle
+          required: false
           type: file
       responses:
         200:
@@ -1410,3 +1470,258 @@ paths:
           description: server error
 
 #CMS
+  /api/cms/newCms:
+    post:
+      tags:
+        - CMS
+      summary: Create new CMS
+      description: Endpoint to create new cms data
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: title
+          in: formData
+          required: true
+          type: string
+        - name: message
+          in: formData
+          required: true
+          type: string
+        - name: url
+          in: formData
+          required: false
+          type: string
+        - name: caption
+          in: formData
+          required: false
+          type: string
+        - name: redirection
+          in: formData
+          required: true
+          description: redirection for cms allowed values - ['inapp', 'mail', 'pushnotification', 'inappandpushnotification']
+          type: string
+        - name: status
+          in: formData
+          required: true
+          description: status for cms allowed values - ['draft', 'scheduled', 'published']
+          type: string
+        - name: type
+          in: formData
+          required: true
+          description: type for cms allowed values - ['updates', 'offers']
+          type: string
+        - name: accountType
+          in: formData
+          required: false
+          description: (optional) account type if cms is for specify account type allowed values - ['driver', 'passenger', 'admin']
+          type: string
+        - name: users
+          in: formData
+          required: false
+          description: custom users for custom users array passing email address
+          type: array
+          items:
+            type: string
+        - name: scheduled
+          in: formData
+          required: true
+          description: scheduled value true is cms is a scheduled cms and false if not
+          type: boolean
+        - name: scheduledDate
+          in: formData
+          required: false
+          description: An object that contains the day, time, and date value for scheduled cms required if cms is scheduled. { day, time, date}. for day - day of the week in full allowed values - ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]. for time - time the day in which the cms should send E.G "09:15 AM" or "12:00 PM" for date - date for the cms format YYYY-MM-DD
+          type: object
+          required:
+            - day
+          properties:
+            day:
+              type: string
+              description: day of the week in full allowed values - ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].
+            time:
+              type: string
+              description: time the day in which the cms should send E.G "09:15 AM" or "12:00 PM"
+            date:
+              type: string
+              description: date for the cms format YYYY-MM-DD
+        - name: cmsImage
+          in: formData
+          required: false
+          type: file
+      responses:
+        200:
+          description: success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/cms/updateCms:
+    post:
+      tags:
+        - CMS
+      summary: Create new CMS
+      description: Endpoint to create new cms data
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: _id
+          in: formData
+          required: true
+          description: id of the cms to update
+          type: string
+        - name: title
+          in: formData
+          required: false
+          type: string
+        - name: message
+          in: formData
+          required: false
+          type: string
+        - name: url
+          in: formData
+          required: false
+          type: string
+        - name: caption
+          in: formData
+          required: false
+          type: string
+        - name: redirection
+          in: formData
+          required: false
+          description: redirection for cms allowed values - ['inapp', 'mail', 'pushnotification', 'inappandpushnotification']
+          type: string
+        - name: status
+          in: formData
+          required: false
+          description: status for cms allowed values - ['draft', 'scheduled', 'published']
+          type: string
+        - name: type
+          in: formData
+          required: false
+          description: type for cms allowed values - ['updates', 'offers']
+          type: string
+        - name: accountType
+          in: formData
+          required: false
+          description: (optional) account type if cms is for specify account type allowed values - ['driver', 'passenger', 'admin']
+          type: string
+        - name: users
+          in: formData
+          required: false
+          description: custom users for custom users array passing email address
+          type: array
+          items:
+            type: string
+        - name: scheduled
+          in: formData
+          required: false
+          description: scheduled value true is cms is a scheduled cms and false if not
+          type: boolean
+        - name: scheduledDate
+          in: formData
+          required: false
+          description: An object that contains the day, time, and date value for scheduled cms required if cms is scheduled. { day, time, date}. for day - day of the week in full allowed values - ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]. for time - time the day in which the cms should send E.G "09:15 AM" or "12:00 PM" for date - date for the cms format YYYY-MM-DD
+          type: object
+          required:
+            - day
+          properties:
+            day:
+              type: string
+              description: day of the week in full allowed values - ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].
+            time:
+              type: string
+              description: time the day in which the cms should send E.G "09:15 AM" or "12:00 PM"
+            date:
+              type: string
+              description: date for the cms format YYYY-MM-DD
+        - name: cmsImage
+          in: formData
+          required: false
+          type: file
+      responses:
+        200:
+          description: success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/cms/deleteCms:
+    post:
+      tags:
+        - CMS
+      summary: Delete a cms data
+      description: Endpoint to delete cms
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - cmsId
+            properties:
+              cmsId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/cms/getAllCms:
+    get:
+      tags:
+        - CMS
+      summary: Get all cms
+      description: The endpoint get all cms data passing in possible queries
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: the status of the cms - ['draft', 'scheduled', 'published']
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /api/cms/getACms/{cmsId}:
+    get:
+      tags:
+        - CMS
+      summary: Get a specific cms
+      description: The endpoint provides details on a specific cms
+      parameters:
+        - name: cmsId
+          in: path
+          required: true
+          description: The cmsId of the cms data
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error

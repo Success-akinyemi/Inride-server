@@ -7,7 +7,7 @@ const router = express.Router()
 
 //POST
 router.post('/del', controllers.dele);
-router.post('/updateProfile', AuthenticateAdmin, VerifyAdminAccount, uploadImages, VerifyAdminAccount, controllers.updateProfile);
+router.post('/updateProfile', AuthenticateAdmin, VerifyAdminAccount, uploadImages, controllers.updateProfile);
 router.post('/updatePassword', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.updatePassword);
 router.post('/activateStaff', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.activateStaff);
 router.post('/sackStaff', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.sackStaff);
