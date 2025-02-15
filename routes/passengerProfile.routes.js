@@ -7,6 +7,8 @@ const router = express.Router()
 
 //POST
 router.post('/updateProfile', uploadImages, AuthenticatePassenger, VerifyAccount, controllers.updateProfile)
+router.post('/fundWallet', AuthenticatePassenger, VerifyAccount, controllers.fundWallet)
+
 router.post('/blockPassenger', AuthenticateAdmin, VerifyAdminAccount, controllers.blockPassenger)
 router.post('/unBlockPassenger', AuthenticateAdmin, VerifyAdminAccount, controllers.unBlockPassenger)
 

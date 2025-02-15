@@ -5,6 +5,11 @@ import AWS from 'aws-sdk';
 import crypto from 'crypto';
 import webpush from 'web-push';
 import PushNotificationModel from "../model/PushNotifications.js";
+import Stripe from 'stripe';
+import PaymentIntentModel from "../model/PaymentIntents.js";
+
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
 
 const apiKeys = {
   publicKey: process.env.WEB_PUSH_PUBLIC_KEY,
@@ -241,4 +246,40 @@ export async function sendNotificationById(cmsId) {
       console.error('UNABLE TO SEND NOTIFICATIONS', error);
       return { success: false, message: 'Unable to send push notifications.' };
   }
+}
+
+//CREATE STRIPE PAYMENT
+export async function initiatePayment({amount, accountId, paymentfor, paymentMethod}) {
+  if(paymentMethod){
+    if(!Array.isArray(paymentMethod)){
+      return { success: false, data: 'Payment method must be an array' }
+    }
+  }
+  if(!accountId){
+    return { success: false, data: 'Account Id is required' }
+  }
+  try {
+    const fullAmount = amount * 100
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: fullAmount,
+      currency: 'usd',
+      payment_method_types: paymentMethod ? paymentMethod : ['card']
+    })
+
+    //Create payment intent db
+    await PaymentIntentModel.create({
+      paymentId: paymentIntent.id,
+      client_secret: paymentIntent.client_secret,
+      paymentfor,
+      amount,
+      accountId,
+    })
+
+    return { success: true, data: paymentIntent.client_secret, message: 'Payment intent created' }
+
+  } catch (error) {
+    console.log('UANLE TO INITIATE STRIPE PAYMENT', error)
+    return { success: false, data: 'Unable to initaite stripe payment'}
+  }  
 }

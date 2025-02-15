@@ -768,7 +768,7 @@ export async function getTransactions(req, res) {
 
   try {
     // Build the query object
-    const query = { };
+    const query = {};
 
     // Handle date filtering
     if (startDate && endDate) {
@@ -779,43 +779,66 @@ export async function getTransactions(req, res) {
       query.createdAt = { $lte: new Date(endDate) };
     }
 
-    // Handle ride type filtering
-    if (status === 'Pending') {
-      query.status = 'Pending';
-    }
-    if (status === 'Successful') {
-      query.status = 'Successful';
-    }
-    if (status === 'Failed') {
-      query.status = 'Failed';
-    }
-    if (!status) {
-      
+    // Handle ride status filtering
+    if (status) {
+      const validStatuses = ['Pending', 'Successful', 'Failed'];
+      if (validStatuses.includes(status)) {
+        query.status = status;
+      }
     }
 
-    // Calculate the number of documents to skip
+    // Calculate the number of documents to skip for pagination
     const skip = (Number(page) - 1) * Number(limit);
 
-    // Fetch rides from the database
+    // Fetch transactions from the database
     const transactionData = await RideTransactionModel.find(query)
       .sort({ createdAt: -1 }) // Sort by latest transactions
-      .skip(skip) // Skip the documents for pagination
-      .limit(Number(limit)); // Limit the results for pagination
+      .skip(skip)
+      .limit(Number(limit));
 
-
-    // Get the total count of transactions for pagination metadata
+    // Get total count of transactions
     const totalTransactions = await RideTransactionModel.countDocuments(query);
 
-    return sendResponse(res, 200, true, {
-      transaction: transactionData,
-      totalTransactions,
-      totalPages: Math.ceil(totalTransactions / limit),
-      currentPage: Number(page),
+    // Fetch ride details for each transaction
+    const enrichedTransactions = await Promise.all(
+      transactionData.map(async (transaction) => {
+        const ride = await RideModel.findOne({ rideId: transaction.rideId });
+
+        if (!ride) {
+          return { ...transaction.toObject(), rideType: 'Unknown', passengerName: 'Unknown', driverName: 'Unknown' };
+        }
+
+        // Fetch passenger and driver details
+        const passenger = ride.passengerId
+          ? await PassengerModel.findOne({ passengerId: ride.passengerId }).select('firstName lastName')
+          : null;
+        const driver = ride.driverId
+          ? await DriverModel.findOne({ driverId: ride.driverId }).select('firstName lastName')
+          : null;
+
+        return {
+          ...transaction.toObject(),
+          rideType: ride.rideType,
+          passengerName: passenger ? `${passenger.firstName} ${passenger.lastName}` : 'Unknown',
+          driverName: driver ? `${driver.firstName} ${driver.lastName}` : 'Unknown',
+        };
+      })
+    );
+
+    return sendResponse(
+      res,
+      200,
+      true,
+      {
+        transactions: enrichedTransactions,
+        totalTransactions,
+        totalPages: Math.ceil(totalTransactions / limit),
+        currentPage: Number(page),
       },
-      'Transaction fetched successfully',
+      'Transactions fetched successfully'
     );
   } catch (error) {
-    console.error('UNABLE TO GET TRANSACTIONS DATA', error);
+    console.error('UNABLE TO GET TRANSACTIONS DATA:', error);
     return sendResponse(res, 500, false, 'Unable to get transaction data');
   }
 }

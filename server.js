@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
+import ngrok from '@ngrok/ngrok'
 
 config();
 import PassengerAuthRoute from './routes/PassengerAuth.routes.js';
@@ -26,6 +27,8 @@ import adminStaffRoutes from './routes/adminStaffs.routes.js';
 import rideChatsRoutes from './routes/rideChats.routes.js';
 import bigTaxesRoutes from './routes/bigTaxes.routes.js';
 import cmsRoutes from './routes/cms.routes.js';
+import webhookRoutes from './routes/stripeWebhook.routes.js';
+
 
 
 
@@ -110,6 +113,8 @@ app.use('/api/admin/staff', adminStaffRoutes);
 app.use('/api/rideChat', rideChatsRoutes);
 app.use('/api/bigTaxes', bigTaxesRoutes);
 app.use('/api/cms', cmsRoutes);
+app.use('/api/webhook', webhookRoutes);
+
 
 
 
@@ -246,3 +251,9 @@ const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+/**
+ * 
+ngrok.connect({ addr: 1000, authtoken_from_env: true })
+	.then(listener => console.log(`Ingress established at: ${listener.url()}`));
+ */

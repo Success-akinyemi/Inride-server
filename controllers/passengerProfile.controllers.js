@@ -1,6 +1,10 @@
-import { sendResponse, uploadFile } from "../middlewares/utils.js"
+import { initiatePayment, sendResponse, uploadFile } from "../middlewares/utils.js"
 import NotificationModel from "../model/Notifications.js";
 import PassengerModel from "../model/Passenger.js"
+import Stripe from 'stripe';
+
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
 
 export async function updateProfile(req, res) {
     console.log('Request Body:', req.body);
@@ -80,6 +84,35 @@ export async function getNotifications(req, res) {
   } catch (error) {
       console.log('UNABLE TO GET PASSENGER NOTIFICATIONS', error)
       sendResponse(res, 500, false, 'Unable to get passenger notifications')
+  }
+}
+
+//FUND WALLET
+export async function fundWallet(req, res) {
+  const { amount } = req.body
+  const { passengerId } = req.user
+  if(!amount){
+    return sendResponse(res, 400, false, 'Provide an amount')
+  }
+  if(isNaN(amount)){
+    return sendResponse(res, 400, false, 'Provide a amount is number')
+  }
+  try {
+    const makePayment = await initiatePayment({
+      amount,
+      accountId: passengerId,
+      paymentfor: 'funding'
+    })
+
+    if(!makePayment.success){
+        return sendResponse(res, 400, false, makePayment.data )
+    }
+    console.log('PAYMENT INTENT', makePayment, makePayment.data)
+
+    sendResponse(res, 201, true, makePayment.data, makePayment.message)
+  } catch (error) {
+    console.log('UNABLE TO MAKE PAYMENT', error)
+    sendResponse(res, 500, false, 'Unable to make payment')
   }
 }
 

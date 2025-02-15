@@ -455,7 +455,7 @@ export async function requestRide({ socket, data, res }) {
       } catch (error) {
         console.error(`Failed to process ride after 90 seconds for rideId: ${rideId}`, error);
       }
-    }, 60000); // 90 seconds
+    }, 60000); // 60 seconds
 
   } catch (error) {
     console.log('UNABLE TO REQUEST RIDE', error);
@@ -708,7 +708,12 @@ export async function payForRide({ socket, data, res }) {
           ride: rideDetails,
           driverLocation: getDriverLocation
         });
-
+        console.log('DRIVER', { 
+          success: true, 
+          message: `New ${getRide?.rideType === 'schedule' && 'Scheduled'} ride has been activated. ${getRide?.rideType === 'schedule' && `This ride ride has been scheduled to the pickup time.`}`,
+          ride: rideDetails,
+          driverLocation: getDriverLocation
+        })
         //update driver location for personal and deliver ride
         if(getRide?.rideType !== 'schedule') getDriverLocation.status = 'busy'
         if(getRide?.rideType !== 'schedule') getDriverLocation.isActive = false
