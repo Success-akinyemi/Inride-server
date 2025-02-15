@@ -2,7 +2,8 @@ import { sendResponse } from "../middlewares/utils.js"
 import DriverModel from "../model/Driver.js";
 import PassengerModel from "../model/Passenger.js";
 import RideModel from "../model/Rides.js";
-
+import moment from 'moment';
+import RideTransactionModel from "../model/RideTransactions.js";
 
 //ACTIVE PASSENGERS AND DRIVERS
 export async function activeUsers(req, res) {
@@ -345,4 +346,63 @@ export async function getTopLocations(req, res) {
         console.log("UNABLE TO GET TOP LOCATIONS", error);
         sendResponse(res, 500, false, 'Unable to get Top Locations')
     }
+}
+
+//GET SALES REPORT
+export async function salesReport(req, res) {
+    const { stats = '1year' } = req.query;
+
+    try {
+        let startDate, endDate;
+        const today = moment().startOf('day');
+        const reports = [];
+
+        if (stats === 'today') {
+            startDate = today;
+            endDate = moment().endOf('day');
+            reports.push(await getReport(startDate, endDate, today.format('dddd')));
+        } 
+        else if (stats === '3days' || stats === '7days' || stats === '30days') {
+            const days = parseInt(stats);
+            for (let i = days - 1; i >= 0; i--) {
+                const periodDate = today.clone().subtract(i, 'days');
+                reports.push(await getReport(periodDate.startOf('day'), periodDate.endOf('day'), periodDate.format('dddd')));
+            }
+        } 
+        else if (stats === '6mth' || stats === '1year') {
+            const months = stats === '6mth' ? 6 : 12;
+            for (let i = months - 1; i >= 0; i--) {
+                const periodDate = today.clone().subtract(i, 'months');
+                
+                // Handle current month correctly
+                startDate = periodDate.startOf('month');
+                endDate = periodDate.isSame(today, 'month') ? today.endOf('day') : periodDate.endOf('month');
+                
+                reports.push(await getReport(startDate, endDate, periodDate.format('MMMM')));
+            }
+        } 
+        else {
+            return sendResponse(res, 400, false, 'Invalid stats value');
+        }
+
+        return sendResponse(res, 200, true, reports, 'Sales report fetched successfully');
+
+    } catch (error) {
+        console.log('UNABLE TO GET SALES REPORT', error);
+        return sendResponse(res, 500, false, 'Unable to get sales report');
+    }
+}
+
+// Helper function to fetch ride and transaction data for a given period
+async function getReport(startDate, endDate, period) {
+    const totalRides = await RideModel.countDocuments({
+        createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() }
+    });
+
+    const totalTransaction = await RideTransactionModel.countDocuments({
+        createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() },
+        status: 'Successful'
+    });
+
+    return { period, totalRides, totalTransaction };
 }

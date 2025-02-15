@@ -10,88 +10,60 @@ import WarningMessageModel from "../model/WarningMessages.js";
 
 //GET ALL CHATS
 export async function getChats(req, res) {
-    const { limit = 10, page = 1, startDate, endDate, status } = req.query;
-
+    const { limit = 10, page = 1, startDate, endDate } = req.query;
+  
     try {
-        // Build the query object
-        const query = {};
-
-        // Handle date filtering
-        if (startDate && endDate) {
-            query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
-        } else if (startDate) {
-            query.createdAt = { $gte: new Date(startDate) };
-        } else if (endDate) {
-            query.createdAt = { $lte: new Date(endDate) };
-        }
-
-        // Handle status filtering
-        if (status) {
-            const formattedStatus = status.toLowerCase();
-            const validStatuses = ["active", "complete", "in progress", "canceled"];
-            if (validStatuses.includes(formattedStatus)) {
-                query.status = formattedStatus.charAt(0).toUpperCase() + formattedStatus.slice(1);
-            }
-        }
-
-        // Calculate pagination
-        const skip = (Number(page) - 1) * Number(limit);
-
-        // Fetch rides from the database
-        const rides = await RideModel.find(query)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(Number(limit));
-
-        const totalRides = await RideModel.countDocuments(query);
-
-        // Fetch ride chats and filter out rides without chats
-        const rideData = await Promise.all(
-            rides.map(async (ride) => {
-                console.log('RDIE', ride?.rideId)
-                const rideChat = await RideChatModel.findOne({ rideId: ride.rideId });
-
-                console.log('rideChat',rideChat, ride?.rideId)
-                if (!rideChat) return null; // Skip rides with no chat
-                let passenger = null;
-                let driver = null;
-
-                if (ride.passengerId) {
-                    passenger = await PassengerModel.findOne({ passengerId: ride.passengerId }).select("firstName lastName");
-                }
-                if (ride.driverId) {
-                    driver = await DriverModel.findOne({ driverId: ride.driverId }).select("firstName lastName");
-                }
-
-                return {
-                    rideId: ride.rideId,
-                    messageId: ride.rideId,
-                    passengerName: passenger ? `${passenger.firstName} ${passenger.lastName}` : "Unknown",
-                    driverName: driver ? `${driver.firstName} ${driver.lastName}` : "Unknown",
-                    startDate: rideChat.createdAt,
-                    endDate: rideChat.updatedAt,
-                    status: ride.status,
-                    currentPage: page,
-                    totalPages: Math.ceil(totalRides / limit),
-                };
-            })
-        );
-
-        // Remove null values (rides without chat)
-        const filteredRideData = rideData.filter((ride) => ride !== null);
-
-        sendResponse(res, 200, true, "Ride chats fetched successfully", {
-            currentPage: page,
-            totalPages: Math.ceil(filteredRideData.length / limit),
-            totalRides: filteredRideData.length,
-            rides: filteredRideData,
-        });
-
+      // Build the query object
+      const query = {};
+  
+      // Handle date filtering
+      if (startDate && endDate) {
+        query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+      } else if (startDate) {
+        query.createdAt = { $gte: new Date(startDate) };
+      } else if (endDate) {
+        query.createdAt = { $lte: new Date(endDate) };
+      }
+  
+      // Calculate pagination
+      const skip = (Number(page) - 1) * Number(limit);
+  
+      // Fetch rides from the database
+      const rideChats = await RideChatModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit));
+  
+      const totalRideChats = await RideChatModel.countDocuments(query);
+  
+      // Map through rideChats and fetch the required details
+      const rideDetails = await Promise.all(rideChats.map(async (chat) => {
+        const ride = await RideModel.findOne({ rideId: chat.rideId});
+        const passenger = await PassengerModel.findOne({ passengerId: ride.passengerId});
+        const driver = await DriverModel.findOne({ driverId: ride.driverId });
+  
+        return {
+          rideId: ride.rideId,
+          passengerName: passenger ? `${passenger.firstName} ${passenger.lastName}` : 'Unknown',
+          driverName: driver ? `${driver.firstName} ${driver.lastName}` : 'Unknown',
+          startDate: chat.createdAt ? chat.createdAt : ride.createdAt,
+          endDate: chat.updatedAt ? chat.updatedAt : ride.updatedAt,
+          status: ride.status,
+        };
+      }));
+  
+      sendResponse(res, 200, true, "Ride chats fetched successfully", {
+        currentPage: Number(page),
+        totalPages: Math.ceil(totalRideChats / Number(limit)),
+        totalRides: totalRideChats,
+        rides: rideDetails,
+      });
+  
     } catch (error) {
-        console.error("UNABLE TO GET RIDE CHATS:", error);
-        sendResponse(res, 500, false, "Unable to get ride chats");
+      console.error("UNABLE TO GET RIDE CHATS:", error);
+      sendResponse(res, 500, false, "Unable to get ride chats");
     }
-}
+  }   
 
 //GET A CHATS
 export async function getAchat(req, res) {

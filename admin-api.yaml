@@ -320,6 +320,27 @@ paths:
         200:
           description: Success
 
+  /api/stats/salesReport/{stats}:
+    get:
+      tags:
+        - Stats
+      summary: Get Stats of active users
+      description: The endpoint provides stats on active users based on the given criteria.
+      parameters:
+        - name: stats
+          in: path
+          required: false
+          description: The type of stats to fetch (e.g., today, 3days, 7days, 30days, 6mth, 1year). 30days by default
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
 #TRANSACTION / RIDES
   /api/rides/getRides:
     get:
