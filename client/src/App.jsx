@@ -12,34 +12,42 @@ import DriverRideChat from './pages/Driver/DriverRideChat'
 import LiveCall from './pages/General/LiveCall'
 import './App.css'
 import LiveVideoCall from './pages/General/LiveVideoCall'
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import StripePayment from './pages/Passenger/StripePayment'
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISH_KEY);
 
 function App() {
 
   return (
-    <div className="app">
+    <Elements stripe={stripePromise}>
+      <div className="app">
 
-    <BrowserRouter>
-      <Routes>
-        <Route path='/passenger/register' element={<Register />} />
-        <Route path='/passenger/requestRide' element={<RequestRide />} />
-        <Route path='/passenger/rideChat' element={<RideChat />} />
-        <Route path='/passenger/login' element={<Login />} />
-        <Route path='/passenger/verifyOtp' element={<VerifyOtp />}  />
+      <BrowserRouter>
+        <Routes>
+          <Route path='/passenger/register' element={<Register />} />
+          <Route path='/passenger/requestRide' element={<RequestRide />} />
+          <Route path='/passenger/rideChat' element={<RideChat />} />
+          <Route path='/passenger/login' element={<Login />} />
+          <Route path='/passenger/verifyOtp' element={<VerifyOtp />}  />
+          <Route path='/passenger/fundWallet' element={<StripePayment />}  />
 
-        <Route path='/driver/login' element={<DriverLogin />}  />
-        <Route path='/driver/verifyOtp' element={<DriverVerifyOtp />}  />
-        <Route path='/driver/home' element={<DriverHome />}  />
-        <Route path='/driver/rideChat' element={<DriverRideChat />}  />
+          <Route path='/driver/login' element={<DriverLogin />}  />
+          <Route path='/driver/verifyOtp' element={<DriverVerifyOtp />}  />
+          <Route path='/driver/home' element={<DriverHome />}  />
+          <Route path='/driver/rideChat' element={<DriverRideChat />}  />
 
 
-        <Route path='/' element={<Test />} />
-        <Route path='/general/liveCall' element={<LiveCall />} />
-        <Route path='/general/liveVideo' element={<LiveVideoCall />} />
+          <Route path='/' element={<Test />} />
+          <Route path='/general/liveCall' element={<LiveCall />} />
+          <Route path='/general/liveVideo' element={<LiveVideoCall />} />
 
-        
-      </Routes>
-    </BrowserRouter>
-    </div>
+          
+        </Routes>
+      </BrowserRouter>
+      </div>
+    </Elements>
   )
 }
 

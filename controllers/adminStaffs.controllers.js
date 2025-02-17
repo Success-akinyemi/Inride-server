@@ -7,7 +7,7 @@ import AdminUserModel from "../model/Admin.js"
 export async function getProfile(req, res) {
     const { adminId } = req.user
     try {
-        const getAdmin = AdminUserModel.findOne({ adminId })
+        const getAdmin = await AdminUserModel.findOne({ adminId })
 
         const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = getAdmin._doc;
         sendResponse(res, 200, true, userData)
@@ -44,10 +44,10 @@ export async function getAStaff(req, res) {
 //UPDATE PROFILE
 export async function updateProfile(req, res) {
     const { firstName, lastName, bio, country, timezone } = req.body
-    const { profileImg } = req.files;
+    const { profileImg } = req.files || {};
     const { adminId } = req.user
 
-    if(profileImg[0]){
+    if(profileImg && profileImg[0]){
         const allowedImageTypes = ['image/jpeg', 'image/png'];
         if (!allowedImageTypes.includes(idCardImgFront[0].mimetype)) {
             return sendResponse(res, 400, false, `Invalid image format for ID card front. Accepted formats: jpeg, png`);
@@ -55,11 +55,11 @@ export async function updateProfile(req, res) {
     }
     try {
         let profileImgUrl
-        if(profileImg[0]){
+        if(profileImg && profileImg[0]){
             profileImgUrl = await uploadFile(req.files.profileImg[0], 'admin-profile-image');
         }
 
-        const getAdmin = AdminUserModel.findOne({ adminId })
+        const getAdmin = await AdminUserModel.findOne({ adminId })
 
         //update
         if(profileImgUrl) getAdmin.profileImg = profileImgUrl
@@ -68,6 +68,8 @@ export async function updateProfile(req, res) {
         if(bio) getAdmin.bio = bio
         if(country) getAdmin.country = country
         if(timezone) getAdmin.timezone = timezone
+
+        await getAdmin.save()
 
         const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = getAdmin._doc;
         sendResponse(res, 200, true, userData, 'Account Updated')
@@ -106,7 +108,7 @@ export async function updatePassword(req, res) {
         return sendResponse(res, 400, false, 'Old Password is required')
     }
     try {
-        const getAdmin = AdminUserModel.findOne({ adminId })
+        const getAdmin = await AdminUserModel.findOne({ adminId })
 
         const isMatch  = await getAdmin.matchPassword(req.body.oldPassword)
         if(!isMatch){
@@ -115,7 +117,7 @@ export async function updatePassword(req, res) {
 
         const notOldPassword  = await getAdmin.matchPassword(req.body.password)
         if(notOldPassword){
-            return sendResponse(res, 401, false, 'Neww password cannot be the same as old password')
+            return sendResponse(res, 401, false, 'New password cannot be the same as old password')
         }
 
         getAdmin.password = password
@@ -146,22 +148,22 @@ export async function getAllStaffs(req, res) {
       }
   
       // Handle status filtering
-      if (status.toLowercase() === "active") {
+      if (status && status.toLowercase() === "active") {
         query.status = 'Active'
       }
-      if (status.toLowercase() === "inactive") {
+      if (status && status.toLowercase() === "inactive") {
         query.status = 'Inactive'; 
       }
-      if (status.toLowercase() === "sacked") {
+      if (status && status.toLowercase() === "sacked") {
         query.status = 'Sacked'; 
       }
-      if (status.toLowercase() === "pending") {
+      if (status && status.toLowercase() === "pending") {
         query.status = 'Pending'; 
       }
-      if (status.toLowercase() === "blocked") {
+      if (status && status.toLowercase() === "blocked") {
         query.status = 'Blocked'; 
       }
-      if (status.toLowercase() === "all" || !status) {
+      if (!status || status.toLowercase() === "all") {
   
       }
 
@@ -253,7 +255,7 @@ export async function sackStaff(req, res) {
             name: `${getStaff?.firstName} ${getStaff?.lastName}`
         })
 
-        sendResponse(res, 200, true, `${getStaff.firstName} ${getStaff.lastName} staff account has been blocked`)
+        sendResponse(res, 200, true, `${getStaff.firstName} ${getStaff.lastName} staff account has been sacked and blocked`)
     } catch (error) {
         console.log('UANBLE TO SACK STAFF', error)
         sendResponse(res, 500, false, 'Uanble to sack staff')

@@ -68,6 +68,12 @@ app.use(cors({
   ],
   credentials: true,
 }));
+
+//STRIPE WEBHOOK
+import * as controllers from './controllers/stripeWebhook.controllers.js';
+app.post('/api/webhook/stripeWebHook', express.raw({ type: 'application/json' }), controllers.stripeWebHook);
+
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -113,8 +119,7 @@ app.use('/api/admin/staff', adminStaffRoutes);
 app.use('/api/rideChat', rideChatsRoutes);
 app.use('/api/bigTaxes', bigTaxesRoutes);
 app.use('/api/cms', cmsRoutes);
-app.use('/api/webhook', webhookRoutes);
-
+//app.use('/api/webhook', webhookRoutes);
 
 
 
@@ -252,8 +257,27 @@ server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 
+const ngrokToken = process.env.NGROK_TOKEN
 /**
+ ngrok.connect({ addr: 1000, ngrokToken: true })
+   .then(listener => console.log(`Ingress established at: ${listener.url()}`));
  * 
-ngrok.connect({ addr: 1000, authtoken_from_env: true })
-	.then(listener => console.log(`Ingress established at: ${listener.url()}`));
+   async function startNgrok() {
+    try {
+        if (!ngrokToken) {
+            throw new Error("NGROK_TOKEN is missing. Please set it in your environment variables.");
+        }
+   
+        const listener = await ngrok.connect({
+            addr: 3000, // Use the correct port (Ensure this port is running)
+            authtoken: ngrokToken, // Correct way to pass the token
+        });
+   
+        console.log(`Ingress established at: ${listener.url()}`);
+    } catch (error) {
+        console.error('Error starting ngrok:', error);
+    }
+   }
+   
+   startNgrok();
  */

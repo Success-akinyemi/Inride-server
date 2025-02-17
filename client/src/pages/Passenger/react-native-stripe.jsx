@@ -31,7 +31,7 @@ const WalletFundingScreen = () => {
     setLoading(true);
     try {
       // Step 1: Request PaymentIntent from Server
-      const response = await fetch('https://your-server.com/api/fund-wallet', {
+      const response = await fetch(`${baseUrl}/passenger/profile/fundWallet`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

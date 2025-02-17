@@ -425,7 +425,7 @@ export async function resetPassword(req, res){
         console.log('resetPasswordToken', resetPasswordToken, 'req.params.resetToken', req.params.resetToken)
         const user = await AdminUserModel.findOne({
             resetPasswordToken,
-            //resetPasswordExpire: { $gt: Date.now()}
+            resetPasswordExpire: { $gt: Date.now()} //time diffrence error
         })
 
         if(!user){

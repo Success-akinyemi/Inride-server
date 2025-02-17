@@ -5,7 +5,7 @@ import * as controllers from '../controllers/stripeWebhook.controllers.js'
 const router = express.Router()
 
 //GET
-router.post('/stripeWebHook', controllers.stripeWebHook)
+router.post('/stripeWebHook', express.raw({ type: 'application/json' }), controllers.stripeWebHook)
 
 
 
