@@ -401,7 +401,7 @@ export async function newStaff(req, res){
         sendNewUserEmail({
             email,
             name: `${newUser.firstName} ${newUser.lastName}`,
-            password: newUser?.password,
+            password: newAdminId,
             buttonLink: `${process.env.CLIENT_URL}`
         })
 
