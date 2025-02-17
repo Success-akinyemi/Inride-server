@@ -7,7 +7,7 @@ const router = express.Router()
 
 router.use(AuthenticateAdmin, VerifyAdminAccount, UserRole(['passenger', 'driver', 'admin', 'superadmin']));
 //POST
-router.get('/sendChatWarning', controllers.sendChatWarning)
+router.post('/sendChatWarning', controllers.sendChatWarning)
 
 
 //GET

@@ -110,7 +110,7 @@ export async function getAchat(req, res) {
 //SEND WARNING TO DRIVER OR PASSENGER
 export async function sendChatWarning(req, res) {
     const { accountId, reason, accountType } = req.body
-    if(!['driver', 'passenger'].includes(accountType.toLowercase())){
+    if(!['driver', 'passenger'].includes(accountType.toLowerCase())){
         return sendResponse(res, 400, false, 'Account type is must be either a passenger or a driver')
     }
     if(!accountId){
@@ -122,9 +122,9 @@ export async function sendChatWarning(req, res) {
 
     try {
         let user
-        if(accountType.toLowercase() === 'passenger') {
+        if(accountType.toLowerCase() === 'passenger') {
             user = await PassengerModel.findOne({ passengerId: accountId })
-        } else if(accountType.toLowercase() === 'driver'){
+        } else if(accountType.toLowerCase() === 'driver'){
             user = await DriverModel.findOne({ driverId: accountId })
         } else {
             return sendResponse(res, 400, false, 'Invalid account type')
