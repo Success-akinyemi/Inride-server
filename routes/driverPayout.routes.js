@@ -18,5 +18,6 @@ router.post('/rejectPayout', controllers.rejectPayout)
 
 router.get('/getAllPayouts', controllers.getAllPayouts)
 router.get('/getAPayout/:payoutId', controllers.getAPayout)
+router.get('/payoutStats/:stats', controllers.payoutStats);
 
 export default router

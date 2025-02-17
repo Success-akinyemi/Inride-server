@@ -22,6 +22,8 @@ router.post('/activateStaff', controllers.activateStaff);
 router.post('/sackStaff', UserRole(['superadmin']), controllers.sackStaff);
 router.post('/deactivateStaff', UserRole(['admin', 'superadmin']), controllers.deactivateStaff);
 router.post('/updateStaffAccount', UserRole(['admin', 'superadmin']), controllers.updateStaffAccount);
+router.post('/newStaff', UserRole(['admin', 'superadmin']), controllers.newStaff);
+
 
 //GET
 router.get('/getAllStaffs', controllers.getAllStaffs);

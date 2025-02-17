@@ -1,8 +1,11 @@
-import { sendStaffActivationEmail, sendStaffSackEmail } from "../middlewares/mailTemplate.js.js";
-import { sendResponse, uploadFile } from "../middlewares/utils.js"
+import { sendNewUserEmail, sendStaffActivationEmail, sendStaffSackEmail } from "../middlewares/mailTemplate.js.js";
+import { generateUniqueCode, sendResponse, uploadFile } from "../middlewares/utils.js"
 import AdminUserModel from "../model/Admin.js"
 
-
+// Allowed permissions
+const allowedPermissions = ['driver', 'passenger', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff', 'admin', 'superadmin'];
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const defaultPwd = '1234!#@$'
 //GET PROFILE
 export async function getProfile(req, res) {
     const { adminId } = req.user
@@ -310,9 +313,6 @@ export async function updateStaffAccount(req, res) {
             return sendResponse(res, 400, false, 'Permissions must be an array');
         }
 
-        // Allowed permissions
-        const allowedPermissions = ['driver', 'passenger', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff', 'admin', 'superadmin'];
-
         // Check if all values in permissions are valid
         const invalidPermissions = permissions.filter(p => !allowedPermissions.includes(p.toLowerCase()));
 
@@ -327,7 +327,7 @@ export async function updateStaffAccount(req, res) {
         }
 
         // Only userPermissions with 'superadmin' can make another user a superadmin
-        if (permissions && permissions.includes('superadmin') && !userPermissions.includes('superadmin')) {
+        if (permissions && permissions?.includes('superadmin') && !userPermissions?.includes('superadmin')) {
             return sendResponse(res, 403, false, 'No Permission', 'You do not have permission to make a user superadmin');
         }
 
@@ -341,6 +341,74 @@ export async function updateStaffAccount(req, res) {
     } catch (error) {
         console.log('UANBLE TO UPDATE STAFF ACCOUNT', error)
         sendResponse(res, 500, false, 'Unable to update staff account')
+    }
+}
+
+//NEW STAFF
+export async function newStaff(req, res){
+    const { firstName, lastName, email, role, roleDescription, permissions } = req.body
+    const { permissions: userPermissions } = req.user
+    if(!firstName){
+        return sendResponse(res, 400, false, 'Provide a first name')
+    }
+    if(!lastName){
+        return sendResponse(res, 400, false, 'Provide last name')
+    }
+    if(!email){
+        return sendResponse(res, 400, false, 'Provide email address')
+    }
+    if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
+    if(permissions){
+        if (!Array.isArray(permissions)) {
+            return sendResponse(res, 400, false, 'Permissions must be an array');
+        }
+
+        // Check if all values in permissions are valid
+        const invalidPermissions = permissions.filter(p => !allowedPermissions.includes(p.toLowerCase()));
+
+        if (invalidPermissions.length > 0) {
+            return sendResponse(res, 400, false, `Invalid permissions: ${invalidPermissions.join(', ')}`);
+        }
+
+        // Only userPermissions with 'superadmin' can make another user a superadmin
+        if (permissions && permissions.includes('superadmin') && !userPermissions.includes('superadmin')) {
+            return sendResponse(res, 403, false, 'No Permission', 'You do not have permission to make a user superadmin');
+        }
+    }
+    try {
+        const userExist = await AdminUserModel.findOne({ email })
+        if(userExist){
+            sendResponse(res, 403, false, 'User with this email already exist')
+            return
+        }
+
+        const adminId = await generateUniqueCode(8)
+        console.log('ADMIN ID', `RF${adminId}AD`)
+        const newAdminId = `RF${adminId}AD`    
+            
+        const newUser = await AdminUserModel.create({
+            adminId: newAdminId,
+            firstName,
+            lastName,
+            email,
+            permissions,
+            status: 'Active',
+            role,
+            roleDescription,
+            password: newAdminId
+        })
+
+        sendNewUserEmail({
+            email,
+            name: `${newUser.firstName} ${newUser.lastName}`,
+            password: newUser?.password,
+            buttonLink: `${process.env.CLIENT_URL}`
+        })
+
+        sendResponse(res, 201, true, 'New user created')
+    } catch (error) {
+        console.log('UNABLE TO CREATE NEW STAFF ACCOUNT',error) 
+        sendResponse(res, 500, false, 'Unable to create new staff account')  
     }
 }
 

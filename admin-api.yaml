@@ -1306,7 +1306,7 @@ paths:
       tags:
         - Staff
       summary: Update staff Account
-      description: Endpoint to update staff account, role, role description, permissions. allowed Permissions = ['driver', 'passenger', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff']
+      description: Endpoint to update staff account, role, role description, permissions. allowed Permissions = ['driver', 'passenger', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff', 'admin', 'superadmin']
       parameters:
         - name: body
           in: body
@@ -1320,6 +1320,48 @@ paths:
               - permissions
             properties:
               adminId:
+                type: string
+              role:
+                type: string
+              roleDescription:
+                type: string
+              permissions:
+                type: array
+                items: 
+                  type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /api/admin/staff/newStaff:
+    post:
+      tags:
+        - Staff
+      summary: New staff Account
+      description: Endpoint to create new staff account. allowed Permissions = ['driver', 'passenger', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff', 'admin', 'superadmin']
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - firstName
+              - lastName
+              - email
+              - role
+              - roleDescription
+              - permissions
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
                 type: string
               role:
                 type: string
@@ -1855,6 +1897,27 @@ paths:
           description: User error
         500:
           description: Server error
+
+  /api/driver/payout/payoutStats/{stats}:
+    get:
+      tags:
+        - Stats
+      summary: Get Stats of payout
+      description: The endpoint provides stats for payout.
+      parameters:
+        - name: stats
+          in: path
+          required: false
+          description: The type of stats to fetch (e.g., today, 7days, 30days, 1year, alltime). 30days by default
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
 
 #SETTINGS
   /api/appSettings/updateAppSettings:

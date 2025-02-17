@@ -50,7 +50,9 @@ export async function createAccount(req, res) {
                 adminId: newAdminId,
                 firstName,
                 lastName,
-                email
+                email,
+
+                blocked: true,
             })
 
             //convert otp code to array

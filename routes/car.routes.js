@@ -21,14 +21,14 @@ router.get('/getCarDetails', AuthenticateDriver, VerifyAccount, controllers.getC
 //ADMIN
 //POST
 router.use(AuthenticateAdmin, VerifyAdminAccount, UserRole(['car', 'admin', 'superadmin']));
-router.post('/blockCar', AuthenticateAdmin, VerifyAdminAccount, controllers.blockCar);
-router.post('/unBlockCar', AuthenticateAdmin, VerifyAdminAccount, UserRole(['car']), controllers.unBlockCar);
+router.post('/blockCar', controllers.blockCar);
+router.post('/unBlockCar', controllers.unBlockCar);
 
 //GET
-router.get('/getAllCar', AuthenticateAdmin, VerifyAdminAccount, controllers.getAllCar);
-router.get('/getACarDetail/:carId/:driverId', AuthenticateAdmin, VerifyAdminAccount, controllers.getCarDetail);
-router.get('/getDriverCarDetails/:driverId', AuthenticateAdmin, VerifyAdminAccount, controllers.getCarDetails);
-router.get('/carStats/:stats', AuthenticateAdmin, VerifyAdminAccount, controllers.carStats);
+router.get('/getAllCar', controllers.getAllCar);
+router.get('/getACarDetail/:carId/:driverId', controllers.getCarDetail);
+router.get('/getDriverCarDetails/:driverId', controllers.getCarDetails);
+router.get('/carStats/:stats', controllers.carStats);
 
 
 

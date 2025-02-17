@@ -292,3 +292,121 @@ export async function getAPayout(req, res) {
       sendResponse(res, 500, false, 'Unable to get payout data')
   }
 }
+
+//PAYOUT STATS
+export async function payoutStats(req, res) {
+  const { stats = '30days' } = req.query;
+
+  const getFilterDates = (value) => {
+      const today = new Date();
+      let startDate, endDate, previousStartDate, previousEndDate;
+
+      switch (value) {
+          case 'today':
+              endDate = new Date(today);
+              startDate = new Date(today);
+              startDate.setDate(startDate.getDate() - 1);
+              previousEndDate = new Date(startDate);
+              previousStartDate = new Date(previousEndDate);
+              previousStartDate.setDate(previousStartDate.getDate() - 1);
+              break;
+
+          case '7days':
+              endDate = new Date(today);
+              startDate = new Date(today);
+              startDate.setDate(startDate.getDate() - 7);
+              previousEndDate = new Date(startDate);
+              previousStartDate = new Date(previousEndDate);
+              previousStartDate.setDate(previousStartDate.getDate() - 7);
+              break;
+
+          case '30days':
+              endDate = new Date(today);
+              startDate = new Date(today);
+              startDate.setDate(startDate.getDate() - 30);
+              previousEndDate = new Date(startDate);
+              previousStartDate = new Date(previousEndDate);
+              previousStartDate.setDate(previousStartDate.getDate() - 30);
+              break;
+
+          case '1year':
+              endDate = new Date(today);
+              startDate = new Date(today);
+              startDate.setFullYear(startDate.getFullYear() - 1);
+              previousEndDate = new Date(startDate);
+              previousStartDate = new Date(previousEndDate);
+              previousStartDate.setFullYear(previousStartDate.getFullYear() - 1);
+              break;
+
+          case 'alltime':
+              startDate = new Date(0); // Unix epoch start
+              endDate = new Date();
+              previousStartDate = null;
+              previousEndDate = null;
+              break;
+
+          default:
+              throw new Error('Invalid stats value');
+      }
+
+      return { startDate, endDate, previousStartDate, previousEndDate };
+  };
+
+  const calculatePercentageChange = (current, previous) => {
+      if (previous === 0) return { change: 100, percentage: '+' }; // Handle division by zero
+      const change = ((current - previous) / previous) * 100;
+      return {
+          change: parseFloat(change.toFixed(2)),
+          percentage: change >= 0 ? '+' : '-',
+      };
+  };
+
+  try {
+      const { startDate, endDate, previousStartDate, previousEndDate } = getFilterDates(stats);
+
+      const aggregatePayouts = async (start, end, status = null) => {
+          const matchCondition = {
+              createdAt: { $gte: start, $lte: end }
+          };
+
+          if (status) {
+              matchCondition.status = status;
+          }
+
+          return await PayoutModel.countDocuments(matchCondition);
+      };
+
+      // Current period stats
+      const currentPayoutRequest = await aggregatePayouts(startDate, endDate);
+      const currentSuccessfulPayout = await aggregatePayouts(startDate, endDate, 'Successful');
+
+      // Previous period stats
+      let previousPayoutRequest = 0, previousSuccessfulPayout = 0;
+      if (previousStartDate && previousEndDate) {
+          previousPayoutRequest = await aggregatePayouts(previousStartDate, previousEndDate);
+          previousSuccessfulPayout = await aggregatePayouts(previousStartDate, previousEndDate, 'Successful');
+      }
+
+      const statsComparison = [
+          {
+              current: currentSuccessfulPayout,
+              previous: previousSuccessfulPayout,
+              id: 'totalpayout',
+              name: 'Total Payout',
+              ...calculatePercentageChange(currentSuccessfulPayout, previousSuccessfulPayout),
+          },
+          {
+              current: currentPayoutRequest,
+              previous: previousPayoutRequest,
+              id: 'totalpayoutrequest',
+              name: 'Total payout request',
+              ...calculatePercentageChange(currentPayoutRequest, previousPayoutRequest),
+          },
+      ];
+
+      sendResponse(res, 200, true, statsComparison);
+  } catch (error) {
+      console.error('UNABLE TO GET PAYOUT STATS', error);
+      sendResponse(res, 500, false, 'Unable to get payout stats');
+  }
+}
