@@ -1306,7 +1306,7 @@ paths:
       tags:
         - Staff
       summary: Update staff Account
-      description: Endpoint to update staff account, role, role description, permissions. allowed Permissions = ['driver', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff']
+      description: Endpoint to update staff account, role, role description, permissions. allowed Permissions = ['driver', 'passenger', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff']
       parameters:
         - name: body
           in: body
@@ -2030,7 +2030,7 @@ paths:
       parameters:
         - name: active
           in: status
-          required: true
+          required: false
           description: The active status of the faq active = [ true or false ] if no active passed it would return only faqs with active true
           schema:
             type: string

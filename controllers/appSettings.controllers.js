@@ -142,6 +142,8 @@ export async function getFaqs(req, res) {
       filteredFaqs = faqEntry.faq.filter(item => item.active === true);
     } else if (active === 'false') {
       filteredFaqs = faqEntry.faq.filter(item => item.active === false);
+    }else if (active === 'all') {
+      filteredFaqs = faqEntry.faq; // Return all FAQs
     } else {
       filteredFaqs = faqEntry.faq.filter(item => item.active === true);
     }
