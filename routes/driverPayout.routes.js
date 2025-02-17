@@ -1,18 +1,22 @@
 import express from 'express'
 import * as controllers from '../controllers/driverPayout.controllers.js'
-import { AuthenticateAdmin, AuthenticateDriver, VerifyAccount, VerifyAdminAccount } from '../middlewares/auth.js'
+import { AuthenticateAdmin, AuthenticateDriver, UserRole, VerifyAccount, VerifyAdminAccount } from '../middlewares/auth.js'
 
 const router = express.Router()
 
 //POST
 router.post('/payoutRequest', AuthenticateDriver, VerifyAccount, controllers.payoutRequest)
-router.post('/approvePayout', AuthenticateAdmin, VerifyAdminAccount, controllers.approvePayout)
-router.post('/rejectPayout', AuthenticateAdmin, VerifyAdminAccount, controllers.rejectPayout)
 
 //GET
 router.get('/getPayouts', AuthenticateDriver, VerifyAccount, controllers.getPayouts)
 
-router.get('/getAllPayouts', AuthenticateAdmin, VerifyAdminAccount, controllers.getAllPayouts)
-router.get('/getAPayout/:payoutId', AuthenticateAdmin, VerifyAdminAccount, controllers.getAPayout)
+//ADMIN
+router.use(AuthenticateAdmin, VerifyAdminAccount, UserRole(['driver', 'admin', 'superadmin']));
+//POST
+router.post('/approvePayout', controllers.approvePayout)
+router.post('/rejectPayout', controllers.rejectPayout)
+
+router.get('/getAllPayouts', controllers.getAllPayouts)
+router.get('/getAPayout/:payoutId', controllers.getAPayout)
 
 export default router

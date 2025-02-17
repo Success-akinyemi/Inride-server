@@ -578,3 +578,16 @@ export const VerifyAdminAccount = async (req, res, next) => {
         return sendResponse(res, 500, false, 'Unable to verify user account')
     }
 }
+
+  //Allowed user roles:
+  export const UserRole = (allowedRoles) => {
+    return (req, res, next) => {
+      //const { permissions } = req.user;
+
+      if (!req.user?.permissions || !req.user?.permissions.some(role => allowedRoles.includes(role))) {
+        return sendResponse(res, 403, false, 'No Permission', 'You do not have permission for this request');
+      }
+  
+      next();
+    };
+  };

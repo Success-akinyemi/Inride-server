@@ -10,6 +10,10 @@ const FaqSchema = new mongoose.Schema({
             answer: {
                 type: String,
                 required: [ true, 'Question for Faq is required']
+            },
+            active: {
+                type: Boolean,
+                default: true,
             }
         }
     ]

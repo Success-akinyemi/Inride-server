@@ -1951,6 +1951,8 @@ paths:
                 type: string
               answer:
                 type: string
+              active:
+                type: boolean
       responses:
         200:
           description: Success
@@ -2025,6 +2027,13 @@ paths:
         - Settings
       summary: Get Faqs
       description: Endpoint to get faq
+      parameters:
+        - name: active
+          in: status
+          required: true
+          description: The active status of the faq active = [ true or false ] if no active passed it would return only faqs with active true
+          schema:
+            type: string
       responses:
         200:
           description: Success

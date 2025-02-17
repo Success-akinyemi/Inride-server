@@ -90,7 +90,9 @@ const AdminUserSchema = new mongoose.Schema({
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
-})
+},
+{ timestamps: true }
+)
 
 AdminUserSchema.pre('save', async function(next) {
     if(!this.isModified('password')){

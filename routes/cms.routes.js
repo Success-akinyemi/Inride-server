@@ -1,21 +1,23 @@
 
 import express from 'express'
 import * as controllers from '../controllers/cms.controllers.js'
-import { AuthenticateAdmin, VerifyAdminAccount } from '../middlewares/auth.js'
+import { AuthenticateAdmin, UserRole, VerifyAdminAccount } from '../middlewares/auth.js'
 import { uploadImages } from '../middlewares/multer.js'
 
 const router = express.Router()
 
+
+router.use(AuthenticateAdmin, VerifyAdminAccount, UserRole(['cms', 'admin', 'superadmin']));
 //POST 
-router.post('/newCms', AuthenticateAdmin, VerifyAdminAccount, uploadImages, controllers.newCms)
-router.post('/updateCms', AuthenticateAdmin, VerifyAdminAccount, uploadImages, controllers.updateCms)
-router.post('/deleteCms', AuthenticateAdmin, VerifyAdminAccount, controllers.deleteCms)
+router.post('/newCms', uploadImages, controllers.newCms)
+router.post('/updateCms', uploadImages, controllers.updateCms)
+router.post('/deleteCms', controllers.deleteCms)
 
 
 
 //GET
-router.get('/getACms/:cmsId', AuthenticateAdmin, VerifyAdminAccount, controllers.getACms)
-router.get('/getAllCms', AuthenticateAdmin, VerifyAdminAccount, controllers.getAllCms)
+router.get('/getACms/:cmsId', controllers.getACms)
+router.get('/getAllCms', controllers.getAllCms)
 
 
 

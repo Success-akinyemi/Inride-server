@@ -70,8 +70,14 @@ export async function createFaq(req, res){
 
 // UPDATE FAQ
 export async function updateFaq(req, res){
+  const { question, answer, faqId, active } = req.body;
   try {
-    const { question, answer, faqId } = req.body;
+
+    if(active){
+      if(active && typeof active !== 'boolean'){
+        return sendResponse(res, 400, false, "Active must be a boolean. true or false");
+      }
+    }
 
     const faqEntry = await FaqModel.findOne();
     if (!faqEntry) {
@@ -85,6 +91,7 @@ export async function updateFaq(req, res){
 
     if (question) faqToUpdate.question = question;
     if (answer) faqToUpdate.answer = answer;
+    if (active) faqToUpdate.active = active
 
     await faqEntry.save();
     sendResponse(res, 200, true, "FAQ updated successfully.", faqToUpdate);
@@ -120,13 +127,30 @@ export async function deleteFaq(req, res){
 };
 
 // GET ALL FAQ
-export async function getFaqs(req, res){
+export async function getFaqs(req, res) {
+  const { active } = req.query;
+
   try {
-    const faqEntry = await FaqModel.findOne();
+    let faqEntry = await FaqModel.findOne();
+
     if (!faqEntry || faqEntry.faq.length === 0) {
       return sendResponse(res, 404, false, "No FAQs found.");
     }
-    sendResponse(res, 200, true, "FAQs retrieved successfully.", faqEntry.faq);
+
+    let filteredFaqs;
+    if (active === 'true') {
+      filteredFaqs = faqEntry.faq.filter(item => item.active === true);
+    } else if (active === 'false') {
+      filteredFaqs = faqEntry.faq.filter(item => item.active === false);
+    } else {
+      filteredFaqs = faqEntry.faq.filter(item => item.active === true);
+    }
+
+    if (filteredFaqs.length === 0) {
+      return sendResponse(res, 404, false, "No FAQs found.");
+    }
+
+    sendResponse(res, 200, true, "FAQs retrieved successfully.", filteredFaqs);
   } catch (error) {
     console.error("Error retrieving FAQs:", error);
     sendResponse(res, 500, false, "Server error while retrieving FAQs.");

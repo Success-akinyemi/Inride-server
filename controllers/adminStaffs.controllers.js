@@ -148,22 +148,22 @@ export async function getAllStaffs(req, res) {
       }
   
       // Handle status filtering
-      if (status && status.toLowercase() === "active") {
+      if (status && status.toLowerCase() === "active") {
         query.status = 'Active'
       }
-      if (status && status.toLowercase() === "inactive") {
+      if (status && status.toLowerCase() === "inactive") {
         query.status = 'Inactive'; 
       }
-      if (status && status.toLowercase() === "sacked") {
+      if (status && status.toLowerCase() === "sacked") {
         query.status = 'Sacked'; 
       }
-      if (status && status.toLowercase() === "pending") {
+      if (status && status.toLowerCase() === "pending") {
         query.status = 'Pending'; 
       }
-      if (status && status.toLowercase() === "blocked") {
+      if (status && status.toLowerCase() === "blocked") {
         query.status = 'Blocked'; 
       }
-      if (!status || status.toLowercase() === "all") {
+      if (!status || status.toLowerCase() === "all") {
   
       }
 
@@ -186,8 +186,9 @@ export async function getAllStaffs(req, res) {
         adminId: staff?.adminId,
         role: staff?.role,
         permissions: staff?.permissions,
-        createdAt: staff?.createdAt,
-        status: staff?.status
+        createdAt: staff?.createdAt || staff?.updatedAt,
+        status: staff?.status,
+        blocked: staff?.blocked
     }));
         
     return sendResponse(res, 200, true, 'Staffs fetched successfully', {
@@ -236,6 +237,8 @@ export async function activateStaff(req, res) {
 //SACK STAFF
 export async function sackStaff(req, res) {
     const { adminId } = req.body
+    const { permissions: userPermissions } = req.user
+
     if(!adminId){
         return sendResponse(res, 400, false, 'Admin Id is required')
     }
@@ -243,6 +246,11 @@ export async function sackStaff(req, res) {
         const getStaff = await AdminUserModel.findOne({  adminId })
         if(!getStaff){
             return sendResponse(res, 500, false, 'Staff with this Id does not exist')
+        }    
+
+        // Only userPermissions with 'superadmin' can sack another superadmin
+        if (getStaff?.permissions && getStaff?.permissions.includes('superadmin') && !userPermissions.includes('superadmin')) {
+            return sendResponse(res, 403, false, 'No Permission', 'You do not have permission to take the actions');
         }
 
         getStaff.status = 'Sacked'
@@ -265,6 +273,7 @@ export async function sackStaff(req, res) {
 //DEACTIVATE STAFF
 export async function deactivateStaff(req, res) {
     const { adminId } = req.body
+    const { permissions: userPermissions } = req.user
     if(!adminId){
         return sendResponse(res, 400, false, 'Admin Id is required')
     }
@@ -272,6 +281,11 @@ export async function deactivateStaff(req, res) {
         const getStaff = await AdminUserModel.findOne({  adminId })
         if(!getStaff){
             return sendResponse(res, 500, false, 'Staff with this Id does not exist')
+        }
+
+        // Only userPermissions with 'superadmin' can deactive another superadmin
+        if (getStaff?.permissions && getStaff?.permissions.includes('superadmin') && !userPermissions.includes('superadmin')) {
+            return sendResponse(res, 403, false, 'No Permission', 'You do not have permission to take the actions');
         }
 
         getStaff.status = 'Inactive'
@@ -287,6 +301,7 @@ export async function deactivateStaff(req, res) {
 //UPDATE STAFF ACCOUNT
 export async function updateStaffAccount(req, res) {
     const { role, roleDescription, permissions, adminId } = req.body
+    const { permissions: userPermissions } = req.user
     if(!adminId){
         return sendResponse(res, 400, false, 'Provide a staff Id')
     }
@@ -296,7 +311,7 @@ export async function updateStaffAccount(req, res) {
         }
 
         // Allowed permissions
-        const allowedPermissions = ['driver', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff'];
+        const allowedPermissions = ['driver', 'passenger', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff', 'admin', 'superadmin'];
 
         // Check if all values in permissions are valid
         const invalidPermissions = permissions.filter(p => !allowedPermissions.includes(p.toLowerCase()));
@@ -310,6 +325,12 @@ export async function updateStaffAccount(req, res) {
         if(!getStaff){
             return sendResponse(res, 404, false, 'User with this Id does not exist')
         }
+
+        // Only userPermissions with 'superadmin' can make another user a superadmin
+        if (permissions && permissions.includes('superadmin') && !userPermissions.includes('superadmin')) {
+            return sendResponse(res, 403, false, 'No Permission', 'You do not have permission to make a user superadmin');
+        }
+
         if(role) getStaff.role = role
         if(roleDescription) getStaff.roleDescription = roleDescription
         if(permissions) getStaff.permissions = permissions
