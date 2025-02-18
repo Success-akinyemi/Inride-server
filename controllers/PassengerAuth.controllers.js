@@ -154,7 +154,7 @@ export async function registerUser(req, res) {
     }
     
     const { idCardImgFront, idCardImgBack, profileImg } = req.files;
-    //console.log('idCardImgFront', idCardImgBack, idCardImgFront)
+    console.log('idCardImgFront', idCardImgBack, req.files)
     if (!idCardImgFront || !idCardImgFront[0]) return sendResponse(res, 400, false, `Provide the front image of your ID card`);
     if (!idCardImgBack || !idCardImgBack[0]) return sendResponse(res, 400, false, `Provide the back image of your ID card`);
     if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
@@ -569,7 +569,7 @@ export async function completeRegisterUser(req, res) {
     }
     
     const { idCardImgFront, idCardImgBack, profileImg } = req.files;
-    //console.log('idCardImgFront', idCardImgBack, idCardImgFront)
+    //console.log('idCardImgFront', idCardImgBack, req.files)
     if (!idCardImgFront || !idCardImgFront[0]) return sendResponse(res, 400, false, `Provide the front image of your ID card`);
     if (!idCardImgBack || !idCardImgBack[0]) return sendResponse(res, 400, false, `Provide the back image of your ID card`);
     if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);

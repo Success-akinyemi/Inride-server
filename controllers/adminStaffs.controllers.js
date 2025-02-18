@@ -52,8 +52,8 @@ export async function updateProfile(req, res) {
 
     if(profileImg && profileImg[0]){
         const allowedImageTypes = ['image/jpeg', 'image/png'];
-        if (!allowedImageTypes.includes(idCardImgFront[0].mimetype)) {
-            return sendResponse(res, 400, false, `Invalid image format for ID card front. Accepted formats: jpeg, png`);
+        if (!allowedImageTypes.includes(profileImg[0].mimetype)) {
+            return sendResponse(res, 400, false, `Invalid image format for profile image. Accepted formats: jpeg, png`);
         }
     }
     try {
