@@ -65,6 +65,7 @@ export async function updateProfile(req, res) {
         const getAdmin = await AdminUserModel.findOne({ adminId })
 
         //update
+        console.log('profileImgUrl', profileImgUrl, 'profileImg', profileImg)
         if(profileImgUrl) getAdmin.profileImg = profileImgUrl
         if(firstName) getAdmin.firstName = firstName
         if(lastName) getAdmin.lastName = lastName
