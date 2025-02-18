@@ -13,6 +13,15 @@ basePath: /
 schemes:
   - https
 
+securityDefinitions:
+  CookieAuth:
+    type: apiKey
+    in: cookie
+    name: inrideaccessid
+
+security:
+  - CookieAuth: []
+
 tags:
   - name: General
     description: General
