@@ -106,6 +106,16 @@ export async function updateCardDetails(req, res) {
             return
         }
     }
+    if(cardNumber){
+        // Remove spaces from the card number
+        const sanitizedCardNumber = cardNumber.replace(/\s+/g, '');
+
+        // Check if the card number is a valid number
+        if (!/^\d+$/.test(sanitizedCardNumber)) {
+            sendResponse(res, 400, false, 'Card number must be numeric');
+            return;
+        }
+    }
     try {
         const getCardDetails = await CardDetailModel.findOne({ passengerId });
         if (!getCardDetails) {
