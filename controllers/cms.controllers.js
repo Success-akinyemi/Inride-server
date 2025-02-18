@@ -8,8 +8,8 @@ import PassengerModel from "../model/Passenger.js"
 //CREATE NEW CMS
 export async function newCms(req, res) {
     const { title, message, url, caption, redirection, status, type, scheduled, scheduledDate, accountType, users } = req.body
-    const { cmsImage } = req.files
-    const { firstName, lastName, adminId } =  req.admin
+    const { cmsImage } = req.files || {}
+    const { firstName, lastName, adminId } =  req.user
     if(!title){
         return sendResponse(res, 400, false, 'Provide a title')
     }
@@ -47,7 +47,7 @@ export async function newCms(req, res) {
     }
     const { day, time, date } = scheduledDate || {}
     let scheduledTimeData 
-    if(scheduled && scheduled === true){
+    if(status === 'scheduled' || scheduled && scheduled === true){
         if (!day) {
             return sendResponse(res, 400, false, 'Provide day for scheduled CMS' )
         }
@@ -57,10 +57,10 @@ export async function newCms(req, res) {
         }
 
         // Validate time format
-        const timeRegex = /^([0-9]|1[0-2]):([0-5][0-9]) (AM|PM)$/;
+        const timeRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9]) (AM|PM)$/;
         if (!timeRegex.test(time)) {
-            return sendResponse(res, 400, false, 'Invalid time format. Use E.G "09:15 AM" or "12:00 PM" format')
-        }
+          return sendResponse(res, 400, false, 'Invalid time format. Use E.G "09:15 AM" or "12:00 PM" format');
+        }        
 
         // Validate day of the week
         const validDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -75,15 +75,30 @@ export async function newCms(req, res) {
 
         // Parse and validate the provided date
         const currentDate = new Date();
-        const providedDate = new Date(date);
+        const providedDate = new Date(`${date}T00:00:00.000Z`); // Force UTC interpretation
 
         // Check if the date format is valid and not in the past
         if (isNaN(providedDate.getTime())) {
-            return sendResponse(res, 400, false, 'Invalid date format. Use E.G "YYYY-MM-DD".')
+        return sendResponse(res, 400, false, 'Invalid date format. Use E.G "YYYY-MM-DD".');
         }
 
-        if (providedDate.setHours(0, 0, 0, 0) < currentDate.setHours(0, 0, 0, 0)) {
-            return sendResponse(res, 400, false, 'The date cannot be in the past.')
+        // Normalize both dates to midnight UTC for comparison
+        const normalizedCurrentDate = new Date(Date.UTC(
+        currentDate.getUTCFullYear(),
+        currentDate.getUTCMonth(),
+        currentDate.getUTCDate(),
+        0, 0, 0, 0
+        ));
+
+        const normalizedProvidedDate = new Date(Date.UTC(
+        providedDate.getUTCFullYear(),
+        providedDate.getUTCMonth(),
+        providedDate.getUTCDate(),
+        0, 0, 0, 0
+        ));
+
+        if (normalizedProvidedDate < normalizedCurrentDate) {
+        return sendResponse(res, 400, false, 'The date cannot be in the past.');
         }
 
         scheduledTimeData = {
@@ -177,7 +192,7 @@ export async function newCms(req, res) {
 //UPDATE CMS
 export async function updateCms(req, res) {
     const { _id, title, message, url, caption, redirection, status, type, scheduled, scheduledDate, accountType, users } = req.body
-    const { cmsImage } = req.files
+    const { cmsImage } = req.files || {}
     if(!_id){
         return sendResponse(res, 400, false, 'Provide a CMs id (_id)')
     }
@@ -234,18 +249,32 @@ export async function updateCms(req, res) {
         if (!date) {
             return sendResponse(res, 400, false, 'Provide a date for scheduled CMS')
         }
-
         // Parse and validate the provided date
         const currentDate = new Date();
-        const providedDate = new Date(date);
+        const providedDate = new Date(`${date}T00:00:00.000Z`); // Force UTC interpretation
 
         // Check if the date format is valid and not in the past
         if (isNaN(providedDate.getTime())) {
-            return sendResponse(res, 400, false, 'Invalid date format. Use E.G "YYYY-MM-DD".')
+        return sendResponse(res, 400, false, 'Invalid date format. Use E.G "YYYY-MM-DD".');
         }
 
-        if (providedDate.setHours(0, 0, 0, 0) < currentDate.setHours(0, 0, 0, 0)) {
-            return sendResponse(res, 400, false, 'The date cannot be in the past.')
+        // Normalize both dates to midnight UTC for comparison
+        const normalizedCurrentDate = new Date(Date.UTC(
+        currentDate.getUTCFullYear(),
+        currentDate.getUTCMonth(),
+        currentDate.getUTCDate(),
+        0, 0, 0, 0
+        ));
+
+        const normalizedProvidedDate = new Date(Date.UTC(
+        providedDate.getUTCFullYear(),
+        providedDate.getUTCMonth(),
+        providedDate.getUTCDate(),
+        0, 0, 0, 0
+        ));
+
+        if (normalizedProvidedDate < normalizedCurrentDate) {
+        return sendResponse(res, 400, false, 'The date cannot be in the past.');
         }
 
         scheduledTimeData = {
