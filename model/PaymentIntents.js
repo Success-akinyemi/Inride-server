@@ -23,7 +23,7 @@ const PaymentIntentSchema = new mongoose.Schema({
     status: {
         type: String,
         default: 'Pending',
-        enum: ['Pending', 'Successful', 'Failed']
+        enum: ['Pending', 'Successful', 'Failed', 'Processing']
     }
 },
 { timestamps: true }

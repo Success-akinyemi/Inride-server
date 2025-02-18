@@ -13,6 +13,10 @@ router.post('/fundWallet', AuthenticatePassenger, VerifyAccount, controllers.fun
 //GET
 router.get('/getProfile', AuthenticatePassenger, VerifyAccount, controllers.getProfile)
 router.get('/getNotifications', AuthenticatePassenger, VerifyAccount, controllers.getNotifications)
+router.get('/getFundingHistroy', AuthenticatePassenger, VerifyAccount, controllers.getFundingHistroy)
+router.get('/getAPaymentData/:paymentId', AuthenticatePassenger, VerifyAccount, controllers.getAPaymentData)
+
+
 
 
 //ADMIN

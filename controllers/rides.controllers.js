@@ -254,13 +254,15 @@ export async function getPassengerRide(req, res){
     return
   }
   try {
-    const getRide = RideModel.findOne({ rideId })
+    const getRide = await RideModel.findOne({ rideId })
     if(!getRide){
       const message = 'Ride with this ID does not exist'
       sendResponse(res, 404, false, message)
       return
     }
-    if(getRide.passengerId !== passengerId){
+
+    const ridePassenger = getRide.passengerId || getRide?.passengers[0]
+    if(ridePassenger !== passengerId){
       const message = 'Not Allowed'
       sendResponse(res, 403, false, message)
       return

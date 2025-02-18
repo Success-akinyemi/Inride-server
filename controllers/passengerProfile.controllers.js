@@ -2,6 +2,7 @@ import { initiatePayment, sendResponse, uploadFile } from "../middlewares/utils.
 import NotificationModel from "../model/Notifications.js";
 import PassengerModel from "../model/Passenger.js"
 import Stripe from 'stripe';
+import PaymentIntentModel from "../model/PaymentIntents.js";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
@@ -116,6 +117,90 @@ export async function fundWallet(req, res) {
   }
 }
 
+//GET FUNDING HISTROY
+export async function getFundingHistroy(req, res) {
+  const { limit = 10, page = 1, status } = req.query
+  try {
+      const pageNumber = Number(page)
+      const limitNumber = Number(limit)
+      const query = {}
+
+      if(status && status.toLowerCase() === 'pending'){
+          query.status = 'Pending'
+      }
+      if(status && status.toLowerCase() === 'successful'){
+          query.status = 'Successful'
+      }        
+      if(status && status.toLowerCase() === 'failed'){
+          query.status = 'Failed'
+      }
+      if(status && status.toLowerCase() === 'processing'){
+        query.status = 'Processing'
+      }
+
+      const skip = (pageNumber -1) * limitNumber;
+
+      const data = await PaymentIntentModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber)
+
+      const totalData = await PaymentIntentModel.countDocuments(query)
+
+      //transaform data
+      const transformedPaymentHistroy = data.map((data) => {
+  
+        return {
+          _id: data._id,
+          paymentId: data.paymentId,
+          paymentfor: data.paymentfor,
+          amount: data.amount,
+          accountId: data.accountId,
+          status: data.status,
+          createdAt: data.createdAt
+        };
+      });
+  
+
+      sendResponse(
+          res,
+          200,
+          true,
+          {
+              data:  transformedPaymentHistroy,
+              totalData,
+              totalPages: Math.ceil(totalData / limitNumber),
+              currentPage: pageNumber
+          },
+          'Funding histroy Data fetched successful'
+      )
+  } catch (error) {
+      console.log('UNABLE TO GET ALL FUNDING HSITROY', error)
+      res.status(500).json({ success: false, data: 'Unable to get funding histroy data' })
+  }
+}
+
+//GET A FUNDING HISTROY
+//GET CMS
+export async function getAPaymentData(req, res) {
+  const { paymentId } = req.params
+  if(!paymentId){
+      return sendResponse(res, 400, false, 'Provide a cms Id')
+  }
+  try {
+      const getPaymentData = await PaymentIntentModel.findById({ _id: paymentId })
+      if(!getPaymentData){
+          return sendResponse(res, 404, false, 'Payment data with this Id not found')
+      }
+
+      const { client_secret, ...restOfData } = getPaymentData._doc
+      sendResponse(res, 200, true, restOfData)
+  } catch (error) {
+      console.log('UNABLE TO GET PAYMENT DATA', error)
+      sendResponse(res, 500, false, 'Unable to get payment data')
+  }
+}
+
 //ADMIN
 //GET PASSENGERS
 export async function getPassengers(req, res) {
@@ -208,7 +293,6 @@ export async function getPassengers(req, res) {
     return sendResponse(res, 500, false, "Unable to get passengers");
   }
 }
-
 
 //GET A PASSNEGER
 export async function getAPassenger(req, res) {

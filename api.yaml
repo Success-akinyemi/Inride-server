@@ -8,7 +8,7 @@ info:
   license:
     name: Apache 2.0
     url: 'http://apache.org/'
-host: inride-server.onrender.com
+host: inride-server.onrender.com/api
 basePath: /
 schemes:
   - https
@@ -46,7 +46,7 @@ paths:
         200:
           description: Success
 
-  /api/ride/afterRideFeedBack:
+  /ride/afterRideFeedBack:
     post:
       tags:
         - General
@@ -105,7 +105,7 @@ paths:
           
 #AUTH
 
-  /api/auth/verifyOtp:
+  /auth/verifyOtp:
     post:
       tags:
         - Auth
@@ -130,7 +130,7 @@ paths:
         500:
           description: Server error
 
-  /api/auth/signout:
+  /auth/signout:
     post:
       tags:
         - Auth
@@ -144,7 +144,7 @@ paths:
 
 #PASSENGER AUTH
 
-  /api/passenger/auth/registerNumber:
+  /passenger/auth/registerNumber:
     post:
       tags:
         - Passenger Auth
@@ -169,7 +169,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/resendOtp:
+  /passenger/auth/resendOtp:
     post:
       tags:
         - Passenger Auth
@@ -194,7 +194,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/verifyPersonalDetails:
+  /passenger/auth/verifyPersonalDetails:
     post:
       tags:
         - Passenger Auth
@@ -222,7 +222,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/verifySSN:
+  /passenger/auth/verifySSN:
     post:
       tags:
         - Passenger Auth
@@ -247,7 +247,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/resendOtp:
+  /passenger/auth/resendOtp:
     post:
       tags:
         - Passenger Auth
@@ -272,7 +272,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/registerUser:
+  /passenger/auth/registerUser:
     post:
       tags:
         - Passenger Auth
@@ -329,7 +329,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/signin:
+  /passenger/auth/signin:
     post:
       tags:
         - Passenger Auth
@@ -354,7 +354,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/verifyLoginOtp:
+  /passenger/auth/verifyLoginOtp:
     post:
       tags:
         - Passenger Auth
@@ -379,7 +379,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/verifyToken:
+  /passenger/auth/verifyToken:
     post:
       tags:
         - Passenger Auth
@@ -393,7 +393,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/signupWithGoogle:
+  /passenger/auth/signupWithGoogle:
     post:
       tags:
         - Passenger Auth
@@ -418,7 +418,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/signinWithGoogle:
+  /passenger/auth/signinWithGoogle:
     post:
       tags:
         - Passenger Auth
@@ -443,7 +443,7 @@ paths:
         500:
           description: Server error
 
-  /api/passenger/auth/completeRegisterUser:
+  /passenger/auth/completeRegisterUser:
     post:
       tags:
         - Passenger Auth
@@ -498,7 +498,7 @@ paths:
 
 #DRIVER AUTH
 
-  /api/driver/auth/registerWithPassengerAccount:
+  /driver/auth/registerWithPassengerAccount:
     post:
       tags:
         - Driver Auth
@@ -523,7 +523,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/verifyPassengerToDriverAccountOtp:
+  /driver/auth/verifyPassengerToDriverAccountOtp:
     post:
       tags:
         - Driver Auth
@@ -548,7 +548,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/completeDriverRegistration:
+  /driver/auth/completeDriverRegistration:
     post:
       tags:
         - Driver Auth
@@ -625,7 +625,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/registerNewDriver:
+  /driver/auth/registerNewDriver:
     post:
       tags:
         - Driver Auth
@@ -650,7 +650,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/resendOtp:
+  /driver/auth/resendOtp:
     post:
       tags:
         - Driver Auth
@@ -675,7 +675,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/verifyPersonalDetails:
+  /driver/auth/verifyPersonalDetails:
     post:
       tags:
         - Driver Auth
@@ -703,7 +703,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/verifySSN:
+  /driver/auth/verifySSN:
     post:
       tags:
         - Driver Auth
@@ -728,7 +728,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/completeNewDriverRegistration:
+  /driver/auth/completeNewDriverRegistration:
     post:
       tags:
         - Driver Auth
@@ -814,7 +814,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/signin:
+  /driver/auth/signin:
     post:
       tags:
         - Driver Auth
@@ -839,7 +839,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/verifyLoginOtp:
+  /driver/auth/verifyLoginOtp:
     post:
       tags:
         - Driver Auth
@@ -864,7 +864,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/auth/verifyToken:
+  /driver/auth/verifyToken:
     post:
       tags:
         - Driver Auth
@@ -1009,7 +1009,7 @@ paths:
           description: Server error
 
 #PASSENGER
-  /api/ride/reportForgotItem:
+  /ride/reportForgotItem:
     post:
       tags:
         - Passenger
@@ -1281,6 +1281,60 @@ paths:
         500:
           description: Server error
 
+  /passenger/profile/getFundingHistroy:
+    get:
+      tags:
+        - Passenger
+      summary: Get all funding histroy of a passenger
+      description: The endpoint get all funding histroy data passing in possible queries
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: The limits of data sent on each request
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: the page number
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: the status of the payment - ['pending', 'successful', 'failed', 'processing']
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
+  /passenger/profile/getAPaymentData/{paymentId}:
+    get:
+      tags:
+        - CMS
+      summary: Get a specific cms
+      description: The endpoint provides details on a specific payment data
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          description: The paymentId (_id) of the payment data
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+        400: 
+          description: user error
+        500: 
+          description: server error
+
   /passenger/card/getPaymentCards:
     get:
       tags:
@@ -1328,12 +1382,19 @@ paths:
         500:
           description: Server error
         
-  /rides/getPassengerRide:
+  /rides/getPassengerRide/{rideId}:
     get:
       tags:
         - Passenger 
       summary: Get passenger a Ride details
       description: This endpoint get passenger a ride details
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          description: The rideId of the ride data
+          schema:
+            type: string
       responses:
         201:
           description: Succesful - ride details infomation

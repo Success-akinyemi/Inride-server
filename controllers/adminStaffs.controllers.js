@@ -12,7 +12,7 @@ export async function getProfile(req, res) {
     try {
         const getAdmin = await AdminUserModel.findOne({ adminId })
 
-        const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = getAdmin._doc;
+        const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, superadmin, ...userData } = getAdmin._doc;
         sendResponse(res, 200, true, userData)
     } catch (error) {
         console.log('UNABLE TO GET USER PROFILE', error)
@@ -36,7 +36,7 @@ export async function getAStaff(req, res) {
             return sendResponse(res, 404, false, 'Staff with this Id or email address does not exist');
         }
 
-        const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = getAdmin._doc;
+        const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, superadmin, ...userData } = getAdmin._doc;
         sendResponse(res, 200, true, userData);
     } catch (error) {
         console.log('UNABLE TO GET USER PROFILE', error);

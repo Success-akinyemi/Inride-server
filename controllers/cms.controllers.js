@@ -350,13 +350,13 @@ export async function getAllCms(req, res) {
         const limitNumber = Number(limit)
         const query = {}
 
-        if(status.toLowerCase()=== 'draft'){
+        if(status && status.toLowerCase()=== 'draft'){
             query.status = 'draft'
         }
-        if(status.toLowerCase()=== 'scheduled'){
+        if(status && status.toLowerCase()=== 'scheduled'){
             query.status = 'scheduled'
         }        
-        if(status.toLowerCase()=== 'published'){
+        if(status && status.toLowerCase()=== 'published'){
             query.status = 'published'
         }
 

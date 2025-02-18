@@ -88,6 +88,10 @@ const AdminUserSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    superadmin: {
+        type: Boolean,
+        default: false
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
 },

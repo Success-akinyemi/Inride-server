@@ -211,7 +211,7 @@ export async function requestRide({ socket, data, res }) {
     console.log('Total Ride Distance:', totalDistanceKm, 'miles');
     const passengersArray = [passenger.passengerId]
     const newRideRequest = await RideModel.create({
-      passengerId: passenger.passengerId,
+      passengerId: passenger.passengerId || passengersArray[0],
       rideId,
       noOffPassengers,
       personnalRide,
@@ -661,6 +661,7 @@ export async function payForRide({ socket, data, res }) {
         return
       }
       getPassenger.wallet -= getRide.charge
+      getPassenger.wallet.toFixed(2)
       await getPassenger.save()
 
       getRide.status = 'Active'
