@@ -8,7 +8,7 @@ const router = express.Router()
 //GET
 router.get('/activeUsers/:stats', AuthenticateAdmin, VerifyAdminAccount, controllers.activeUsers)
 router.get('/getTopLocations', AuthenticateAdmin, VerifyAdminAccount, controllers.getTopLocations)
-router.get('/salesReport/:stats', AuthenticateAdmin, VerifyAdminAccount, controllers.salesReport)
+router.get('/salesReport', AuthenticateAdmin, VerifyAdminAccount, controllers.salesReport)
 
 
 

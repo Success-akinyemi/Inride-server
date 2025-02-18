@@ -91,8 +91,8 @@ export async function updateFaq(req, res){
 
     if (question) faqToUpdate.question = question;
     if (answer) faqToUpdate.answer = answer;
-    if (active) faqToUpdate.active = active
-
+    if (active !== undefined) faqToUpdate.active = active;
+    console.log('question', active, faqToUpdate.active)
     await faqEntry.save();
     sendResponse(res, 200, true, "FAQ updated successfully.", faqToUpdate);
   } catch (error) {

@@ -320,14 +320,14 @@ paths:
         200:
           description: Success
 
-  /api/stats/salesReport/{stats}:
+  /api/stats/salesReport:
     get:
       tags:
         - Stats
       summary: Get Stats of active users
       description: The endpoint provides stats on active users based on the given criteria.
       parameters:
-        - name: stats
+        - name: query
           in: path
           required: false
           description: The type of stats to fetch (e.g., today, 3days, 7days, 30days, 6mth, 1year). 30days by default
@@ -2004,8 +2004,6 @@ paths:
           schema:
             type: object
             required:
-              - question
-              - answer
               - faqId
             properties:
               faqId:
