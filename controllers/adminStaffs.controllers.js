@@ -3,7 +3,7 @@ import { generateUniqueCode, sendResponse, uploadFile } from "../middlewares/uti
 import AdminUserModel from "../model/Admin.js"
 
 // Allowed permissions
-const allowedPermissions = ['driver', 'passenger', 'car', 'transaction', 'message', 'bigtaxe', 'cms', 'staff', 'admin', 'superadmin'];
+const allowedPermissions = ['driver', 'passenger', 'car', 'transaction', 'payout', 'message', 'bigtaxe', 'cms', 'staff', 'admin', 'superadmin'];
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const defaultPwd = '1234!#@$'
 //GET PROFILE
@@ -393,6 +393,7 @@ export async function newStaff(req, res){
             email,
             permissions,
             status: 'Active',
+            verified: true,
             role,
             roleDescription,
             password: newAdminId
