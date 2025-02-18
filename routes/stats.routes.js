@@ -13,6 +13,4 @@ router.get('/salesReport/:stats', AuthenticateAdmin, VerifyAdminAccount, control
 
 
 
-
-
 export default router

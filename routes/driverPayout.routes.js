@@ -11,7 +11,7 @@ router.post('/payoutRequest', AuthenticateDriver, VerifyAccount, controllers.pay
 router.get('/getPayouts', AuthenticateDriver, VerifyAccount, controllers.getPayouts)
 
 //ADMIN
-router.use(AuthenticateAdmin, VerifyAdminAccount, UserRole(['driver', 'admin', 'superadmin']));
+router.use(AuthenticateAdmin, VerifyAdminAccount, UserRole(['payout', 'admin', 'superadmin']));
 //POST
 router.post('/approvePayout', controllers.approvePayout)
 router.post('/rejectPayout', controllers.rejectPayout)

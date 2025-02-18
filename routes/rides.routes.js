@@ -28,7 +28,7 @@ router.get('/getARide/:rideId', controllers.getARide)
 router.get('/passengerRides/:passengerId', controllers.getPassengerRides)
 router.get('/driverRides/:driverId', controllers.getDriverRides)
 router.get('/getRideStats/:stats', controllers.getRideStats)
-router.get('/getTransactions', controllers.getTransactions)
+router.get('/getTransactions', UserRole(['transaction', 'admin', 'superadmin']), controllers.getTransactions)
 
 
 

@@ -15,11 +15,11 @@ router.get('/getNotifications', AuthenticateDriver, VerifyAccount, controllers.g
 //ADMIN
 router.use(AuthenticateAdmin, VerifyAdminAccount, UserRole(['driver', 'admin', 'superadmin']));
 //POST
-router.post('/blockDriver', AuthenticateAdmin, VerifyAdminAccount, controllers.blockDriver)
-router.post('/unBlockDriver', AuthenticateAdmin, VerifyAdminAccount, controllers.unBlockDriver)
+router.post('/blockDriver', controllers.blockDriver)
+router.post('/unBlockDriver', controllers.unBlockDriver)
 
 //GET
-router.get('/getDrivers', AuthenticateAdmin, VerifyAdminAccount, controllers.getDrivers)
-router.get('/getADriver/:driverId', AuthenticateAdmin, VerifyAdminAccount, controllers.getADriver)
+router.get('/getDrivers', controllers.getDrivers)
+router.get('/getADriver/:driverId', controllers.getADriver)
 
 export default router
