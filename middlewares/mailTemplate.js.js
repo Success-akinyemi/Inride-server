@@ -907,7 +907,7 @@ export async function sendPayoutRequestRejectedEmail({
       subject: title,
       html: emailContent,
     });
-    console.log(`payout approved email sent to ${email}`);
+    console.log(`payout rejected email sent to ${email}`);
   } catch (error) {
     console.error(`Failed to send email to ${email}:`, error.message);
     throw error;

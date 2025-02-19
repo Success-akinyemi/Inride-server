@@ -146,14 +146,16 @@ export async function approvePayout(req, res) {
     })
 
     //Send Email
-    sendPayoutRequestApprovedEmail({
-      email,
-      name: `${getDriver?.firstName} ${getDriver?.lastName}`,
-      amount,
-      bankName: getPayoutData?.bankName,
-      accountName: getPayoutData?.accountName,
-      accountNumber: getPayoutData?.accountNumber
-    })
+    if(getDriver?.email){
+      sendPayoutRequestApprovedEmail({
+        email: getDriver.email,
+        name: `${getDriver?.firstName} ${getDriver?.lastName}`,
+        amount: getPayoutData?.amount,
+        bankName: getPayoutData?.bankName,
+        accountName: getPayoutData?.accountName,
+        accountNumber: getPayoutData?.accountNumber
+      })
+    }
     sendResponse(res, 200, true, `Payout request has been approved for ${getDriver?.firstName} ${getDriver?.lastName}`)
   } catch (error) {
     console.log('UNABLE TO APPROVED PAYOUT REQUEST', error)
@@ -194,16 +196,18 @@ export async function rejectPayout(req, res) {
       message: `Payout for ${getPayoutData?.amount} to ${getPayoutData?.accountNumber} has been rejected. Reason: ${reason}`
     })
 
-    //Send Email
-    sendPayoutRequestRejectedEmail({
-      email,
-      name: `${getDriver?.firstName} ${getDriver?.lastName}`,
-      amount,
-      bankName: getPayoutData?.bankName,
-      accountName: getPayoutData?.accountName,
-      accountNumber: getPayoutData?.accountNumber,
-      reason
-    })
+    //Send Emai
+    if(getDriver?.email){
+      sendPayoutRequestRejectedEmail({
+        email: getDriver?.email,
+        name: `${getDriver?.firstName} ${getDriver?.lastName}`,
+        amount: getPayoutData?.amount,
+        bankName: getPayoutData?.bankName,
+        accountName: getPayoutData?.accountName,
+        accountNumber: getPayoutData?.accountNumber,
+        reason
+      })
+    }
     sendResponse(res, 200, true, `Payout request has been rejected for ${getDriver?.firstName} ${getDriver?.lastName}`)
   } catch (error) {
     console.log('UNABLE TO REJECT PAYOUT REQUEST', error)
@@ -278,7 +282,7 @@ export async function getAPayout(req, res) {
           return sendResponse(res, 404, false, 'payout data with this Id not found')
       }
 
-      const driverId = getPayoutData?.driverId
+      const driverId = getPayout?.driverId
       const getDriver = await DriverModel.findOne({ driverId })
       
       const data = {

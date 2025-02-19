@@ -47,7 +47,7 @@ export async function newCms(req, res) {
     }
     const { day, time, date } = scheduledDate || {}
     let scheduledTimeData 
-    if(status === 'scheduled' || scheduled && scheduled === true){
+    if(status.toLowerCase() === 'scheduled' || scheduled && scheduled === true){
         if (!day) {
             return sendResponse(res, 400, false, 'Provide day for scheduled CMS' )
         }
