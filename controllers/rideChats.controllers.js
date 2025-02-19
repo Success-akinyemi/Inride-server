@@ -130,6 +130,10 @@ export async function sendChatWarning(req, res) {
             return sendResponse(res, 400, false, 'Invalid account type')
         }
 
+        if(!user){
+            return sendResponse(res, 404, false, 'Account not found')
+        }
+
         //new notification
         await NotificationModel.create({
             accountId: user.passengerId ? user.passengerId : user.driverId,
