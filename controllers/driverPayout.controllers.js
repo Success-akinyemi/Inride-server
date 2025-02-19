@@ -223,13 +223,13 @@ export async function getAllPayouts(req, res) {
       const limitNumber = Number(limit)
       const query = {}
 
-      if(status?.toLowercase() === 'pending'){
+      if(status && status?.toLowerCase() === 'pending'){
           query.status = 'Pending'
       }
-      if(status?.toLowercase() === 'succesful'){
+      if(status && status?.toLowerCase() === 'succesful'){
           query.status = 'Succesful'
       }        
-      if(status?.toLowercase() === 'canceled'){
+      if(status && status?.toLowerCase() === 'canceled'){
           query.status = 'Canceled'
       }
 

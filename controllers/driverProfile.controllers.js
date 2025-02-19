@@ -230,6 +230,7 @@ export async function getDrivers(req, res) {
       getDriver.isBlocked = false
       getDriver.verified = true
       getDriver.active = true
+      getDriver.warningCount = 0
       await getDriver.save()
   
       sendResponse(res, 200, true, `${getDriver?.firstName} ${getDriver.lastName} account has been unblocked`)

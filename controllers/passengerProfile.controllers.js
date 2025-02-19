@@ -355,6 +355,7 @@ export async function unBlockPassenger(req, res) {
     getPassenger.isBlocked = false
     getPassenger.verified = true
     getPassenger.active = true
+    getPassenger.warningCount = 0
     await getPassenger.save()
 
     sendResponse(res, 200, true, `${getPassenger?.firstName} ${getPassenger.lastName} account has been unblocked`)
