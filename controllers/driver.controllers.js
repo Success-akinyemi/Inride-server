@@ -45,7 +45,7 @@ export async function goOnline({ data, socket, res }) {
     if(driverLoc){
       driverLoc.isActive = true
       driverLoc.status = 'online'
-      //if(locationData) driverLoc.location = locationData
+      if(data) driverLoc.location = data
       await driverLoc.save()
     }
     const driverStats = await DriverModel.findOne({ driverId })

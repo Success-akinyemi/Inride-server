@@ -76,7 +76,7 @@ function DriverHome() {
 
   const goOnline = () => {
     console.log('ONLINe')
-    socket.emit('goOnline');
+    socket.emit('goOnline', userLocation);
   }
 
   const goOffline = () => {
