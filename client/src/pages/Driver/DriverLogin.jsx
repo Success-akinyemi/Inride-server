@@ -27,7 +27,7 @@ function DriverLogin() {
   
       const result = await response.json();
       if (response.ok) {
-        alert(`Success: ${result?.data}`);
+        alert(`Success: ${result?.data} ${result?.message}`);
         navigate('/driver/verifyOtp');
       } else {
         alert(`Error: ${result?.data || 'Failed to sign in'}`);
