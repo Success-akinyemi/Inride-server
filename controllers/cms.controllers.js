@@ -45,7 +45,7 @@ export async function newCms(req, res) {
             return sendResponse(res, 400, false, 'users must be an array');
         }
     }
-    const { day, time, date } = scheduledDate || {}
+    const { day, time, date } = req.body || {}
     let scheduledTimeData 
     if(status.toLowerCase() === 'scheduled' || scheduled && scheduled === true){
         if (!day) {
@@ -222,7 +222,7 @@ export async function updateCms(req, res) {
             return sendResponse(res, 400, false, 'users must be an array');
         }
     }
-    const { day, time, date } = scheduledDate || {}
+    const { day, time, date } = req.body || {}
     let scheduledTimeData 
     if(scheduled && scheduled === true){
         if (!day) {

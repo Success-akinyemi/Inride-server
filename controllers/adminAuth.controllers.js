@@ -352,7 +352,7 @@ export async function login(req, res) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
         
-        const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = getUser._doc;
+        const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, superadmin, _id, ...userData } = getUser._doc;
         return sendResponse(res, 200, true, userData, { accessId: getUser?.adminId });
     } catch (error) {
         console.log('UNABLE TO LOGIN USER', error)
