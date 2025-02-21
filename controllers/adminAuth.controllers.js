@@ -353,7 +353,7 @@ export async function login(req, res) {
         });
         
         const { password, noOfLoginAttempts, temporaryAccountBlockTime, verified, accountSuspended, blocked, resetPasswordToken, resetPasswordExpire, superadmin, _id, ...userData } = getUser._doc;
-        return sendResponse(res, 200, true, userData, { accessId: getUser?.adminId });
+        return sendResponse(res, 200, true, userData, accessToken );
     } catch (error) {
         console.log('UNABLE TO LOGIN USER', error)
         sendResponse(res, 500, false, 'Unable to login user')
