@@ -62,64 +62,66 @@ export default function LiveCall() {
 
 
 
+/**
+ * 
+*/
+useEffect(() => {
+    const handleIncomingCall = (data) => {
+        setCaller(data?.message);
+        setProfileImg(data?.profileImg);
+        setCallStatus("Incoming call");
+    };
 
-    useEffect(() => {
-        const handleIncomingCall = (data) => {
-            setCaller(data?.message);
-            setProfileImg(data?.profileImg);
-            setCallStatus("Incoming call");
-        };
+    const handleCallAccepted = async () => {
+        setCallStatus("Connected");
+        await startVoiceStream();
+    };
 
-        const handleCallAccepted = async () => {
-            setCallStatus("Connected");
-            await startVoiceStream();
-        };
+    const handleCallRejected = () => {
+        setCallStatus("Rejected");
+        setTimeout(() => setCallStatus(null), 3000);
+    };
 
-        const handleCallRejected = () => {
-            setCallStatus("Rejected");
-            setTimeout(() => setCallStatus(null), 3000);
-        };
+    const handleCallEnded = () => {
+        endCall();
+    };
 
-        const handleCallEnded = () => {
-            endCall();
-        };
+    socket.on("incomingCall", handleIncomingCall);
+    socket.on("callAccepted", handleCallAccepted);
+    socket.on("callRejected", handleCallRejected);
+    socket.on("callEnded", handleCallEnded);
 
-        socket.on("incomingCall", handleIncomingCall);
-        socket.on("callAccepted", handleCallAccepted);
-        socket.on("callRejected", handleCallRejected);
-        socket.on("callEnded", handleCallEnded);
+    // ✅ Listen for WebRTC signaling messages
+    socket.on("webrtcOffer", async ({ offer }) => {
+        try {
+            await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.current.createAnswer();
+            await peerConnection.current.setLocalDescription(answer);
+            socket.emit("webrtcAnswer", { rideId, answer });
+        } catch (error) {
+            console.error("Error handling WebRTC offer:", error);
+        }
+    });
 
-        // ✅ Listen for WebRTC signaling messages
-        socket.on("webrtcOffer", async ({ offer }) => {
-            try {
-                await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
-                const answer = await peerConnection.current.createAnswer();
-                await peerConnection.current.setLocalDescription(answer);
-                socket.emit("webrtcAnswer", { rideId, answer });
-            } catch (error) {
-                console.error("Error handling WebRTC offer:", error);
-            }
-        });
+    socket.on("webrtcAnswer", async ({ answer }) => {
+        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+    });
 
-        socket.on("webrtcAnswer", async ({ answer }) => {
-            await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
-        });
+    socket.on("iceCandidate", ({ candidate }) => {
+        console.log('CANDIDATE', candidate)
+        peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+    });
 
-        socket.on("iceCandidate", ({ candidate }) => {
-            console.log('CANDIDATE', candidate)
-            peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
-        });
-
-        return () => {
-            socket.off("incomingCall", handleIncomingCall);
-            socket.off("callAccepted", handleCallAccepted);
-            socket.off("callRejected", handleCallRejected);
-            socket.off("callEnded", handleCallEnded);
-            socket.off("webrtcOffer");
-            socket.off("webrtcAnswer");
-            socket.off("iceCandidate");
-        };
-    }, []);
+    return () => {
+        socket.off("incomingCall", handleIncomingCall);
+        socket.off("callAccepted", handleCallAccepted);
+        socket.off("callRejected", handleCallRejected);
+        socket.off("callEnded", handleCallEnded);
+        socket.off("webrtcOffer");
+        socket.off("webrtcAnswer");
+        socket.off("iceCandidate");
+    };
+}, []);
 
     const startCall = () => {
         const data = { rideId };
