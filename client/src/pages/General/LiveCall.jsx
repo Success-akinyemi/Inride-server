@@ -64,7 +64,6 @@ export default function LiveCall() {
 
 /**
  * 
-*/
 useEffect(() => {
     const handleIncomingCall = (data) => {
         setCaller(data?.message);
@@ -122,6 +121,7 @@ useEffect(() => {
         socket.off("iceCandidate");
     };
 }, []);
+*/
 
     const startCall = () => {
         const data = { rideId };
