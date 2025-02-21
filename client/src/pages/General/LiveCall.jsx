@@ -16,6 +16,50 @@ export default function LiveCall() {
     const peerConnection = useRef(null);
     const timerRef = useRef(null);
 
+    socket.on("incomingCall", (data) => {
+        setCaller(data?.message);
+        setProfileImg(data?.profileImg);
+        setCallStatus("Incoming call");
+    });
+
+    socket.on("callAccepted", async () => {
+        setCallStatus("Connected");
+        await startVoiceStream();
+    });
+
+    socket.on("callRejected", () => {
+        setCallStatus("Rejected");
+        setTimeout(() => setCallStatus(null), 3000);
+    });
+
+    socket.on("callEnded", () => {
+        endCall();
+    });
+
+    // ✅ Listen for WebRTC signaling messages
+    socket.on("webrtcOffer", async ({ offer }) => {
+        try {
+            await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.current.createAnswer();
+            await peerConnection.current.setLocalDescription(answer);
+            socket.emit("webrtcAnswer", { rideId, answer });
+        } catch (error) {
+            console.error("Error handling WebRTC offer:", error);
+        }
+    });
+    
+    socket.on("webrtcAnswer", async ({ answer }) => {
+        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+    
+    socket.on("iceCandidate", ({ candidate }) => {
+        console.log('CANDIDATE', candidate)
+        peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+
+
+
+
 
 
 
