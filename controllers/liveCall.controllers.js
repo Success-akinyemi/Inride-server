@@ -156,45 +156,54 @@ export async function endCall({ data, socket, res }) {
 }
 
 export async function webrtcOffer({ data, socket, res }) {
-    const { rideId, offer } = data
+    const { rideId, offer } = data;
     try {
         const { caller, receiver } = activeCalls[rideId] || {};
         const targetSocketId = socket.id === caller ? receiver : caller;
 
         if (targetSocketId) {
+            console.log("Relaying WebRTC offer to:", targetSocketId);
+            console.log("Offer:", offer); // Log the offer
             generalNamespace.to(targetSocketId).emit("webrtcOffer", { offer });
+        } else {
+            console.log("Target socket not found for offer.");
         }
     } catch (error) {
-        console.log('UNABLE TO MAKE WEB RTC OFFER', error)
+        console.log('UNABLE TO RELAY WEBRTC OFFER', error);
     }
 }
 
 export async function webrtcAnswer({ data, socket, res }) {
-    const { rideId, answer } = data
+    const { rideId, answer } = data;
     try {
         const { caller, receiver } = activeCalls[rideId] || {};
         const targetSocketId = socket.id === caller ? receiver : caller;
 
         if (targetSocketId) {
+            console.log("Relaying WebRTC answer to:", targetSocketId);
             generalNamespace.to(targetSocketId).emit("webrtcAnswer", { answer });
+        } else {
+            console.log("Target socket not found for answer.");
         }
     } catch (error) {
-        console.log('UNABLE TO MAKE WEB RTC ANSWER')
+        console.log('UNABLE TO RELAY WEBRTC ANSWER', error);
     }
 }
 
 export async function iceCandidate({ data, socket, res }) {
-    const { rideId, candidate } = data
-    console.log('CANDIDATE', candidate)
+    const { rideId, candidate } = data;
     try {
         const { caller, receiver } = activeCalls[rideId] || {};
         const targetSocketId = socket.id === caller ? receiver : caller;
 
         if (targetSocketId) {
+            console.log("Relaying ICE candidate to:", targetSocketId);
             generalNamespace.to(targetSocketId).emit("iceCandidate", { candidate });
+        } else {
+            console.log("Target socket not found for ICE candidate.");
         }
     } catch (error) {
-        console.log('UANBLE TO ESTABLISH CANDITATE', error)
+        console.log('UNABLE TO RELAY ICE CANDIDATE', error);
     }
 }
 
