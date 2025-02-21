@@ -136,7 +136,8 @@ export async function getDrivers(req, res) {
         name: `${driver.firstName} ${driver.lastName}`,
         email: driver.email,
         createdAt: driver.createdAt,
-        status: `${driver.verified && driver.active ? 'Active' : driver.verified && !driver.active ? 'Pending' : !driver.verified ? 'In active' : driver.isBlocked ? 'Blocked' : ''}`
+        status: `${driver.verified && driver.active ? 'Active' : driver.verified && !driver.active ? 'Pending' : !driver.verified ? 'In active' : driver.isBlocked ? 'Blocked' : ''}`,
+        isBlocked: driver.isBlocked
       }));
   
       return sendResponse(res, 200, true, 'Drivers fetched successfully', {

@@ -760,7 +760,7 @@ paths:
         500: 
           description: server error
 
-  /api/driver/profile/blockPassenger:
+  /api/driver/profile/blockDriver:
     post:
       tags:
         - Driver
@@ -785,7 +785,7 @@ paths:
         500:
           description: Server error
 
-  /api/driver/profile/unBlockPassenger:
+  /api/driver/profile/unBlockDriver:
     post:
       tags:
         - Driver

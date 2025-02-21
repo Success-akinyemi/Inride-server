@@ -279,6 +279,7 @@ export async function getPassengers(req, res) {
         email: passenger.email,
         createdAt: passenger.createdAt,
         status,
+        isBlocked: passenger.isBlocked
       };
     });
 
