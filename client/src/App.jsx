@@ -15,6 +15,7 @@ import LiveVideoCall from './pages/General/LiveVideoCall'
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import StripePayment from './pages/Passenger/StripePayment'
+import LiveCall5latest from './pages/General/LiveCall5latest'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISH_KEY);
 
@@ -41,6 +42,7 @@ function App() {
 
           <Route path='/' element={<Test />} />
           <Route path='/general/liveCall' element={<LiveCall />} />
+          <Route path='/general/liveCall5' element={<LiveCall5latest />} />
           <Route path='/general/liveVideo' element={<LiveVideoCall />} />
 
           

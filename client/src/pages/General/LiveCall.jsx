@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { io } from "socket.io-client";
+import Peer from "peerjs";
 
 const socket = io(`${import.meta.env.VITE_SOCKET_BASE_URL}/general`, {
     transports: ["websocket"],
@@ -13,50 +14,63 @@ export default function LiveCall() {
     const [profileImg, setProfileImg] = useState(null);
     const [stream, setStream] = useState(null);
     const audioRef = useRef(null);
-    const peerConnection = useRef(null);
+    const peerInstance = useRef(null); // PeerJS instance
+    const currentCall = useRef(null); // Active call instance
     const timerRef = useRef(null);
+    const [receiverPeerId, setReceiverPeerId] = useState(null); // Receiver's peerId
 
-    // Ensure peer connection is set up
-    const ensurePeerConnection = () => {
-        if (!peerConnection.current) {
-            peerConnection.current = new RTCPeerConnection();
+    // Initialize PeerJS
+    useEffect(() => {
+        const peer = new Peer(); // Generates a unique peerId
+        peerInstance.current = peer;
 
-            peerConnection.current.onicecandidate = (event) => {
-                if (event.candidate) {
-                    console.log("Sending ICE Candidate:", event.candidate);
-                    socket.emit("iceCandidate", { rideId, candidate: event.candidate });
-                }
-            };
+        peer.on("open", (peerId) => {
+            console.log("PeerJS connected with ID:", peerId);
+            socket.emit("registerPeer", { rideId, peerId }); // Register peerId with the server
+        });
 
-            peerConnection.current.ontrack = (event) => {
-                console.log("Received remote track:", event.streams);
-                if (audioRef.current) {
-                    audioRef.current.srcObject = event.streams[0]; // Play remote audio
-                }
-            };
+        peer.on("call", (call) => {
+            // Handle incoming call
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then((stream) => {
+                    setStream(stream);
+                    call.answer(stream); // Answer the call with the local stream
+                    currentCall.current = call;
 
-            peerConnection.current.queuedIceCandidates = [];
+                    call.on("stream", (remoteStream) => {
+                        if (audioRef.current) {
+                            audioRef.current.srcObject = remoteStream; // Play remote audio
+                        }
+                        setCallStatus("Connected");
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error accessing microphone:", error);
+                });
+        });
 
-            peerConnection.current.onconnectionstatechange = () => {
-                console.log("WebRTC Connection State:", peerConnection.current.connectionState);
-                if (peerConnection.current.connectionState === "connected") {
-                    setCallStatus("Connected");
-                }
-            };
-        }
-    };
+        peer.on("error", (error) => {
+            console.error("PeerJS error:", error);
+        });
 
-    // Handle incoming call
+        return () => {
+            if (peerInstance.current) {
+                peerInstance.current.destroy();
+            }
+        };
+    }, []);
+
+    // Handle incoming call notification
     socket.on("incomingCall", (data) => {
         setCaller(data?.message);
         setProfileImg(data?.profileImg);
         setCallStatus("Incoming call");
+        setReceiverPeerId(data?.callerPeerId); // Store the caller's peerId
     });
 
     // Handle call accepted
-    socket.on("callAccepted", async () => {
+    socket.on("callAccepted", () => {
         setCallStatus("Connected");
-        await startVoiceStream();
     });
 
     // Handle call rejected
@@ -69,90 +83,6 @@ export default function LiveCall() {
     socket.on("callEnded", () => {
         endCall();
     });
-
-    // Handle WebRTC offer
-    socket.on("webrtcOffer", async ({ offer }) => {
-        console.log("Received WebRTC offer:", offer);
-        ensurePeerConnection();
-        if (!peerConnection.current) {
-            console.error("PeerConnection not initialized.");
-            return;
-        }
-    
-        try {
-            // Set the remote description
-            await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
-            console.log("Remote description set successfully.");
-    
-            // Create and send an answer
-            const answer = await peerConnection.current.createAnswer();
-            await peerConnection.current.setLocalDescription(answer);
-            console.log("Created WebRTC answer:", answer);
-    
-            // Send the answer back to the caller
-            socket.emit("webrtcAnswer", { rideId, answer });
-            console.log("WebRTC answer sent to caller.");
-    
-            // Process any queued ICE candidates
-            processQueuedIceCandidates();
-        } catch (error) {
-            console.error("Error handling WebRTC offer:", error);
-        }
-    });
-
-    // Handle WebRTC answer
-    socket.on("webrtcAnswer", async ({ answer }) => {
-        console.log("Received WebRTC answer:", answer);
-        ensurePeerConnection();
-        if (!peerConnection.current) {
-            console.error("PeerConnection not initialized.");
-            return;
-        }
-
-
-        try {
-            await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
-            console.log("Remote description set successfully.");
-        } catch (error) {
-            console.error("Error setting remote description:", error);
-            console.error("Offer:", offer); // Log the offer for debugging
-        }
-    });
-
-    // Handle ICE candidates
-    socket.on("iceCandidate", async ({ candidate }) => {
-        console.log("Received ICE candidate:", candidate);
-        ensurePeerConnection();
-    
-        if (!peerConnection.current.remoteDescription || !peerConnection.current.remoteDescription.type) {
-            console.warn("Remote description is not set yet. Storing candidate for later.");
-            peerConnection.current.queuedIceCandidates.push(candidate);
-            return;
-        }
-    
-        try {
-            await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
-            console.log("ICE candidate added successfully.");
-        } catch (error) {
-            console.error("Error adding ICE candidate:", error);
-        }
-    });
-
-    // Process queued ICE candidates
-    const processQueuedIceCandidates = () => {
-        if (peerConnection.current?.queuedIceCandidates?.length) {
-            console.log("Processing stored ICE candidates...");
-            peerConnection.current.queuedIceCandidates.forEach(async (candidate) => {
-                try {
-                    await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
-                    console.log("Stored ICE candidate added.");
-                } catch (error) {
-                    console.error("Error adding stored ICE candidate:", error);
-                }
-            });
-            peerConnection.current.queuedIceCandidates = [];
-        }
-    };
 
     // Start a call
     const startCall = () => {
@@ -172,7 +102,25 @@ export default function LiveCall() {
     const acceptCall = async () => {
         setCallStatus("Connected");
         socket.emit("acceptCall", { rideId });
-        await startVoiceStream();
+
+        // Initiate the call using the receiver's peerId
+        if (receiverPeerId && peerInstance.current) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then((stream) => {
+                    setStream(stream);
+                    const call = peerInstance.current.call(receiverPeerId, stream); // Call the receiver
+                    currentCall.current = call;
+
+                    call.on("stream", (remoteStream) => {
+                        if (audioRef.current) {
+                            audioRef.current.srcObject = remoteStream; // Play remote audio
+                        }
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error accessing microphone:", error);
+                });
+        }
     };
 
     // Reject a call
@@ -182,44 +130,20 @@ export default function LiveCall() {
         setTimeout(() => setCallStatus(null), 3000);
     };
 
-    // Start voice stream
-    const startVoiceStream = async () => {
-        try {
-            const userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            setStream(userStream);
-            console.log("User media stream started.");
-    
-            ensurePeerConnection();
-    
-            userStream.getTracks().forEach((track) => {
-                peerConnection.current.addTrack(track, userStream);
-                console.log("Added track:", track);
-            });
-    
-            const offer = await peerConnection.current.createOffer();
-            console.log("Created WebRTC offer:", offer); // Log the offer
-            await peerConnection.current.setLocalDescription(offer);
-    
-            socket.emit("startWebRTC", { rideId, offer });
-        } catch (error) {
-            console.error("Error accessing microphone:", error);
-        }
-    };
-
     // End the call
     const endCall = () => {
         socket.emit("endCall", { rideId });
-    
+
+        if (currentCall.current) {
+            currentCall.current.close();
+            currentCall.current = null;
+        }
+
         if (stream) {
             stream.getTracks().forEach((track) => track.stop());
             setStream(null);
         }
-    
-        if (peerConnection.current) {
-            peerConnection.current.close();
-            peerConnection.current = null;
-        }
-    
+
         setCallStatus(null);
         setCaller(null);
     };
@@ -227,8 +151,8 @@ export default function LiveCall() {
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (peerConnection.current) {
-                peerConnection.current.close();
+            if (currentCall.current) {
+                currentCall.current.close();
             }
             if (stream) {
                 stream.getTracks().forEach((track) => track.stop());

@@ -221,6 +221,7 @@ generalNamespace.on('connection', (socket) => {
 
   //sockets for live call
   socket.on('callUser', (data) => generalLiveCallController.callUser({ data, socket }));
+  socket.on('registerPeer', (data) => generalLiveCallController.registerPeer({ data, socket }));
   socket.on('acceptCall', (data) => generalLiveCallController.acceptCall({ data, socket }));
   socket.on('rejectCall', (data) => generalLiveCallController.rejectCall({ data, socket }));
   socket.on('endCall', (data) => generalLiveCallController.endCall({ data, socket }));
