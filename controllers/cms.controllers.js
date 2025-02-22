@@ -297,7 +297,7 @@ export async function updateCms(req, res) {
             {
                 title,
                 message,
-                image: image ? image : editCms?.image,
+                image: image ? image : updateCms?.image,
                 url,
                 caption,
                 redirection,

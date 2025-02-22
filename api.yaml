@@ -1326,8 +1326,8 @@ paths:
   /passenger/profile/getAPaymentData/{paymentId}:
     get:
       tags:
-        - CMS
-      summary: Get a specific cms
+        - Passenger
+      summary: Get a specific payment data
       description: The endpoint provides details on a specific payment data
       parameters:
         - name: paymentId
