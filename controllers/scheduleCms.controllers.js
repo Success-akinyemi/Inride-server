@@ -1,11 +1,11 @@
 import { sendCMSEmail } from "../middlewares/mailTemplate.js.js";
-import { sendNotificationById } from "../middlewares/utils.js";
 import AdminUserModel from "../model/Admin.js";
 import CmsModel from "../model/Cms.js";
 import DriverModel from "../model/Driver.js";
 import NotificationModel from "../model/Notifications.js";
 import PassengerModel from "../model/Passenger.js";
 import cron from 'node-cron';
+import { sendNotificationById } from "./pushNotification.controllers.js";
 
 // Function to check for scheduled emails and send them
 async function checkAndSendScheduledEmails() {
