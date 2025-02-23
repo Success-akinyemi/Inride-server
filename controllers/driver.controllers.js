@@ -198,7 +198,7 @@ export async function acceptRideRequest({ data, socket, res }) {
     const getAppAmount = await AppSettingsModel.findOne()
     const totalRideAmount = getAppAmount.pricePerKm * getRide?.kmDistance
 
-    if(price > totalRideAmount + 2 || price < totalRideAmount - 1){
+    if(price > totalRideAmount + 5 || price < totalRideAmount - 5){
       const message = 'Price is not within the range'
       if(res) return sendResponse(res, 400, false, message)
       if(socket) return socket.emit('acceptRideRquest', { success: false, message })
@@ -297,7 +297,7 @@ export async function acceptEditRideRquest({ data, socket, res }) {
     const getAppAmount = await AppSettingsModel.findOne()
     const totalRideAmount = getAppAmount.pricePerKm * getEditRideRequest?.totalDistance
 
-    if(price > totalRideAmount + 2 || price < totalRideAmount - 1){
+    if(price > totalRideAmount + 5 || price < totalRideAmount - 5){
       const message = 'Price is not within the range'
       if(res) return sendResponse(res, 400, false, message)
       if(socket) return socket.emit('acceptEditRideRquest', { success: false, message })

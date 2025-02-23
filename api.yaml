@@ -43,6 +43,9 @@ tags:
     description: Endpoints for Booking 
   - name: Live call
     description: Live call between passenger and driver.
+  - name: Subscription
+    description: user subscription to push notification
+
 paths:
 #GENARAL
   /:
@@ -1980,6 +1983,20 @@ paths:
         500:
           description: Server error
 
+  /rides/getAvailableRideRequest:
+    get:
+      tags:
+        - Driver 
+      summary: Get Driver available Rides
+      description: This endpoint get a driver avaible rides at the moment that are been requested by passengers.
+      responses:
+        201:
+          description: Succesful - ride details infomation
+        400:
+          description: User error
+        500:
+          description: Server error
+
 #BOOKING
   /passenger/requestRide:
     post:
@@ -2723,3 +2740,36 @@ paths:
         500:
           description: Server error
       
+  /pushNotification/saveSubscription:
+    post:
+      tags:
+        - Subscription
+      summary: allows a user to subscribe to push notification. accountType is either 'passenger' or 'driver'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+              - accountId
+              - accountType
+              - data
+            properties:
+              email:
+                type: string
+              accountId:
+                type: string
+              account:
+                type: string
+              data:
+                type: object
+      responses:
+        201:
+          description: Subscription saved - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+              

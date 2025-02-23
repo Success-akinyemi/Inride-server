@@ -1,5 +1,6 @@
 import { sendResponse } from "../middlewares/utils.js";
 import AppSettingsModel from "../model/AppSettings.js";
+import AvailableActiveRideModel from "../model/AvailableActiveRide.js";
 import DriverModel from "../model/Driver.js";
 import ForgotItemModel from "../model/ForgotItem.js";
 import PassengerModel from "../model/Passenger.js";
@@ -171,6 +172,61 @@ export async function getUpcomingDriverRides(req, res) {
   } catch (error) {
     console.error("UNABLE TO GET UPCOMING DRIVERS RIDES", error);
     return sendResponse(res, 500, false, "Unable to get upcoming rides");
+  }
+}
+
+//GET AVAILABLE RIDES REQUEST AVAILABLE TO DRIVERS
+export async function getAvailableRideRequest(req, res) {
+  const { limit = 10, page = 1, rideType } = req.query;
+  const { driverId } = req.user;
+
+  try {
+    const getAvailableRide = await AvailableActiveRideModel.findOne({ driverId });
+    if (!getAvailableRide) {
+      return sendResponse(res, 404, false, 'No available rides');
+    }
+
+    // Using the rideId inside the rideIds to get each ride and send to the driver
+    const rides = await RideModel.find({ rideId: { $in: getAvailableRide.rideIds } });
+    let driverRideRequest;
+    const getAppAmount = await AppSettingsModel.findOne();
+
+    const transformedRides = [];
+
+    for (const ride of rides) {
+      let price;
+      if (rideType === 'delivery') {
+        price = (getAppAmount?.deliveryPricePerKm * ride?.kmDistance).toFixed(2);
+      } else {
+        price = (getAppAmount?.pricePerKm * ride?.kmDistance).toFixed(2);
+      }
+
+      const passenger = await PassengerModel.findOne({ passengerId: ride.passengerId });
+
+      driverRideRequest = {
+        from: ride?.from,
+        kmDistance: ride?.kmDistance,
+        passengerName: `${passenger?.firstName} ${passenger?.lastName}`,
+        to: ride?.to.map(destination => ({
+          place: destination.place
+        })),
+        pickupPoint: ride?.pickupPoint,
+        priceRange: `${price - 5} - ${price + 5}`,
+        rideId: ride?.rideId,
+        rideType: ride?.rideType,
+        scheduleTime: ride?.scheduleTime || '',
+        scheduleDate: ride?.scheduleDate || ''
+      };
+
+      transformedRides.push(driverRideRequest);
+    }
+
+    // Send Data
+    sendResponse(res, 200, true, transformedRides, 'Available rides fetched successfully');
+
+  } catch (error) {
+    console.error('UNABLE TO GET AVAILABLE RIDES', error);
+    return sendResponse(res, 500, false, 'Unable to get available rides');
   }
 }
 

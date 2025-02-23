@@ -18,6 +18,7 @@ import Stripe from 'stripe';
 import RideTransactionModel from "../model/RideTransactions.js";
 import RideChatModel from "../model/RideChats.js";
 import NotificationModel from "../model/Notifications.js";
+import AvailableActiveRideModel from "../model/AvailableActiveRide.js";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
@@ -290,7 +291,7 @@ export async function requestRide({ socket, data, res }) {
           place: destination.place
         })),
         pickupPoint: newRideRequest?.pickupPoint,
-        priceRange: `${price - 1} - ${price + 2}`,
+        priceRange: `${price - 5} - ${price + 5}`,
         rideId: newRideRequest?.rideId,
         rideType: newRideRequest?.rideType,
         scheduleTime: newRideRequest?.scheduleTime || '',
@@ -300,26 +301,38 @@ export async function requestRide({ socket, data, res }) {
       newRideRequest.status = 'Pending'
       await newRideRequest.save()
       //get driver within range and broadcast to them the ride request
-      driverIds.forEach(driver => {
+      for (const driver of driverIds) {
         console.log('DRIVER ID:', driver);
         const driverSocketId = driverConnections.get(driver); // Fetch socket ID
         console.log('object driver connections:', driverConnections);
         console.log('object driver id:', driverSocketId);
-
+      
         if (driverSocketId) {
-
           // Emit to driver if socket ID is found
-          driverNamespace.to(driverSocketId).emit('newRideRequest', { 
+          driverNamespace.to(driverSocketId).emit('newRideRequest', {
             success: true,
-            message: `You have a new ${rideType === 'personal' ? 'Personnal' : rideType === 'delivery' ? 'Delivery' : 'Schedule'} ride request`,
-            ride: driverRideRequest, 
-           // driverId: driverSocketId 
+            message: `You have a new ${rideType === 'personal' ? 'Personal' : rideType === 'delivery' ? 'Delivery' : 'Schedule'} ride request`,
+            ride: driverRideRequest,
           });
         } else {
           // Log if connection is not found, and skip to the next
           console.log(`No active connection for driver ID: ${driver}`);
         }
-      });
+      
+        // notify driver via push notification
+      
+        // add ride to driver available ride
+        const availableRide = await AvailableActiveRideModel.findOne({ driverId: driver });
+        if(availableRide){
+          availableRide.rideIds.push(rideId)
+          await availableRide.save()
+        } else {
+          await AvailableActiveRideModel.create({
+            driverId: driver,
+            rideIds: [rideId]
+          })
+        }
+      }      
 
     
     const message = 'Ride request successful. driver response would take up to a minute';
@@ -737,7 +750,7 @@ export async function payForRide({ socket, data, res }) {
     }
 
   } catch (error) {
-    console.log('UNABLE TO PROCESS PAYMENT FOR RIDE')
+    console.log('UNABLE TO PROCESS PAYMENT FOR RIDE', error)
     const message = 'Unable to process payment for ride'
     if(res) sendResponse(res, 400, false, message)
     if(socket) socket.emit('payForRide', { success: false, message})

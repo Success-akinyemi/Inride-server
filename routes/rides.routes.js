@@ -16,6 +16,8 @@ router.get('/getDriverRides', AuthenticateDriver, VerifyAccount, controllers.get
 router.get('/getDriverRide/:rideId', AuthenticateDriver, VerifyAccount, controllers.getDriverRide)
 router.get('/getUpcomingDriverRides', AuthenticateDriver, VerifyAccount, controllers.getUpcomingDriverRides)
 router.get('/getLastSevenDays', AuthenticateDriver, VerifyAccount, controllers.getLastSevenDays)
+router.get('/getAvailableRideRequest', AuthenticateDriver, VerifyAccount, controllers.getAvailableRideRequest)
+
 router.get('/getPassengerRides', AuthenticatePassenger, VerifyAccount, controllers.getPassengerRides)
 router.get('/getUpcomingPassengerRides', AuthenticatePassenger, VerifyAccount, controllers.getUpcomingPassengerRides)
 router.get('/getPassengerRide/:rideId', AuthenticatePassenger, VerifyAccount, controllers.getPassengerRide)
