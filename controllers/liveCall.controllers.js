@@ -74,7 +74,7 @@ export async function callUser({ data, socket, res }) {
                 members: [{ user_id: accountId }, { user_id: receiverId }],
             },
         });
-
+        console.log('accountId', accountId, 'receiverId', receiverId)
         // Generate tokens for caller and receiver
         const validity = 60 * 60; // 1 hour
         const callerToken = client.generateUserToken({ user_id: accountId, validity_in_seconds: validity });
