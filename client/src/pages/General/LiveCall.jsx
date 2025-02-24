@@ -119,7 +119,12 @@ export default function LiveCall() {
 
     return (
         <div className="voice-call">
-            {callStatus === "Ringing" && <p>Ringing...</p>}
+            {callStatus === "Ringing" && (
+                <>
+                    <p>Ringing...</p>
+                    <button onClick={endCall}>End Call</button>
+                </>
+            ) }
             {callStatus === "Incoming call" && (
                 <div>
                     <img src={profileImg} alt="Caller" className="profileImg" />
