@@ -84,6 +84,7 @@ export async function callUser({ data, socket, res }) {
         socket.emit("callerToken", { token: callerToken, callId });
         generalNamespace.to(receiverSocketId).emit("receiverToken", { token: receiverToken, callId });
         console.log('TOKEN EMITTED TO CLIENT')
+        console.log('RECEIVER SOCKET ID', receiverSocketId)
         // Notify receiver of incoming call
         generalNamespace.to(receiverSocketId).emit("incomingCall", {
             success: true,
