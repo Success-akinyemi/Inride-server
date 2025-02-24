@@ -1,14 +1,20 @@
 import { sendResponse } from "../middlewares/utils.js";
+import DriverModel from "../model/Driver.js";
+import PassengerModel from "../model/Passenger.js";
 import RideModel from "../model/Rides.js";
 import { generalConnections, generalNamespace } from "../server.js";
+import { StreamClient } from "@stream-io/node-sdk";
 
 const activeCalls = {}; // Track ongoing calls
-const peerIds = {};
+
+const apiKey = process.env.STREAM_KEY;
+const secret = process.env.STREAM_SECRET;
+const client = new StreamClient(apiKey, secret, { timeout: 9000 });
 
 export async function callUser({ data, socket, res }) {
     const { rideId } = data;
     const { userType, accountId, firstName, lastName, profileImg } = socket.user;
-
+    console.log('CALL USER')
     if (!rideId) {
         const message = "Ride Id is required";
         if (res) sendResponse(res, 400, false, message);
@@ -38,69 +44,65 @@ export async function callUser({ data, socket, res }) {
         const receiverId = userType === "passenger" ? getRide.driverId : getRide.passengerId;
         const receiverSocketId = generalConnections.get(receiverId);
 
-        // 🛑 Check if the caller is already in a call
-        const existingCallerCall = Object.values(activeCalls).find(
-            (call) => call.caller === socket.id || call.receiver === socket.id
-        );
-
-        if (existingCallerCall) {
-            const message = "You are already in another call";
-            if (res) sendResponse(res, 400, false, message);
-            if (socket) socket.emit("callUser", { success: false, message });
-            return;
-        }
-
-        // 🛑 Check if the receiver is already in a call
-        const existingReceiverCall = Object.values(activeCalls).find(
-            (call) => call.receiver === receiverSocketId || call.caller === receiverSocketId
-        );
-
-        if (existingReceiverCall) {
-            const message = "Receiver is in another call";
-            if (res) sendResponse(res, 400, false, message);
-            if (socket) socket.emit("callUser", { success: false, message });
-            return;
-        }
-
-        // 📞 Check if receiver is online
-        if (receiverSocketId) {
-            const message = `Incoming call from ${firstName} ${lastName}`;
-            generalNamespace.to(receiverSocketId).emit("incomingCall", { 
-                success: true, 
-                message, 
-                profileImg, 
-                rideId,
-                callerPeerId: peerIds[socket.id], // Send caller's peerId
-            });
-
-            activeCalls[rideId] = { caller: socket.id, receiver: receiverSocketId };
-            console.log('CALL SENT', activeCalls);
-
-            const callerMessage = `Calling ${userType === "passenger" ? "Driver" : "Passenger"}...`;
-            if (res) sendResponse(res, 200, true, callerMessage);
-            if (socket) socket.emit("callUser", { success: true, message: callerMessage });
-
-        } else {
+        if (!receiverSocketId) {
+            console.log('USER OFFLINE')
             return handleUserOffline(socket, res, userType);
         }
+
+        // 🛑 Check if the caller or receiver is already in a call
+        /**
+         if (activeCalls[rideId]) {
+             console.log('CALL IN PROGRESS')
+             const message = "Call already in progress";
+             if (res) sendResponse(res, 400, false, message);
+             if (socket) socket.emit("callUser", { success: false, message });
+             return;
+         }
+         * 
+         */
+
+        // Create Stream.io call
+        const callType = 'default';
+        //const callType = 'audio_room';
+        const callId = rideId;
+        const call = client.video.call(callType, callId);
+
+        await call.getOrCreate({
+            ring: true,
+            data: {
+                created_by_id: accountId,
+                members: [{ user_id: accountId }, { user_id: receiverId }],
+            },
+        });
+
+        // Generate tokens for caller and receiver
+        const validity = 60 * 60; // 1 hour
+        const callerToken = client.generateUserToken({ user_id: accountId, validity_in_seconds: validity });
+        const receiverToken = client.generateUserToken({ user_id: receiverId, validity_in_seconds: validity });
+
+        // Emit tokens to clients
+        socket.emit("callerToken", { token: callerToken, callId });
+        generalNamespace.to(receiverSocketId).emit("receiverToken", { token: receiverToken, callId });
+        console.log('TOKEN EMITTED')
+        // Notify receiver of incoming call
+        generalNamespace.to(receiverSocketId).emit("incomingCall", {
+            success: true,
+            message: `Incoming call from ${firstName} ${lastName}`,
+            profileImg,
+            rideId,
+            callId,
+        });
+
+        // Track active call
+        activeCalls[rideId] = { caller: socket.id, receiver: receiverSocketId, callId };
+
+        if (res) sendResponse(res, 200, true, "Call initiated");
+        if (socket) socket.emit("callUser", { success: true, message: "Call initiated" });
     } catch (error) {
-        console.log('object', error);
+        console.error("Error in callUser:", error);
         return handleError(socket, res, "Unable to make call", error);
     }
 }
-
-// Register peerId with the server
-export async function registerPeer({ socket, data }) {
-    const { rideId, peerId } = data
-    peerIds[socket.id] = peerId;
-    console.log(`Registered peerId ${peerId} for socket ${socket.id}`);
-    console.log('peerIds', peerIds)
-}
-/**
- * 
-socket.on("registerPeer", ({ rideId, peerId }) => {
-});
- */
 
 export async function acceptCall({ data, socket, res }) {
     const { rideId } = data;
@@ -110,39 +112,17 @@ export async function acceptCall({ data, socket, res }) {
     }
 
     try {
-        if (!activeCalls[rideId]) {
+        const call = activeCalls[rideId];
+        if (!call) {
             return handleInvalidCall(socket, res);
         }
 
-        const { caller } = activeCalls[rideId];
-        generalNamespace.to(caller).emit("callAccepted");
+        // Notify caller that the call has been accepted
+        generalNamespace.to(call.caller).emit("callAccepted");
 
         if (res) sendResponse(res, 200, true, "Call accepted");
     } catch (error) {
         return handleError(socket, res, "Unable to accept call", error);
-    }
-}
-
-export async function rejectCall({ data, socket, res }) {
-    const { rideId } = data;
-
-    if (!rideId) {
-        return handleMissingRideId(socket, res);
-    }
-
-    try {
-        if (!activeCalls[rideId]) {
-            return handleInvalidCall(socket, res);
-        }
-
-        const { caller } = activeCalls[rideId];
-        generalNamespace.to(caller).emit("callRejected");
-
-        delete activeCalls[rideId];
-
-        if (res) sendResponse(res, 200, true, "Call rejected");
-    } catch (error) {
-        return handleError(socket, res, "Unable to reject call", error);
     }
 }
 
@@ -154,71 +134,21 @@ export async function endCall({ data, socket, res }) {
     }
 
     try {
-        if (!activeCalls[rideId]) {
+        const call = activeCalls[rideId];
+        if (!call) {
             return handleInvalidCall(socket, res);
         }
 
-        const { caller, receiver } = activeCalls[rideId];
-        generalNamespace.to(caller).emit("callEnded");
-        generalNamespace.to(receiver).emit("callEnded");
+        // Notify both parties that the call has ended
+        generalNamespace.to(call.caller).emit("callEnded");
+        generalNamespace.to(call.receiver).emit("callEnded");
 
+        // Remove call from active calls
         delete activeCalls[rideId];
 
         if (res) sendResponse(res, 200, true, "Call ended");
     } catch (error) {
         return handleError(socket, res, "Unable to end call", error);
-    }
-}
-
-export async function webrtcOffer({ data, socket, res }) {
-    const { rideId, offer } = data;
-    try {
-        const { caller, receiver } = activeCalls[rideId] || {};
-        const targetSocketId = socket.id === caller ? receiver : caller;
-
-        if (targetSocketId) {
-            console.log("Relaying WebRTC offer to:", targetSocketId);
-            console.log("Offer:", offer); // Log the offer
-            generalNamespace.to(targetSocketId).emit("webrtcOffer", { offer });
-        } else {
-            console.log("Target socket not found for offer.");
-        }
-    } catch (error) {
-        console.log('UNABLE TO RELAY WEBRTC OFFER', error);
-    }
-}
-
-export async function webrtcAnswer({ data, socket, res }) {
-    const { rideId, answer } = data;
-    try {
-        const { caller, receiver } = activeCalls[rideId] || {};
-        const targetSocketId = socket.id === caller ? receiver : caller;
-
-        if (targetSocketId) {
-            console.log("Relaying WebRTC answer to:", targetSocketId);
-            generalNamespace.to(targetSocketId).emit("webrtcAnswer", { answer });
-        } else {
-            console.log("Target socket not found for answer.");
-        }
-    } catch (error) {
-        console.log('UNABLE TO RELAY WEBRTC ANSWER', error);
-    }
-}
-
-export async function iceCandidate({ data, socket, res }) {
-    const { rideId, candidate } = data;
-    try {
-        const { caller, receiver } = activeCalls[rideId] || {};
-        const targetSocketId = socket.id === caller ? receiver : caller;
-
-        if (targetSocketId) {
-            console.log("Relaying ICE candidate to:", targetSocketId);
-            generalNamespace.to(targetSocketId).emit("iceCandidate", { candidate });
-        } else {
-            console.log("Target socket not found for ICE candidate.");
-        }
-    } catch (error) {
-        console.log('UNABLE TO RELAY ICE CANDIDATE', error);
     }
 }
 
@@ -248,7 +178,7 @@ function handleInvalidCall(socket, res) {
 }
 
 function handleError(socket, res, message, error) {
-    console.log(message, error);
+    console.error(message, error);
     if (res) sendResponse(res, 500, false, message);
     if (socket) socket.emit("callUser", { success: false, message });
 }

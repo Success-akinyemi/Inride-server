@@ -6,8 +6,8 @@ import {
   import { MyVideoUI } from "./MyVideoUI";
   
   const apiKey = "vjw8jjkqz6z8";
-  const userId = "1368151";
-  const token = "ujb9j6yrdtrrsxyk9us2t7hh9c6v26n6axz67mcbktc9mxnn28f4pmf3khfxzmbw";
+  const userId = "RFYHRTRXVMDR";
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiUkZZSFJUUlhWTURSIiwidmFsaWRpdHlfaW5fc2Vjb25kcyI6MzYwMCwiaWF0IjoxNzQwMzkyNzExLCJleHAiOjE3NDAzOTYzMTF9.mKFlvQUBPKWL47lvswf2p-JvTgk1DDVCXtWfuRylo4s";
   const user = { id: userId };
   
   const client = new StreamVideoClient({ apiKey, user, token });
