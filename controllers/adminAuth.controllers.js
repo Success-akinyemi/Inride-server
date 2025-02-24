@@ -63,7 +63,7 @@ export async function createAccount(req, res) {
                     email,
                     name: `${firstName} ${lastName}`,
                     code: codeArray,
-                    buttonLink: `${process.env.CLIENT_URL}/verify-otp/${otpCode}`
+                    buttonLink: `${process.env.ADMIN_URL}/verify-otp/${otpCode}`
                 })
             } catch (error) {
                 console.log('UANBLE TO SEND OTP EMAIL TO USER', error)
@@ -289,6 +289,7 @@ export async function login(req, res) {
         // Extract device information
         const agent = useragent.parse(req.headers['user-agent']);
         const deviceInfo = agent.toString(); // e.g., "Chrome 110.0.0 on Windows 10"
+        const deviceType = deviceInfo.split('/')[1]
 
         // Get user IP
         const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress;
@@ -305,6 +306,7 @@ export async function login(req, res) {
         getUser.lastLoginInfo.unshift({
             device: deviceInfo,
             location: locationInfo,
+            deviceType: deviceType
         });
 
         // Limit history to the last 5 logins
@@ -382,7 +384,7 @@ export async function forgotPassword(req, res) {
             sendForgotPasswordEmail({
                 email: getUser.email,
                 name: `${getUser?.firstName} ${getUser?.lastName}`,
-                buttonLink: `${process.env.CLIENT_URL}/reset-password/${token}`
+                buttonLink: `${process.env.ADMIN_URL}/reset-password/${token}`
             })
             
             sendResponse(res, 200, true, 'Reset Email sent ')

@@ -6,7 +6,6 @@ import { uploadImages } from '../middlewares/multer.js';
 const router = express.Router()
 
 //POST
-router.post('/del', controllers.dele);
 router.post('/updateProfile', AuthenticateAdmin, VerifyAdminAccount, uploadImages, controllers.updateProfile);
 router.post('/updatePassword', AuthenticateAdmin, VerifyAdminAccount, VerifyAdminAccount, controllers.updatePassword);
 

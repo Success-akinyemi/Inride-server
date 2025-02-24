@@ -58,11 +58,11 @@ export async function sendWelcomeEmail({
             Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+            Thank you for choosing <b>RideFuze</b>. We are committed to providing you with a seamless and secure experience.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -142,11 +142,11 @@ export async function sendOtpEmail({
             This code will only be valid for the next 1 hour. If the code does not work, you can use this login verification link:
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+            Thank you for choosing <b>RideFuze</b>. We are committed to providing you with a seamless and secure experience.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -185,7 +185,7 @@ export async function sendNewLoginEmail({
   name = "",
   time = Date.now(),
   device = {},
-  title = "Account Login",
+  title = "Successful Login Attempt on Your RideFuze Account`",
 }) {
   if (!email) {
     throw new Error("Email is required to send a welcome email.");
@@ -200,23 +200,31 @@ export async function sendNewLoginEmail({
         <br />
         <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            A new Login attempt was successfully on your account.
+            We detected a successful login attempt on your account.
+        </p>
+        <br />
+        <strong>Details:</strong>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            <strong>- Time</strong>: ${time}
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            <strong>Time</strong>: ${time}
+            <strong>- Device</strong>: ${device?.device} <br> ${device?.location}
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            <strong>Device</strong>: ${device?.device} <br> ${device?.location}
+            <strong>- Operating System</strong>: ${device?.deviceType} <br> ${device?.location}
+        </p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            <strong>- Location</strong>: ${device?.location}
         </p>
 
         <br />
         <br />
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            If this was not you. Quickly contact the admin support team.
+            If this login was not initiated by you, please contact our Admin Support Team immediately for assistance.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Best regards,<br /> <b>Team RideFuze</b></p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -280,9 +288,9 @@ export async function sendAccountSuspendedEmail({
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
             If this was not you. Quickly contact the admin support team.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -321,7 +329,7 @@ export async function sendForgotPasswordEmail({
   name = "",
   buttonLink = "#",
   buttonText = "Reset Password",
-  title = "Forgot Password request",
+  title = "Password Reset Request",
 }) {
   if (!email) {
     throw new Error("Email is required to send a welcome email.");
@@ -335,11 +343,9 @@ export async function sendForgotPasswordEmail({
         <br />
         <br />
         <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+        <br />
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Reset password request
-        </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            You request for a reset password request click on the button below to finish you reset password
+            We received a request to reset your password. To proceed, please click the button below:  
         </p>
         <br />
         <div style="text-align: center; margin: 20px 0; background: #007BFF; padding: 10px 20px; border-radius: 8px;">
@@ -347,15 +353,15 @@ export async function sendForgotPasswordEmail({
         </div>
         <br />
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Need Help? click on the link below to continue if unable to use the button. <br />
+            If you are unable to use the button above, you can reset your password using the following link <br />
             <a href="${buttonLink}" style="display: inline-block; color: #007BFF; text-decoration: none;">${buttonLink}</a>
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+            Thank you for choosing <b>RideFuze</b>. We are committed to providing you with a seamless and secure experience.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">Best regards,<br /><b>Team RideFuze</b></p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -418,9 +424,9 @@ export async function sendUserAccountBlockedEmail({
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
             If you believe this is a mistake, Quickly contact the admin support team.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -482,9 +488,9 @@ export async function sendStaffSackEmail({
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
             If you believe this is a mistake, Quickly contact the admin support team.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -546,9 +552,9 @@ export async function sendStaffActivationEmail({
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
             If you believe this is a mistake, Quickly contact the admin support team.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -618,11 +624,11 @@ export async function sendCMSEmail({
             Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+            Thank you for choosing <b>RideFuze</b>. We are committed to providing you with a seamless and secure experience.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -702,11 +708,11 @@ export async function sendPayoutrequestSubmittedEmail({
             Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+            Thank you for choosing <b>RideFuze</b>. We are committed to providing you with a seamless and secure experience.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -786,11 +792,11 @@ export async function sendPayoutRequestApprovedEmail({
             Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+            Thank you for choosing <b>RideFuze</b>. We are committed to providing you with a seamless and secure experience.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -876,11 +882,11 @@ export async function sendPayoutRequestRejectedEmail({
             Need Help? Our support team is available 24/7 to assist you with any questions or issues. Just reply to this email or visit our Help Center within the app.
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Thank you for choosing RideFuze. We look forward to helping you get around with ease and convenience. Safe travels!
+            Thank you for choosing <b>RideFuze</b>. We are committed to providing you with a seamless and secure experience.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
@@ -964,9 +970,9 @@ export async function sendNewUserEmail({
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
             Welcome to the  RideFuze team. We look forward to growing and together!
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">Thanks,<br />Team RideFuze</p>
+        <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
-            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you'd rather not receive this kind of email, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+            <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
             <p style="text-align: center;">© ${currentYear} RideFuze</p>
             <br />
             <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">

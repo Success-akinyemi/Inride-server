@@ -6,7 +6,7 @@ import { AuthenticateAdmin } from '../middlewares/auth.js'
 const router = express.Router()
 
 //POST
-router.post('/createAccount', controllers.createAccount)
+//router.post('/createAccount', controllers.createAccount)
 router.post('/resendOtp', controllers.resendOtp)
 router.post('/verifyOtp', controllers.verifyOtp)
 router.post('/createPassword', controllers.createPassword)
