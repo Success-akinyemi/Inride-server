@@ -19,44 +19,6 @@ export default function LiveCall() {
     const [call, setCall] = useState(null);
     const audioRef = useRef(null);
 
-    //
-    socket.on("callerToken", ({ token, callId }) => {
-        console.log("Caller Token Received:", token, callId);
-        const client = new StreamVideoClient({
-            apiKey: import.meta.env.VITE_STREAM_KEY,
-            token,
-            user: { id: 'RFY0V4BM8SPA' }, // Replace with actual user ID
-        });
-        setClient(client);
-        setCallId(callId);
-    });
-
-    socket.on("receiverToken", ({ token, callId }) => {
-        console.log("Receiver Token Received:", token, callId);
-        const client = new StreamVideoClient({
-            apiKey: import.meta.env.VITE_STREAM_KEY,
-            token,
-            user: { id: 'RFYHRTRXVMDR' }, // Replace with actual user ID
-        });
-        setClient(client);
-        setCallId(callId);
-    });
-
-    socket.on("incomingCall", (data) => {
-        setCaller(data.message);
-        setProfileImg(data.profileImg);
-        setCallStatus("Incoming call");
-        setCallId(data.callId);
-    });
-
-    socket.on("callAccepted", () => {
-        setCallStatus("Connected");
-    });
-
-    socket.on("callEnded", () => {
-        endCall();
-    });
-    //
     // Initialize Stream.io client
     useEffect(() => {
         socket.on("callerToken", ({ token, callId }) => {
