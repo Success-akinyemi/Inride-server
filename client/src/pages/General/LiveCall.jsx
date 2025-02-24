@@ -26,7 +26,7 @@ export default function LiveCall() {
             const client = new StreamVideoClient({
                 apiKey: import.meta.env.VITE_STREAM_KEY,
                 token,
-                user: { id: 'RFYHRTRXVMDR' }, // Replace with actual user ID
+                user: { id: 'RFY0V4BM8SPA' }, // Replace with actual user ID
             });
             setClient(client);
             setCallId(callId);
@@ -37,7 +37,7 @@ export default function LiveCall() {
             const client = new StreamVideoClient({
                 apiKey: import.meta.env.VITE_STREAM_KEY,
                 token,
-                user: { id: 'RFY0V4BM8SPA' }, // Replace with actual user ID
+                user: { id: 'RFYHRTRXVMDR' }, // Replace with actual user ID
             });
             setClient(client);
             setCallId(callId);
