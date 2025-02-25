@@ -47,6 +47,24 @@ export async function saveSubscription(req, res) {
             accountType
         });
 
+        //TEST NOTIFICATION
+        const image = 'https://i.ibb.co/HtNmMC5/Group-625936.png'; 
+        const notificationPayload = {
+            notification: {
+                title: "NEW SUBSCRIPTION",
+                body: 'Welcome to RideFuze',
+                image, // Fixed image URL
+            },
+        };
+
+        try {
+            // Send the notification using FCM
+            await admin.messaging().sendToDevice(data, notificationPayload);
+            console.log(`Notification sent to ${email}`);
+        } catch (error) {
+            console.error(`Failed to send notification to ${email}`, error);
+        }
+
         sendResponse(res, 201, true, 'Subscription saved')
     } catch (error) {
         console.error('UNABLE TO SAVE SUBSCRIPTION', error);
@@ -127,7 +145,7 @@ export async function sendNotificationById(cmsId) {
 export async function sendNotificationToAccount(accountId, title, message, url) {
     try {
         // Fixed image URL
-        const image = 'https://example.com/path/to/fixed-image.png'; // Replace with your fixed image URL
+        const image = 'https://i.ibb.co/HtNmMC5/Group-625936.png'; 
 
         // Find the subscriber by accountId
         const subscriber = await PushNotificationModel.findOne({ accountId }).exec();
