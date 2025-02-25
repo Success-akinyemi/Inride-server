@@ -66,7 +66,7 @@ export default function LiveCall() {
             socket.off("callAccepted");
             socket.off("callEnded");
         };
-    }, []);
+    }, [socket]);
     
     // Join call when callId and client are set
     useEffect(() => {
