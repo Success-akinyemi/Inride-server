@@ -15,7 +15,6 @@ import RefreshTokenModel from "../model/RefreshToken.js";
 export async function registerWithPassengerAccount(req, res) {
     const { mobileNumber } = req.body
 
-    const accountId = req.cookies.inrideaccessid;
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Please provide your passenger mobile number to perform this action')
     }
@@ -34,6 +33,14 @@ export async function registerWithPassengerAccount(req, res) {
         console.log('PASSENGER TO DRIVER OTP CODE', otpCode)
 
         if(otpCode){
+            const driverId = await generateUniqueCode(8)
+            console.log('DRIVER ID', `RF${driverId}PA`)
+            const newDriverId = `RF${driverId}PA`
+            
+            const newUser = await DriverModel.create({
+                mobileNumber: mobileNumber,
+                driverId: newDriverId
+            })
             /**
              * REMOVE LATTER AFTER WORK DONE
             const sendOtpCode = await twilioClient.messages.create({
@@ -44,6 +51,14 @@ export async function registerWithPassengerAccount(req, res) {
             console.log('SMS BODY', sendOtpCode)
         
              */
+
+            res.cookie('inridedrivertoken', newDriverId, {
+                httpOnly: true,
+                sameSite: 'None',
+                secure: true,
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            });
+
             return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber}, Code: ${otpCode}`)
         }
 
@@ -94,9 +109,15 @@ export async function verifyPassengerToDriverAccountOtp(req, res) {
 
 //Complete registration for driver who created account with passenger account
 export async function completeDriverRegistration(req, res) {
-    const {ssn, opreatingCity, carDetails, mobileNumber, pricePerKm, coordinates, email } = req.body
-    //const accountId = req.cookies.inrideaccessid;
+    const {ssn, opreatingCity, carDetails, firstName, lastName, pricePerKm, coordinates, email } = req.body
+    const accountId = req.cookies.inridedrivertoken;
 
+    if(!ssn){
+        return sendResponse(res, 400, false, 'SSN is required')
+    }
+    if(!email){
+        return sendResponse(res, 400, false, 'email is required')
+    }
     if(!opreatingCity){
         return sendResponse(res, 400, false, 'Opreating city is required')
     }
@@ -105,7 +126,7 @@ export async function completeDriverRegistration(req, res) {
     
 
     const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg } = req.files;
-    console.log('COMPLETE RETURNING DRIVER REG', req.body, req?.files)
+    //console.log('COMPLETE RETURNING DRIVER REG', req.body, req?.files)
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
     if (!driverLincenseImgBack || !driverLincenseImgBack[0]) return sendResponse(res, 400, false, `Provide a valid photo of the back image of driver lincense`);
     if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
@@ -130,28 +151,14 @@ export async function completeDriverRegistration(req, res) {
     }
     try {
         let driver
-        if(mobileNumber){
-            driver = await DriverModel.findOne({ mobileNumber })
+        if(accountId){
+            driver = await DriverModel.findOne({ driverId: accountId })
         }
         if(!driver){
             return sendResponse(res, 404, false, 'Account not found')
         }
-        /**
-         * 
-        if(!driver?.otpCode){
-            console.log('OTP NOT FOUND IN DRIVER DATA')
-            return sendResponse(res, 403, false, 'Not Allowed')
-        }
-        const verifyOtp = await OtpModel.findOne({ otp: driver?.otpCode })
-        if(!verifyOtp){
-            console.log('OTP NOT FOUND IN OTP MODEL FOR DRIVER')
-            return sendResponse(res, 403, false, 'Not Allowed')
-        }
-        if(verifyOtp?.accountType !== 'driver'){
-            console.log('INVALID OTP ACCOUNT TYPE')
-            return sendResponse(res, 403, false, 'Not Allowed')
-        }
-         */
+
+        const getPassenger = await PassengerModel.findOne({ mobileNumber: driver?.mobileNumber })
 
         //VERIFY DRIVER LINCENSE
         const driverLincenseVerification = await verifyDriverLicense(req.files.driverLincenseImgFront[0], req.files.driverLincenseImgBack[0]);
@@ -184,14 +191,15 @@ export async function completeDriverRegistration(req, res) {
             console.log('carImgUrl', carImgUrl);
         }
         
-
+        driver.firstName = getPassenger?.firstName || firstName
+        driver.lastName = getPassenger?.lastName || lastName
         driver.opreatingCity = opreatingCity
         driver.ssn = req.body.ssn ? req.body.ssn : '',
         driver.driverLincenseImgFront = driverLincenseImgFrontUrl
         driver.driverLincenseImgBack = driverLicenseImgBackUrl
         driver.profileImg = profileImgUrl
-        driver.pricePerKm = pricePerKm,
-        driver.email = email
+        driver.pricePerKm = pricePerKm || '',
+        driver.email = getPassenger?.email || email
         driver.status = 'online'
         driver.otpCode = ''
 
@@ -237,6 +245,8 @@ export async function completeDriverRegistration(req, res) {
             email: driver.email,
             name: driver.firstName
         })
+
+        res.clearCookie(`inridedrivertoken`)
 
         // Set cookies
         res.cookie('inrideaccesstoken', accessToken, {
@@ -298,6 +308,14 @@ export async function registerNewDriver(req, res) {
             console.log('SMS BODY', sendOtpCode)
         
              */
+
+            res.cookie('inridedrivertoken', newUser.driverId, {
+                httpOnly: true,
+                sameSite: 'None',
+                secure: true,
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            });
+
             return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber}, Code: ${otpCode}`)
         }
 
@@ -394,6 +412,7 @@ export async function verifySSN(req, res) {
 //Complete new driver registration
 export async function completeNewDriverRegistration(req, res) {
     const { mobileNumber, email, firstName, lastName, opreatingCity, ssn, carDetails, pricePerKm, coordinates} = req.body
+    const accountId = req.cookies.inridedrivertoken;
     
     // Validate required fields
     if (!email) return sendResponse(res, 400, false, `Provide an email address`);
@@ -409,7 +428,7 @@ export async function completeNewDriverRegistration(req, res) {
     //if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
 
     const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg, } = req.files;
-    console.log('COMPLETE NEW DRIVER REG',req.body, req?.files)
+    //console.log('COMPLETE NEW DRIVER REG',req.body, req?.files)
 
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
     if (!driverLincenseImgBack || !driverLincenseImgBack[0]) return sendResponse(res, 400, false, `Provide a valid photo of the back image of driver lincense`);
@@ -434,29 +453,13 @@ export async function completeNewDriverRegistration(req, res) {
         return sendResponse(res, 400, false, 'Car registration number, year, model, color, no of seats are required')
     }
     try {
-        newDriver = await DriverModel.findOne({ mobileNumber })
+        newDriver = await DriverModel.findOne({ driverId: accountId })
         if(!newDriver){
             return sendResponse(res, 403, false, 'No account found')
         }
         if(!newDriver?.verified){
             return sendResponse(res, 403, false, 'Mobile number not verified')
         }
-        /**
-         * 
-        if(!newDriver?.otpCode){
-            console.log('OTP NOT FOUND IN DRIVER DATA')
-            return sendResponse(res, 403, false, 'Not Allowed')
-        }
-        const verifyOtp = await OtpModel.findOne({ otp: newDriver?.otpCode })
-        if(!verifyOtp){
-            console.log('OTP NOT FOUND IN OTP MODEL FOR DRIVER')
-            return sendResponse(res, 403, false, 'Not Allowed')
-        }
-        if(verifyOtp?.accountType !== 'driver'){
-            console.log('INVALID OTP ACCOUNT TYPE')
-            return sendResponse(res, 403, false, 'Not Allowed')
-        }
-         */
 
         //VERIFY DRIVER LINCENSE
         const driverLincenseVerification = await verifyDriverLicense(req.files.driverLincenseImgFront[0], req.files.driverLincenseImgBack[0]);
@@ -486,9 +489,6 @@ export async function completeNewDriverRegistration(req, res) {
             console.log('carImgUrl', carImgUrl);
         }
                 
-        const driverId = await generateUniqueCode(8)
-        console.log('DRIVER ID', `RF${driverId}DR`)
-
         newDriver.firstName = firstName
         newDriver.lastName = lastName
         newDriver.email = email
@@ -499,7 +499,7 @@ export async function completeNewDriverRegistration(req, res) {
         newDriver.idCardImgFront = driverLincenseImgFrontUrl
         newDriver.idCardImgBack = driverLicenseImgBackUrl,
         newDriver.profileImg = profileImgUrl,
-        newDriver.driverId = `RF${driverId}DR`,
+        //newDriver.driverId = `RF${driverId}DR`,
         newDriver.idCardType = 'Driver\'s License',
         newDriver.pricePerKm = pricePerKm,
         newDriver.status = 'online'
@@ -547,6 +547,8 @@ export async function completeNewDriverRegistration(req, res) {
                 refreshToken: refreshToken
             })
         }
+
+        res.clearCookie(`inridedrivertoken`)
 
         // Set cookies
         res.cookie('inrideaccesstoken', accessToken, {
@@ -811,22 +813,7 @@ export async function verifyToken(req, res) {
     }
 }
 
-
-/** 
- */
-export async function del(req, res) {
-    try {
-        //const deletepas = await DriverModel.deleteMany() 
-        //const deletecars = await CarDetailModel.deleteMany() 
-        const deleteOtp = await OtpModel.deleteMany()
-        const getOtp = await OtpModel.find()
-        const deleteCars = await CarDetailModel.deleteMany()
-        res.status(200).json({ success: true, getOtp })
-    } catch (error) {
-        console.log('object', error)
-    }
-}
-
+/** */
 export async function createnew(req, res) {
     try {
         const driverId = await generateUniqueCode(8)

@@ -41,6 +41,13 @@ export async function registerNumber(req, res) {
             })
             console.log('SMS BODY', sendOtpCode)
              */
+
+            res.cookie('inridepassengertoken', newPassengerId, {
+                httpOnly: true,
+                sameSite: 'None',
+                secure: true,
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            });
         
             return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}. code is valid for 10min`, `${mobileNumber}, Code: ${otpCode}`)
         }
@@ -141,7 +148,9 @@ export async function verifySSN(req, res) {
 //REGISTER DETAILS
 export async function registerUser(req, res) {
     const { email, firstName, lastName, ssn, idCardType, mobileNumber } = req.body;
-    console.log('REGSITRATION BODY', req.body)
+    const accountId = req.cookies.inridepassengertoken;
+
+    //console.log('REGSITRATION BODY', req.body)
     // Validate required fields
     if (!email) return sendResponse(res, 400, false, `Provide an email address`);
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -154,7 +163,6 @@ export async function registerUser(req, res) {
     }
     
     const { idCardImgFront, idCardImgBack, profileImg } = req.files;
-    console.log('idCardImgFront', idCardImgBack, req.files)
     if (!idCardImgFront || !idCardImgFront[0]) return sendResponse(res, 400, false, `Provide the front image of your ID card`);
     if (!idCardImgBack || !idCardImgBack[0]) return sendResponse(res, 400, false, `Provide the back image of your ID card`);
     if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
@@ -171,7 +179,7 @@ export async function registerUser(req, res) {
     }
 
     try {
-        const newPassenger = await PassengerModel.findOne({ mobileNumber })
+        const newPassenger = await PassengerModel.findOne({ passengerId: accountId })
         console.log('object', newPassenger)
         if(!newPassenger){
             return sendResponse(res, 403, false, 'No Account found')
@@ -179,23 +187,6 @@ export async function registerUser(req, res) {
         if(!newPassenger?.verified){
             return sendResponse(res, 403, false, 'Mobile number not verified')
         }
-        /**\
-         * 
-        if(!newPassenger?.otpCode){
-            console.log('OTP NOT FOUND IN PASSENGER DATA')
-            return sendResponse(res, 403, false, 'Not Allowed')
-        }
-        const verifyOtp = await OtpModel.findOne({ otp: newPassenger?.otpCode })
-        console.log('PASSNEGER VERIFY OTP', verifyOtp)
-        if(!verifyOtp){
-            console.log('OTP NOT FOUND IN OTP MODEL FOR PASSENGER')
-            return sendResponse(res, 403, false, 'Not Allowed')
-        }
-        if(verifyOtp?.accountType !== 'passenger'){
-            console.log('INVALID OTP ACCOUNT TYPE: PASSENGER')
-            return sendResponse(res, 403, false, 'Not Allowed')
-        }
-         */
 
         const emailExist = await PassengerModel.findOne({ email })
         if(emailExist){
@@ -227,7 +218,7 @@ export async function registerUser(req, res) {
         newPassenger.firstName = firstName
         newPassenger.lastName = lastName
         newPassenger.email = email
-        newPassenger.passengerId = `IN${passengerId}PA`,
+        //newPassenger.passengerId = `RF${passengerId}PA`,
         newPassenger.ssn = req.body.ssn
         newPassenger.idCardImgFront = idCardImgFrontUrl,
         newPassenger.idCardImgBack = idCardImgBackUrl,
@@ -235,11 +226,6 @@ export async function registerUser(req, res) {
         newPassenger.idCardType = idVerification.cardType
         newPassenger.otpCode = ''
         await newPassenger.save()
-
-        //delete otp code from otp model
-        //const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
-
-        //console.log('new passenger', newPassenger)
 
         // Generate Tokens
         const accessToken = newPassenger.getAccessToken()
@@ -255,6 +241,8 @@ export async function registerUser(req, res) {
             name: newPassenger.firstName
         })
         
+
+        res.clearCookie(`inridepassengertoken`)
 
         // Set cookies
         res.cookie('inrideaccesstoken', accessToken, {
@@ -657,15 +645,6 @@ export async function completeRegisterUser(req, res) {
 
 /** 
  */
-export async function del(req, res) {
-    try {
-        const deletepas = await PassengerModel.deleteMany({ })  
-        res.status(200).json({ success: true})
-    } catch (error) {
-        console.log('object', error)
-    }
-}
-
 export async function createnew(req, res) {
     try {
         const passengerId = await generateUniqueCode(8)

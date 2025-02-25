@@ -10,7 +10,7 @@ import moment from 'moment';
 export const AuthenticatePassenger = async (req, res, next) => {
     const accessToken = req.cookies.inrideaccesstoken;
     const accountId = req.cookies.inrideaccessid;
-    console.log('PASSENGER','accessToken', accessToken, 'accountId', accountId)
+    console.log('PASSENGER','accessToken', accessToken, 'accountId', accountId, req.cookies)
 
     try {
         if (accessToken) {
@@ -62,7 +62,7 @@ export const AuthenticatePassenger = async (req, res, next) => {
                 });
                 req.user = user;
                 return next();
-            }
+            }console.log('USRE', user, 'refreshTokenExist', refreshTokenExist)
         }
         return sendResponse(res, 403, false, 'UnAuthenicated');
     } catch (error) {

@@ -7,9 +7,9 @@ const router = express.Router()
 
 //POST
 //router.post('/createAccount', controllers.createAccount)
-router.post('/resendOtp', controllers.resendOtp)
-router.post('/verifyOtp', controllers.verifyOtp)
-router.post('/createPassword', controllers.createPassword)
+//router.post('/resendOtp', controllers.resendOtp)
+//router.post('/verifyOtp', controllers.verifyOtp)
+//router.post('/createPassword', controllers.createPassword)
 router.post('/login', controllers.login)
 router.post('/forgotPassword', controllers.forgotPassword)
 router.post('/resetPassword/:resetToken', controllers.resetPassword)

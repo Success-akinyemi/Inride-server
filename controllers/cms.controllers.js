@@ -223,6 +223,7 @@ export async function updateCms(req, res) {
         }
     }
     const { day, time, date } = req.body || {}
+    console.log('status', status, 'scheduled', scheduled, 'day', day, 'time', time, 'date', date)
     let scheduledTimeData 
     if(status.toLowerCase() === 'scheduled' || scheduled && scheduled === true){
         if (!day) {
@@ -312,7 +313,10 @@ export async function updateCms(req, res) {
         );
         await editCms.save()
 
-        if(scheduled === true){
+        if(status.toLowerCase() === 'scheduled' || scheduled && scheduled === true){
+            //replace the only existing object in the arra
+            updateCms.scheduledDate = [];
+            await updateCms.save();
             updateCms.scheduledDate.push(scheduledTimeData);
         } else{
             updateCms.scheduledDate = [];

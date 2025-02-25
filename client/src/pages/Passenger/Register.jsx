@@ -9,7 +9,7 @@ function Register() {
     email: '',
     idCardType: '',
     ssn: '',
-    mobileNumber: '+2341059309831',
+    mobileNumber: 'RFPCSVCC59AD',
   });
   const [idCardImgFront, setIdCardFrontImg] = useState(null);
   const [idCardImgBack, setIdCardBackImg] = useState(null);
@@ -34,7 +34,7 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const form = new FormData();
-    form.append('mobileNumber', '+2349059309831');
+    form.append('mobileNumber', '+2349999999999');
     form.append('firstName', formData.firstName);
     form.append('lastName', formData.lastName);
     form.append('email', formData.email);

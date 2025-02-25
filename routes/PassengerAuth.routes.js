@@ -19,7 +19,6 @@ router.post('/signinWithGoogle', controllers.signinWithGoogle)
 router.post('/completeRegisterUser', AuthenticatePassenger, uploadImages, controllers.completeRegisterUser)
 
 
-//router.post('/del', controllers.del)
 router.post('/createnew', controllers.createnew)
 
 
