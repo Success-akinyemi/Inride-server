@@ -82,17 +82,21 @@ export async function callUser({ data, socket, res }) {
 
         // Emit tokens to clients
         socket.emit("callerToken", { token: callerToken, callId });
-        generalNamespace.to(receiverSocketId).emit("receiverToken", { token: receiverToken, callId });
-        console.log('TOKEN EMITTED TO CLIENT')
-        console.log('RECEIVER SOCKET ID', receiverSocketId)
-        // Notify receiver of incoming call
-        generalNamespace.to(receiverSocketId).emit("incomingCall", {
-            success: true,
-            message: `Incoming call from ${firstName} ${lastName}`,
-            profileImg,
-            rideId,
-            callId,
-        });
+        try {
+            generalNamespace.to(receiverSocketId).emit("receiverToken", { token: receiverToken, callId });
+            console.log('TOKEN EMITTED TO CLIENT')
+            console.log('RECEIVER SOCKET ID', receiverSocketId)
+            // Notify receiver of incoming call
+            generalNamespace.to(receiverSocketId).emit("incomingCall", {
+                success: true,
+                message: `Incoming call from ${firstName} ${lastName}`,
+                profileImg,
+                rideId,
+                callId,
+            });
+        } catch (error) {
+            console.log('ERROR EMIT TOKEN AND CALLER DATA TO RECEIVER', error)
+        }
 
         // Track active call
         activeCalls[rideId] = { caller: socket.id, receiver: receiverSocketId, callId };
