@@ -61,14 +61,14 @@ export default function LiveCall() {
 
         /**
          * 
-        return () => {
-            socket.off("callerToken");
-            socket.off("receiverToken");
-            socket.off("incomingCall");
-            socket.off("callAccepted");
-            socket.off("callEnded");
-        };
-         */
+        */
+       return () => {
+           socket.off("callerToken");
+           socket.off("receiverToken");
+           socket.off("incomingCall");
+           socket.off("callAccepted");
+           socket.off("callEnded");
+       };
     }, [socket]);
     
     // Join call when callId and client are set
