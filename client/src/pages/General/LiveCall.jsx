@@ -21,6 +21,7 @@ export default function LiveCall() {
 
     // Initialize Stream.io client
     useEffect(() => {
+        console.log("Setting up Socket.io event listeners");
         socket.on("callerToken", ({ token, callId }) => {
             console.log("Caller Token Received:", token, callId);
             const client = new StreamVideoClient({
