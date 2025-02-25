@@ -27,12 +27,14 @@ export async function verifyID(frontFile, backFile) {
         // Check for Voter's Card (Needs at least 2 matches)
         const voterCardMatches = countMatches(frontText.data.text, ["VOTER'S CARD", "VIN", "FEDERAL REPUBLIC OF NIGERIA"]) +
                                 countMatches(backText.data.text, ["SERIAL NO."]);
+        console.log('voterCardMatches', voterCardMatches)
         if (voterCardMatches >= 2) {
             return { success: true, cardType: "Voter's Card", photo: frontImageBuffer };
         }
 
         // Check for International Passport (Needs at least 2 matches)
         const passportMatches = countMatches(frontText.data.text, ["INTERNATIONAL PASSPORT", "PASSPORT NUMBER", "ISSUE DATE", "COUNTRY"]);
+        console.log('passportMatches', passportMatches)
         if (passportMatches >= 2) {
             return { success: true, cardType: "International Passport", photo: frontImageBuffer };
         }
@@ -40,13 +42,15 @@ export async function verifyID(frontFile, backFile) {
         // Check for National ID (Needs at least 2 matches)
         const nationalIDMatches = countMatches(frontText.data.text, ["NATIONAL ID", "NIN"]) +
                                 countMatches(backText.data.text, ["SERIAL NO."]);
+        console.log('nationalIDMatches', nationalIDMatches)
         if (nationalIDMatches >= 2) {
             return { success: true, cardType: "National ID", photo: frontImageBuffer };
         }
 
         // Check for Driver's License (Needs at least 2 matches)
-        const licenseMatches = countMatches(frontText.data.text, ["DRIVER'S LICENSE", "LICENSE NO.", "EXPIRATION DATE"]) +
-                            countMatches(backText.data.text, ["LICENSE HOLDER"]);
+        const licenseMatches = countMatches(frontText.data.text, ["DRIVER'S LICENSE", "LICENSE NO.", "EXPIRATION DATE", "EXP", "SEX", "CLASS", "END"]) +
+                            countMatches(backText.data.text, ["LICENSE HOLDER", "VEHICLE CATEGORIES", "ISSUE", "EXPIRATION"]);
+        console.log('licenseMatches', licenseMatches)
         if (licenseMatches >= 2) {
             return { success: true, cardType: "Driver's License", photo: frontImageBuffer };
         }

@@ -9,7 +9,7 @@ function Register() {
     email: '',
     idCardType: '',
     ssn: '',
-    mobileNumber: '+2349059309831',
+    mobileNumber: '+2341059309831',
   });
   const [idCardImgFront, setIdCardFrontImg] = useState(null);
   const [idCardImgBack, setIdCardBackImg] = useState(null);
