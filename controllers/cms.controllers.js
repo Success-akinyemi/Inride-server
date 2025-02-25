@@ -224,7 +224,7 @@ export async function updateCms(req, res) {
     }
     const { day, time, date } = req.body || {}
     let scheduledTimeData 
-    if(scheduled && scheduled === true){
+    if(status.toLowerCase() === 'scheduled' || scheduled && scheduled === true){
         if (!day) {
             return sendResponse(res, 400, false, 'Provide day for scheduled CMS' )
         }
@@ -303,7 +303,7 @@ export async function updateCms(req, res) {
                 redirection,
                 status,
                 type,
-                scheduled: scheduled === true ? true : false,
+                scheduled: scheduled === true || status.toLowerCase() === 'scheduled' ? true : false,
                 accountType,
                 allUsers: accountType ? false : true,
                 users: users?.length > 0 ? users : updateCms?.users ,
@@ -314,6 +314,8 @@ export async function updateCms(req, res) {
 
         if(scheduled === true){
             updateCms.scheduledDate.push(scheduledTimeData);
+        } else{
+            updateCms.scheduledDate = [];
         }
 
         // Update the CMS document
