@@ -19,6 +19,7 @@ import RideTransactionModel from "../model/RideTransactions.js";
 import RideChatModel from "../model/RideChats.js";
 import NotificationModel from "../model/Notifications.js";
 import AvailableActiveRideModel from "../model/AvailableActiveRide.js";
+import { sendNotificationToAccount } from "./pushNotification.controllers.js";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
@@ -320,6 +321,14 @@ export async function requestRide({ socket, data, res }) {
         }
       
         // notify driver via push notification
+        try{
+          sendNotificationToAccount({
+            accountId: driver,
+            message: `You have a new ${rideType === 'personal' ? 'Personal' : rideType === 'delivery' ? 'Delivery' : 'Schedule'} ride request`,
+          })
+        } catch {
+          console.log('UNABLE TO SEND PUSH NOTIFICATION TO DRIVER RIDE REQUEST')
+        }
       
         // add ride to driver available ride
         const availableRide = await AvailableActiveRideModel.findOne({ driverId: driver });
@@ -565,6 +574,16 @@ export async function requestDriver({ data, socket, res }) {
   
       driverNamespace.to(driverSocketId).emit('driverRequested', rideRequestData)
 
+      //PUSH  NOTIFICATIONS
+      try{
+        sendNotificationToAccount({
+          accountId: driverId,
+          message: `New Ride Request`
+        })
+      } catch {
+        console.log('UNABLE TO SEND PUSH NOTIFICATION TO DRIVER')
+      }
+
       //alert other drivers that passenger has gotten a driver
       const otherDrivers = getDriverPrice.prices.filter(
         (price) => price.driverId !== driverId
@@ -746,6 +765,27 @@ export async function payForRide({ socket, data, res }) {
         ride: rideDetails,
         driverLocation: getDriverLocation
       })
+
+      //PUSH NOTIFICATIONS
+      try {
+        sendNotificationToAccount({
+          accountId: passengerId,
+          message: 'Payment succesful ride has been activated',
+        })
+
+      } catch (error) {
+        console.log('UNABLE SNED NOTIFICATION', error)
+      }
+      try {
+        sendNotificationToAccount({
+          accountId: getRide?.driverId,
+          message: `New ${getRide?.rideType === 'schedule' && 'Scheduled'} ride has been activated. ${getRide?.rideType === 'schedule' && `This ride ride has been scheduled to the pickup time.`}`,
+        })
+        
+      } catch (error) {
+        console.log('UNABLE SNED NOTIFICATION DRIVER', error)
+      }
+      
       return
     }
 
@@ -888,6 +928,23 @@ export async function payForEditRide({ socket, data, res }) {
         ride: rideDetails,
         driverLocation: getDriverLocation
       })
+
+      try {
+        sendNotificationToAccount({
+          accountId: passengerId,
+          message: 'Payment succesful ride has been updated'
+        })
+      } catch (error) {
+        console.log('NOTIFUCATION ERROR', error)
+      }
+      try {
+        sendNotificationToAccount({
+          accountId: getRide?.driverId,
+          message: `New ${getRide?.rideType === 'schedule' && 'Scheduled'} ride has been activated. ${getRide?.rideType === 'schedule' && `This ride ride has been scheduled to the pickup time.`}`
+        })
+      } catch (error) {
+        console.log('DRIVER NOTIFUCATION ERROR', error)
+      }
       return
     }
 
@@ -987,6 +1044,25 @@ export function scheduleRideAlerts() {
           });
         } else {
           console.log(`No active connection for Passenger ID: ${passengerId}`);
+        }
+
+        try {
+          sendNotificationToAccount({
+            accountId: driverId,
+            message: 'Schedule Ride is now active. Head over to the pickup location to start the ride.'
+          })
+
+        } catch (error) {
+          console.log('UNABLE TO SEND PUSH NOTIFICATION SCHEDULED', error)
+        }
+        try {
+          sendNotificationToAccount({
+            accountId: passengerId,
+            message: 'Schedule Ride is now active. The driver has been notified to come to the pickup location.'
+          })
+          
+        } catch (error) {
+          console.log('UNABLE TO SEND PUSH NOTIFICATION SCHEDULED PASSENGER', error)
         }
 
         // Update ride status to "Active"
@@ -1090,12 +1166,30 @@ export async function shareRideWithFriends({ data, socket, res}) {
       } else {
         console.log(`No active connection for passenger mobile number: ${mobileNumber}`);
       }
+
+      try {
+        sendNotificationToAccount({
+          accountId: getPassenger.passengerId,
+          message : `${firstName} ${lastName} shared a ride with you.`
+        })
+      } catch (error) {
+        console.log('UNABLE TO SEND SHARE RIDE WITH FRIENDS PUSH NOTIFICATION', error)
+      }
     }
 
     await NotificationModel.create({
       accountId: passengerId,
       message: `You have shared you ride with ${totalPassengers} of your loved ones`
     })
+
+    try {
+      sendNotificationToAccount({
+        accountId: passengerId,
+        message: `You have shared you ride with ${totalPassengers} of your loved ones`
+      })
+    } catch (error) {
+      console.log('UNABLE TO SEND PUSH NOTIFICATION OF SHARE RIDE', error)
+    }
 
     getRide.rideType = 'group'
     await getRide.save()
@@ -1129,8 +1223,8 @@ export async function editRide({ data, socket, res}) {
       return
     }
     if(passengerId !== getRide?.passengerId ){
-      const message = 'You can only edit you ride'
-      if(res) sendResponse(res, 404, false, message)
+      const message = 'You can only edit your ride'
+      if(res) sendResponse(res, 403, false, message)
       if(socket) socket.emit('editRide', { success: false, message })
       return
     }
@@ -1355,6 +1449,16 @@ export async function cancelRide({ data, socket, res}) {
         driverNamespace.to(driverSocketId).emit('passengerCancelRide', messsage)
       }
 
+      //PUSH NOTIFICATION
+      try {
+        sendNotificationToAccount({
+          accountId: getRide.driverId,
+          message:  'Passenger has canceled the Ride with you'
+        })
+      } catch (error) {
+        console.log('PASSENGER CANCEL RIDE', error)
+      }
+
       const message = 'Your Ride has been Canceled. Your wallet has been funded with the balance'
       if(res) sendResponse(res, 200, true, message)
       if(socket) socket.emit('cancelRide', { success: true, message })
@@ -1425,7 +1529,7 @@ export async function saftey({ data, res, socket }) {
 //CHAT WITH DRIVER
 export async function chatWithDriver({ socket, data, res}) {
   const { rideId, message: passengerMessage, file } = data
-  const { passengerId } = socket.user
+  const { passengerId, firstName, lastName } = socket.user
   try {
     const getRide = await RideModel.findOne({ rideId })
     if(!getRide){
@@ -1478,6 +1582,16 @@ export async function chatWithDriver({ socket, data, res}) {
       driverNamespace.to(driverSocketId).emit('chatWithPassenger', { success: true, message })
     } else {
       console.log('DRIVER SOCKET FOR CHATS NOT FOUND> DRIVER NOT ONLINE')
+    }
+
+    //push notification
+    try {
+      sendNotificationToAccount({
+        accountId: getRide.driverId,
+        message: `You have a new message from ${firstName} ${lastName}`
+      })
+    } catch (error) {
+      console.log('UNABLE TO NOTIFY DRIVER OF USER CHAT', error)
     }
 
     const message = getChats.chats

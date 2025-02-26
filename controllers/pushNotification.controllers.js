@@ -142,7 +142,7 @@ export async function sendNotificationById(cmsId) {
     }
 }
 
-export async function sendNotificationToAccount(accountId, title, message, url) {
+export async function sendNotificationToAccount({accountId, title, message, url}) {
     try {
         // Fixed image URL
         const image = 'https://i.ibb.co/HtNmMC5/Group-625936.png'; 
@@ -157,7 +157,7 @@ export async function sendNotificationToAccount(accountId, title, message, url) 
         // Prepare the notification payload for FCM
         const notificationPayload = {
             notification: {
-                title,
+                title: title || 'RideFuze',
                 body: message,
                 image, // Fixed image URL
             },

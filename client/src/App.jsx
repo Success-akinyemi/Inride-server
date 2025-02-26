@@ -17,6 +17,8 @@ import { loadStripe } from '@stripe/stripe-js';
 import StripePayment from './pages/Passenger/StripePayment'
 import LiveCall5latest from './pages/General/LiveCall5latest'
 import { MyApp } from './pages/General/StreamVoiceCall'
+import DriverNewUser from './pages/Driver/DriverNewUser'
+import NewPassenger from './pages/Passenger/NewPassenger'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISH_KEY);
 
@@ -29,6 +31,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path='/passenger/register' element={<Register />} />
+          <Route path='/passenger/new' element={<NewPassenger />} />
           <Route path='/passenger/requestRide' element={<RequestRide />} />
           <Route path='/passenger/rideChat' element={<RideChat />} />
           <Route path='/passenger/login' element={<Login />} />
@@ -36,6 +39,7 @@ function App() {
           <Route path='/passenger/fundWallet' element={<StripePayment />}  />
 
           <Route path='/driver/login' element={<DriverLogin />}  />
+          <Route path='/driver/new' element={<DriverNewUser />}  />
           <Route path='/driver/verifyOtp' element={<DriverVerifyOtp />}  />
           <Route path='/driver/home' element={<DriverHome />}  />
           <Route path='/driver/rideChat' element={<DriverRideChat />}  />

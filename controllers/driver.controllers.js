@@ -11,6 +11,7 @@ import RideChatModel from "../model/RideChats.js";
 import RideModel from "../model/Rides.js";
 import RideTransactionModel from "../model/RideTransactions.js";
 import { passengerConnections, passengerNamespace } from "../server.js";
+import { sendNotificationToAccount } from "./pushNotification.controllers.js";
 
 // UPDATE DRIVER LOCATION
 export async function updateLocation({ data, socket, res }) {
@@ -161,7 +162,6 @@ export async function homeBreak(req, res) {
 export async function acceptRideRequest({ data, socket, res }) {
   const { rideId, price } = data
   const { driverId } = socket.user;
-  console.log('OOOOP', data)
   try {
     if(!rideId){
       const message = 'The ride Id is required'
@@ -356,7 +356,6 @@ export async function acceptEditRideRquest({ data, socket, res }) {
 export async function cancelRideRequest({ data, socket, res }) {
   const { rideId } = data
   const { driverId } = socket.user;
-  console.log('HELLO')
   try {
     const getRide = await RideModel.findOne({ rideId })
     if(!getRide){
@@ -453,6 +452,16 @@ export async function rejectEditRideRquest({ data, socket, res }) {
             console.log(`No active connection for passenger: ${getRide?.passengerId}`);
           }
 
+                //PUSH NOTIFICATION
+                try {
+                  sendNotificationToAccount({
+                    accountId: getRide.passengerId,
+                    message:  `Driver has rejected your ride request`
+                  })
+                } catch (error) {
+                  console.log('DRIVER REJECT RIDe', error)
+                }
+
                     //new notification
         await NotificationModel.create({
           accountId: driverId,
@@ -502,6 +511,16 @@ export async function startRide({ data, socket, res}) {
       accountId: getRide?.passengerId,
       message: `Ride: ${getRide.rideId} has been started, heading to destination.`
     })
+
+    //PUSH NOTIFICATION
+    try {
+      sendNotificationToAccount({
+        accountId: getRide.passengerId,
+        message:  `Ride: ${getRide.rideId} has been started, heading to destination.`
+      })
+    } catch (error) {
+      console.log('PASSENGER RIDE STARTED', error)
+    }
 
     const message = 'Ride has started'
     if(res) sendResponse(res, 200, true, message)
@@ -562,6 +581,24 @@ export async function rideComplete({ socket, res, data }) {
       accountId: getRide?.passengerId,
       message: `Ride: ${getRide.rideId} has been completed.`
     })
+
+    //push notification
+    try {
+      sendNotificationToAccount({
+        accountId: driverId,
+        message: `Hurray ride completed. Earnings updated`
+      })
+    } catch (error) {
+      console.log('UNABLE TO NOTIFY ridE COMPLETE', error)
+    }
+    try {
+      sendNotificationToAccount({
+        accountId: getRide?.passengerId,
+        message: `Ride: ${getRide.rideId} has been completed.`
+      })
+    } catch (error) {
+      console.log('UNABLE TO NOTIFY ridE COMPLETE', error)
+    }
 
     const message = 'Ride completed, earings updated driver is now active for another ride';
     if (res) return sendResponse(res, 200, true, message);
@@ -658,7 +695,7 @@ export async function cancelRide({ res, data, socket}) {
       if(passengerSocketId){
         passengerNamespace.to(passengerSocketId).emit('driverCancelRide', {
           success: false,
-          message: `Driver has cancel the ride and you wallet refunded`
+          message: `Driver has cancel the ride and your wallet refunded`
         })
       } else{
         console.log('Passenger Active connection not found')
@@ -669,6 +706,16 @@ export async function cancelRide({ res, data, socket}) {
           accountId: driverId,
           message: `You Canceled ride ${rideId}.`
         })
+
+      //PUSH NOTIFICATION
+      try {
+        sendNotificationToAccount({
+          accountId: getRide?.passengerId,
+          message: `Driver has cancel the ride and your wallet refunded`
+        })
+      } catch (error) {
+        console.log('DRIVER CANCEL RIDE NOTIFICATION ERROR', error)
+      }
 
       const message = 'Ride has been canceled'
       if(res) sendResponse( res, 200, true, message)
@@ -685,9 +732,8 @@ export async function cancelRide({ res, data, socket}) {
 
 //CHAT WITH PASSNEGER
 export async function chatWithPassenger({ socket, data, res}) {
-  console.log('DTA', data)
   const { rideId, message: driverMessage, file } = data
-  const { driverId } = socket.user
+  const { driverId, firstName, lastName } = socket.user
   try {
     const getRide = await RideModel.findOne({ rideId })
     if(!getRide){
@@ -740,6 +786,16 @@ export async function chatWithPassenger({ socket, data, res}) {
       passengerNamespace.to(passengerSocketId).emit('chatWithDriver', { success: true, message })
     } else {
       console.log('PASSENGER SOCKET FOR CHATS NOT FOUND> PASSENGER NOT ONLINE')
+    }
+
+    //push notification
+    try {
+      sendNotificationToAccount({
+        accountId: getRide.passengerId,
+        message: `You have a new message from ${firstName} ${lastName}`
+      })
+    } catch (error) {
+      console.log('UNABLE TO NOTIFY PASSENGER OF DRIVER CHAT', error)
     }
 
     const message = getChats.chats

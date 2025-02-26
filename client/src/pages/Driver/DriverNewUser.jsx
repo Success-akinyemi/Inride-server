@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function DriverVerifyOtp() {
+function DriverNewUser() {
     const navigate = useNavigate()
   const [formData, setFormData] = useState({
-    otp: '',
+    mobileNumber: '',
   });
 
   const handleInputChange = (e) => {
@@ -12,25 +12,25 @@ function DriverVerifyOtp() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleVerifyNewUserOtp = async (e) => {
+  const handleNewDriver = async (e) => {
     e.preventDefault();
   
     try {
-      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/auth/verifyOtp`, {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/driver/auth/registerNewDriver`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',  // Set content type for JSON
         },
-        body: JSON.stringify({ otp: formData.otp }),  // Send data as JSON
+        body: JSON.stringify({ mobileNumber: formData.mobileNumber }),  // Send data as JSON
       });
   
       const result = await response.json();
       if (response.ok) {
         alert(`Success: ${result?.data}`);
-        navigate('/driver/register');
+        navigate('/driver/verifyOtp');
       } else {
-        alert(`Error: ${result?.data || 'Failed to verify'}`);
+        alert(`Error: ${result?.data || 'Failed to Register new driver'}`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -39,7 +39,7 @@ function DriverVerifyOtp() {
   };
   
 
-  const handleVerifyLoginOtp = async (e) => {
+  const handleDriverToPassenger = async (e) => {
     e.preventDefault();
   
     const getUserLocation = () => {
@@ -66,14 +66,14 @@ function DriverVerifyOtp() {
   
     try {
       const location = await getUserLocation();
-      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/driver/auth/verifyLoginOtp`, {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/driver/auth/registerWithPassengerAccount`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',  // Set content type for JSON
         },
         body: JSON.stringify({
-          otp: formData.otp,
+          mobileNumber: formData.mobileNumber,
           location: location,  // Attach location to the request
         }),
       });
@@ -81,9 +81,9 @@ function DriverVerifyOtp() {
       const result = await response.json();
       if (response.ok) {
         alert(`Success: ${result?.data}`);
-        navigate('/driver/home');
+        navigate('/driver/verifyOtp');
       } else {
-        alert(`Error: ${result?.data || 'Failed to sign in'}`);
+        alert(`Error: ${result?.data || 'Failed to sign in with passenger account'}`);
       }
     } catch (error) {
       alert(error || 'An error occurred while retrieving location.');
@@ -94,18 +94,18 @@ function DriverVerifyOtp() {
   return (
     <form encType="multipart/form-data">
       <div>
-        <label>Otp:</label>
+        <label>Mobile Number:</label>
         <input
           type="text"
-          name="otp"
-          value={formData.otp}
+          name="mobileNumber"
+          value={formData.mobileNumber}
           onChange={handleInputChange}
         />
       </div>
-      <button onClick={handleVerifyNewUserOtp} type="submit">Verify New User Otp</button>
-      <button onClick={handleVerifyLoginOtp} type="submit">Verify Login Otp</button>
+      <button onClick={handleNewDriver} type="submit">New Driver</button>
+      <button onClick={handleDriverToPassenger} type="submit">Passenger to Driver</button>
     </form>
   );
 }
 
-export default DriverVerifyOtp;
+export default DriverNewUser;

@@ -211,14 +211,9 @@ export async function registerUser(req, res) {
         const idCardImgBackUrl = await uploadFile(req.files.idCardImgBack[0], folder);
         const profileImgUrl = await uploadFile(req.files.profileImg[0], 'passenger-profile-image');
 
-        const passengerId = await generateUniqueCode(8)
-        console.log('PASSENGER ID', `RF${passengerId}PA`)
-
-
         newPassenger.firstName = firstName
         newPassenger.lastName = lastName
         newPassenger.email = email
-        //newPassenger.passengerId = `RF${passengerId}PA`,
         newPassenger.ssn = req.body.ssn
         newPassenger.idCardImgFront = idCardImgFrontUrl,
         newPassenger.idCardImgBack = idCardImgBackUrl,
