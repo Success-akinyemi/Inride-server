@@ -264,7 +264,7 @@ export async function initiatePayment({amount, accountId, paymentfor, paymentMet
     const paymentIntent = await stripe.paymentIntents.create({
       amount: fullAmount,
       currency: 'usd',
-      payment_method_types: paymentMethod ? paymentMethod : ['card', 'wallet', 'bank_transfer']
+      payment_method_types: paymentMethod ? paymentMethod : ['card',]
     })
 
     //Create payment intent db
