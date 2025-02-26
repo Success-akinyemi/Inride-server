@@ -164,15 +164,14 @@ export async function getCardDetails(req, res) {
             return;
         }
 
-        // Decrypt card numbers and mask them
+        // Decrypt card numbers and mask them, remove CVV
         const cards = getCardDetails.cards.map(card => {
             const decryptedCardNumber = decrypt(card.cardNumber); // Decrypt the card number
             const maskedCardNumber = `**** **** **** ${decryptedCardNumber.slice(-4)}`; // Mask all but the last 4 digits
-            //remove cvv also
-            const { cvv, ...cardData } = card._doc
             return {
-                ...cardData.toObject(),
-                cardNumber: maskedCardNumber, // Replace cardNumber with the masked value
+                ...card.toObject(),
+                cardNumber: maskedCardNumber, 
+                cvv: undefined,
             };
         });
 
@@ -199,12 +198,11 @@ export async function getCardDetail(req, res) {
             return;
         }
 
-        // Decrypt card number and mask it
+        // Decrypt card number and mask it, remove CVV
         const decryptedCardNumber = decrypt(card.cardNumber);
         const maskedCardNumber = `**** **** **** ${decryptedCardNumber.slice(-4)}`; // Mask all but the last 4 digits
 
-        const { cvv, ...cardData } = card._doc
-        sendResponse(res, 200, true, { ...cardData.toObject(), cardNumber: maskedCardNumber }, 'Card details fetched successfully');
+        sendResponse(res, 200, true, { ...card.toObject(), cardNumber: maskedCardNumber, cvv: undefined }, 'Card details fetched successfully');
     } catch (error) {
         console.log('ERROR FETCHING CARD DETAILS', error);
         sendResponse(res, 500, false, 'Unable to fetch card details');
