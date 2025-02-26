@@ -1,4 +1,4 @@
-import { calculateAverageRating, decrypt, generateUniqueCode, sendResponse, uploadBufferFile, uploadFile } from "../middlewares/utils.js";
+import { calculateAverageRating, decrypt, generateUniqueCode, initiatePayment, sendResponse, uploadBufferFile, uploadFile } from "../middlewares/utils.js";
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js";
 import DriverLocationModel from "../model/DriverLocation.js";
@@ -682,7 +682,26 @@ export async function payForRide({ socket, data, res }) {
 
     //MAKE PAYMENT
     if(paymentType === 'card' || paymentType === 'direct'){
+      const makePayment = await initiatePayment({
+        amount: getRide.charge,
+        accountId: passengerId,
+        paymentfor: 'ridebooking',
+        rideId
+      })
 
+      if(!makePayment.success){
+        const message = makePayment.data || 'Unable to process payment'
+        if(res) sendResponse(res, false, 400, message)
+        if(socket) socket.emit('payForRide', { success: false, message })
+        return
+      }
+
+      const data = makePayment.data
+      const message = makePayment.message
+      if(res) sendResponse(res, false, 400, message)
+      if(socket) socket.emit('payForRide', { success: true, data, message })
+      
+        return
     }
 
     if(paymentType === 'wallet'){
@@ -774,7 +793,7 @@ export async function payForRide({ socket, data, res }) {
         })
 
       } catch (error) {
-        console.log('UNABLE SNED NOTIFICATION', error)
+        console.log('UNABLE SEND NOTIFICATION', error)
       }
       try {
         sendNotificationToAccount({
@@ -783,7 +802,7 @@ export async function payForRide({ socket, data, res }) {
         })
         
       } catch (error) {
-        console.log('UNABLE SNED NOTIFICATION DRIVER', error)
+        console.log('UNABLE SEND NOTIFICATION DRIVER', error)
       }
       
       return
@@ -857,7 +876,25 @@ export async function payForEditRide({ socket, data, res }) {
 
     //MAKE PAYMENT
     if(paymentType === 'card' || paymentType === 'direct'){
+      const makePayment = await initiatePayment({
+        amount: getRide.paid ? getPendingRide.price : getRide.charge,
+        accountId: passengerId,
+        paymentfor: 'ridebooking',
+        rideId
+      })
 
+      if(!makePayment.success){
+        const message = makePayment.data || 'Unable to process payment'
+        if(res) sendResponse(res, false, 400, message)
+        if(socket) socket.emit('payForEditRide', { success: false, message })
+        return
+      }
+
+      const data = makePayment.data
+      const message = makePayment.message
+      if(res) sendResponse(res, false, 400, message)
+      if(socket) socket.emit('payForEditRide', { success: true, data, message })
+      return
     }
 
     if(paymentType === 'wallet'){
@@ -867,8 +904,13 @@ export async function payForEditRide({ socket, data, res }) {
         if(socket) socket.emit('payForEditRide', { success: false, message })
         return
       }
-      getPassenger.wallet -= getRide.charge
-      await getPassenger.save()
+      if(getRide.paid){
+        getPassenger.wallet -= getPendingRide.price
+        await getPassenger.save()
+      } else {
+        getPassenger.wallet -= getRide.charge
+        await getPassenger.save()
+      }
 
       getRide.status = 'Active'
       getRide.paid = true

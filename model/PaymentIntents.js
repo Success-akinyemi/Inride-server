@@ -11,7 +11,7 @@ const PaymentIntentSchema = new mongoose.Schema({
     },
     paymentfor: {
         type: String,
-        enum: ['funding', 'booking']
+        enum: ['funding', 'ridebooking']
     },
     amount: {
         type: Number
@@ -24,7 +24,10 @@ const PaymentIntentSchema = new mongoose.Schema({
         type: String,
         default: 'Pending',
         enum: ['Pending', 'Successful', 'Failed', 'Processing']
-    }
+    },
+    rideId: {
+        type: String,
+    },
 },
 { timestamps: true }
 )

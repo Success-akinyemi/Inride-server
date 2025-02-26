@@ -108,7 +108,7 @@ export async function fundWallet(req, res) {
     if(!makePayment.success){
         return sendResponse(res, 400, false, makePayment.data )
     }
-    console.log('PAYMENT INTENT', makePayment, makePayment.data)
+    //console.log('PAYMENT INTENT', makePayment, makePayment.data)
 
     sendResponse(res, 201, true, makePayment.data, makePayment.message)
   } catch (error) {
@@ -120,10 +120,13 @@ export async function fundWallet(req, res) {
 //GET FUNDING HISTROY
 export async function getFundingHistroy(req, res) {
   const { limit = 10, page = 1, status } = req.query
+  const { passengerId } = req.user
+
+  let accountId = passengerId
   try {
       const pageNumber = Number(page)
       const limitNumber = Number(limit)
-      const query = {}
+      const query = { accountId }
 
       if(status && status.toLowerCase() === 'pending'){
           query.status = 'Pending'
@@ -179,6 +182,10 @@ export async function getFundingHistroy(req, res) {
       res.status(500).json({ success: false, data: 'Unable to get funding histroy data' })
   }
 }
+
+//manual approve fundind
+//manual reject fundind
+
 
 //GET A FUNDING HISTROY
 //GET CMS

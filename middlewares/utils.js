@@ -249,7 +249,7 @@ export async function sendNotificationById(cmsId) {
 }
 
 //CREATE STRIPE PAYMENT
-export async function initiatePayment({amount, accountId, paymentfor, paymentMethod}) {
+export async function initiatePayment({amount, accountId, paymentfor, paymentMethod, rideId}) {
   if(paymentMethod){
     if(!Array.isArray(paymentMethod)){
       return { success: false, data: 'Payment method must be an array' }
@@ -264,7 +264,7 @@ export async function initiatePayment({amount, accountId, paymentfor, paymentMet
     const paymentIntent = await stripe.paymentIntents.create({
       amount: fullAmount,
       currency: 'usd',
-      payment_method_types: paymentMethod ? paymentMethod : ['card']
+      payment_method_types: paymentMethod ? paymentMethod : ['card', 'wallet', 'bank_transfer']
     })
 
     //Create payment intent db
@@ -274,6 +274,7 @@ export async function initiatePayment({amount, accountId, paymentfor, paymentMet
       paymentfor,
       amount,
       accountId,
+      rideId: rideId || ''
     })
 
     return { success: true, data: paymentIntent.client_secret, message: 'Payment intent created' }
