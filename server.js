@@ -27,7 +27,7 @@ import adminStaffRoutes from './routes/adminStaffs.routes.js';
 import rideChatsRoutes from './routes/rideChats.routes.js';
 import bigTaxesRoutes from './routes/bigTaxes.routes.js';
 import cmsRoutes from './routes/cms.routes.js';
-import webhookRoutes from './routes/stripeWebhook.routes.js';
+import checkrRoutes from './routes/checkr.routes.js';
 import pushNotificationRoute from './routes/pushNotification.routes.js';
 
 
@@ -121,7 +121,7 @@ app.use('/api/admin/staff', adminStaffRoutes);
 app.use('/api/rideChat', rideChatsRoutes);
 app.use('/api/bigTaxes', bigTaxesRoutes);
 app.use('/api/cms', cmsRoutes);
-//app.use('/api/webhook', webhookRoutes);
+app.use('/api/checkr', checkrRoutes);
 app.use('/api/pushNotification', pushNotificationRoute)
 
 
