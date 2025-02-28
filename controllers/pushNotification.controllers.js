@@ -116,20 +116,38 @@ export async function sendNotificationById(cmsId) {
             },
         };
 
-        // Send notifications to each subscriber
-        for (const subscriber of pushSubscribers) {
-            const { data } = subscriber;
+        // Collect all device tokens
+        const deviceTokens = pushSubscribers
+            .map(subscriber => subscriber.data) // Extract device tokens
+            .filter(token => token); // Filter out invalid or empty tokens
 
-            // Ensure the device token exists
-            if (data) {
-                try {
-                    // Send the notification using FCM
-                    await admin.messaging().sendToDevice(data, notificationPayload);
-                    console.log(`Notification sent to ${subscriber.email}`);
-                } catch (error) {
-                    console.error(`Failed to send notification to ${subscriber.email}`, error);
-                }
+        if (deviceTokens.length === 0) {
+            console.error('No valid device tokens found.');
+            return { success: false, message: 'No valid device tokens found.' };
+        }
+
+        // Send notifications to all subscribers
+        try {
+            const multicastMessage = {
+                tokens: deviceTokens, // Array of device tokens
+                notification: notificationPayload.notification,
+                data: notificationPayload.data,
+            };
+
+            // Use sendEachForMulticast to send notifications to multiple devices
+            const response = await admin.messaging().sendEachForMulticast(multicastMessage);
+            console.log(`Successfully sent notifications: ${response.successCount} successful, ${response.failureCount} failed.`);
+
+            if (response.failureCount > 0) {
+                response.responses.forEach((resp, index) => {
+                    if (!resp.success) {
+                        console.error(`Failed to send notification to ${pushSubscribers[index].email}:`, resp.error);
+                    }
+                });
             }
+        } catch (error) {
+            console.error('Failed to send notifications:', error);
+            return { success: false, message: 'Failed to send notifications.' };
         }
 
         // Update the CMS status to "published"
@@ -142,45 +160,161 @@ export async function sendNotificationById(cmsId) {
     }
 }
 
-export async function sendNotificationToAccount({accountId, title, message, url}) {
-    try {
-        // Fixed image URL
-        const image = 'https://i.ibb.co/HtNmMC5/Group-625936.png'; 
+/**
+ export async function sendNotificationById(cmsId) {
+     try {
+         // Find the CMS data by ID
+         const cmsData = await CmsModel.findById(cmsId).exec();
+         if (!cmsData) {
+             console.error(`No CMS data found with ID: ${cmsId}`);
+             return { success: false, message: 'CMS data not found.' };
+         }
+ 
+         const { accountType, message, title, allUsers, users, url, image } = cmsData;
+ 
+         // Build the query based on accountType
+         let query = {};
+         if (accountType === 'allUser') {
+             // Send to all users
+             query = {};
+         } else if (accountType === 'custom') {
+             // Send to specific users in the CMS users array
+             query = { email: { $in: users } };
+         } else {
+             // Send to specific account type (e.g., passenger, driver)
+             query = { accountType };
+         }
+ 
+         // Fetch matching subscribers from the PushNotificationModel
+         const pushSubscribers = await PushNotificationModel.find(query).exec();
+ 
+         if (!pushSubscribers.length) {
+             console.error('No subscribers found for the specified query.');
+             return { success: false, message: 'No subscribers found.' };
+         }
+ 
+         // Prepare the notification payload for FCM
+         const notificationPayload = {
+             notification: {
+                 title,
+                 body: message,
+                 image, // Optional: Include image if provided
+             },
+             data: {
+                 url: url || '', // Optional: Include URL if provided
+             },
+         };
+ 
+         // Send notifications to each subscriber
+         for (const subscriber of pushSubscribers) {
+             const { data } = subscriber;
+ 
+             // Ensure the device token exists
+             if (data) {
+                 try {
+                     // Send the notification using FCM
+                     await admin.messaging().sendToDevice(data, notificationPayload);
+                     console.log(`Notification sent to ${subscriber.email}`);
+                 } catch (error) {
+                     console.error(`Failed to send notification to ${subscriber.email}`, error);
+                 }
+             }
+         }
+ 
+         // Update the CMS status to "published"
+         await CmsModel.findByIdAndUpdate(cmsId, { status: 'published' });
+ 
+         return { success: true, message: 'Notifications sent successfully and CMS status updated to published.' };
+     } catch (error) {
+         console.error('UNABLE TO SEND NOTIFICATIONS:', error);
+         return { success: false, message: 'Unable to send push notifications.' };
+     }
+ }
+ */
 
-        // Find the subscriber by accountId
+/**
+ export async function sendNotificationToAccount({accountId, title, message, url}) {
+     try {
+         // Fixed image URL
+         const image = 'https://i.ibb.co/HtNmMC5/Group-625936.png'; 
+ 
+         // Find the subscriber by accountId
+         const subscriber = await PushNotificationModel.findOne({ accountId }).exec();
+         if (!subscriber) {
+             console.error(`No subscriber found with accountId: ${accountId}`);
+             return { success: false, message: 'Subscriber not found.' };
+         }
+ 
+         // Prepare the notification payload for FCM
+         const notificationPayload = {
+             notification: {
+                 title: title || 'RideFuze',
+                 body: message,
+                 image, // Fixed image URL
+             },
+             data: {
+                 url: url || '', // Optional: Include URL if needed
+             },
+         };
+ 
+         // Ensure the device token exists
+         const { data } = subscriber;
+         if (data) {
+             try {
+                 // Send the notification using FCM
+                 await admin.messaging().sendToDevice(data, notificationPayload);
+                 console.log(`Notification sent to ${subscriber.email}`);
+                 return { success: true, message: 'Notification sent successfully.' };
+             } catch (error) {
+                 console.error(`Failed to send notification to ${subscriber.email}`, error);
+                 return { success: false, message: 'Failed to send notification.' };
+             }
+         } else {
+             console.error(`No device token found for subscriber: ${subscriber.email}`);
+             return { success: false, message: 'No device token found.' };
+         }
+     } catch (error) {
+         console.error('UNABLE TO SEND NOTIFICATION:', error);
+         return { success: false, message: 'Unable to send notification.' };
+     }
+ }
+ */
+
+ export async function sendNotificationToAccount({ accountId, title, message, url }) {
+    try {
+        const image = 'https://i.ibb.co/HtNmMC5/Group-625936.png';
+
         const subscriber = await PushNotificationModel.findOne({ accountId }).exec();
         if (!subscriber) {
             console.error(`No subscriber found with accountId: ${accountId}`);
             return { success: false, message: 'Subscriber not found.' };
         }
 
-        // Prepare the notification payload for FCM
+        const { data } = subscriber;
+        if (!data) {
+            console.error(`No device token found for subscriber: ${subscriber.email}`);
+            return { success: false, message: 'No device token found.' };
+        }
+
         const notificationPayload = {
             notification: {
                 title: title || 'RideFuze',
                 body: message,
-                image, // Fixed image URL
+                image,
             },
             data: {
-                url: url || '', // Optional: Include URL if needed
+                url: url || '',
             },
+            token: data, // Use the device token directly
         };
 
-        // Ensure the device token exists
-        const { data } = subscriber;
-        if (data) {
-            try {
-                // Send the notification using FCM
-                await admin.messaging().sendToDevice(data, notificationPayload);
-                console.log(`Notification sent to ${subscriber.email}`);
-                return { success: true, message: 'Notification sent successfully.' };
-            } catch (error) {
-                console.error(`Failed to send notification to ${subscriber.email}`, error);
-                return { success: false, message: 'Failed to send notification.' };
-            }
-        } else {
-            console.error(`No device token found for subscriber: ${subscriber.email}`);
-            return { success: false, message: 'No device token found.' };
+        try {
+            await admin.messaging().send(notificationPayload);
+            console.log(`Notification sent to ${subscriber.email}`);
+            return { success: true, message: 'Notification sent successfully.' };
+        } catch (error) {
+            console.error(`Failed to send notification to ${subscriber.email}`, error);
+            return { success: false, message: 'Failed to send notification.' };
         }
     } catch (error) {
         console.error('UNABLE TO SEND NOTIFICATION:', error);

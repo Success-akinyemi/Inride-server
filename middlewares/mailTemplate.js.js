@@ -926,7 +926,7 @@ export async function sendNewUserEmail({
   password = "",
   buttonLink = "#",
   buttonText = "Go to Dashboard",
-  title = "New Staff account created",
+  title = "Subject: Welcome to RideFuze – Your Staff Account is Ready",
 }) {
   if (!email) {
     throw new Error("Email is required to send a new user email.");
@@ -940,14 +940,15 @@ export async function sendNewUserEmail({
         <br />
         <br />
         <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            New Staff account created
+          We are excited to welcome you to the RideFuze team! Your staff account has been successfully created, granting you access to the RideFuze dashboard application.
         </p>
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            <strong>Hurray!!!</strong> <br>
-            Your new staff account has been created for you to access the ride fuze dashboard application. below are the login credentials of your account.
-        </p>
+
         <br />
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">
+            Your Login Credentials
+        </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
             <strong>Email:</strong> ${email}
         </p>
@@ -955,8 +956,9 @@ export async function sendNewUserEmail({
             <strong>Password:</strong> ${password}
         </p>
         <br />
-        <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            After logging please update your password from the default password
+
+        <p style="color: #344054; font-size: 16px; font-weight: 400;">            
+          For security purposes, please update your password immediately after logging in.
         </p>
         <br />
         <div style="text-align: center; margin: 20px 0; background: #007BFF; padding: 10px 20px; border-radius: 8px;">
@@ -964,11 +966,11 @@ export async function sendNewUserEmail({
         </div>
         <br />
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Need Help? click on the link below to continue if unable to use the button. <br />
+            If you're unable to access the dashboard using the button above, you can use the following link: <br />
             <a href="${buttonLink}" style="display: inline-block; color: #007BFF; text-decoration: none;">${buttonLink}</a>
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;">
-            Welcome to the  RideFuze team. We look forward to growing and together!
+            We look forward to growing together and achieving great things!
         </p>
         <p style="color: #344054; font-size: 16px; font-weight: 400;"><b>Best regards</b>,<br />Team RideFuze</p>
         <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
