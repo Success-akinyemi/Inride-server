@@ -3,10 +3,12 @@ import AppSettingsModel from "../model/AppSettings.js";
 import AvailableActiveRideModel from "../model/AvailableActiveRide.js";
 import DriverModel from "../model/Driver.js";
 import ForgotItemModel from "../model/ForgotItem.js";
+import NotificationModel from "../model/Notifications.js";
 import PassengerModel from "../model/Passenger.js";
 import RideModel from "../model/Rides.js";
 import RideTransactionModel from "../model/RideTransactions.js";
 import SafteyModel from "../model/Saftey.js";
+import { sendNotificationToAccount } from "./pushNotification.controllers.js";
 
 // GET ALL RIDES OF A DRIVER
 export async function getDriverRides(req, res) {
@@ -531,6 +533,21 @@ export async function reportForgotItem(req, res) {
     })
 
     //can email user and passenger here or any other action
+
+    //notify driver
+    await NotificationModel.create({
+      accountId: getRide?.driverId,
+      message: `Passenger Forgot Item in your vehicle. Description: ${description}`
+    })
+    //Push notification
+    try {
+      sendNotificationToAccount({
+        accountId: getRide?.driverId,
+        message: `Passenger Forgot Item in your vehicle. Description: ${description}`
+      })
+    } catch (error) {
+      console.log('UNABLE TO SEND FORGOT ITEM PUSH NOTIFICATION', error)
+    }
   } catch (error) {
     console.log('UNABLE TO REPORT FORGOTTEN ITEM', error)
     sendResponse(res, 500, false, 'Unable to report forgotten item')

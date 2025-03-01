@@ -1866,6 +1866,90 @@ paths:
         500:
           description: Server error
 
+  /rides/afterRideFeedBack:
+    post:
+      tags:
+        - General 
+      summary: After Ride feed back
+      description: This endpoint collect the after ride feed back from either driver or driver
+      parameters:
+        - name: body
+          in: body
+          required: true
+            - rating
+            - comment
+            - rideId
+          schema:
+            type: object
+            properties:
+              rating:
+                type: number
+              comment:
+                type: string
+              rideId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /rides/reportForgotItem:
+    post:
+      tags:
+        - Passenger 
+      summary: Forgot Item
+      description: This endpoint collect forgot items request from user
+      parameters:
+        - name: body
+          in: body
+          required: true
+            - description
+            - rideId
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+              rideId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
+  /rides/saftey:
+    post:
+      tags:
+        - General 
+      summary: Saftey
+      description: This endpoint to report saftey issues
+      parameters:
+        - name: body
+          in: body
+          required: true
+            - safteyIssue
+            - rideId
+          schema:
+            type: object
+            properties:
+              safteyIssue:
+                type: string
+              rideId:
+                type: string
+      responses:
+        200:
+          description: Success
+        400:
+          description: User error
+        500:
+          description: Server error
+
   /driver/payout/payoutRequest:
     post:
       tags:
@@ -2773,3 +2857,26 @@ paths:
         500:
           description: Server error
               
+  /pushNotification/subscribeEmail:
+    post:
+      tags:
+        - Subscription
+      summary: allows a user to subscribe to email notification. 
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+      responses:
+        201:
+          description: Subscription saved - true
+        400:
+          description: User error. success - false
+        500:
+          description: Server error
+ 

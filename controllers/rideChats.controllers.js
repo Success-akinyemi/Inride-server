@@ -6,11 +6,29 @@ import NotificationModel from "../model/Notifications.js";
 import PassengerModel from "../model/Passenger.js";
 import RideChatModel from "../model/RideChats.js";
 import RideModel from "../model/Rides.js";
+import UserRideModel from "../model/UserRides.js";
 import WarningMessageModel from "../model/WarningMessages.js";
+
+//GET CUSTOMERS RIDE CHATS
+export async function getCustomerChat(req, res) {
+    const { limit = 10, page = 1, startDate, endDate } = req.query;
+    const { passengerId, driverId } = req.user || {}
+    const accountId = passengerId || driverId
+    try {
+        const getUserRides = await UserRideModel.findOne({ accountId })
+
+        //using the rideIds in the rides array check the RideChatModel for the corresponding ride
+        //also take not of the page limit startDate and endDate
+    } catch (error) {
+        console.log('UNABLE TO GET CUSTOMER CHAT', error)
+        sendResponse(res, 500, false, 'Unable to get customer chat')
+    }
+}
 
 //GET ALL CHATS
 export async function getChats(req, res) {
     const { limit = 10, page = 1, startDate, endDate } = req.query;
+    const { passengerId, driverId } = req.user || {}
   
     try {
       // Build the query object

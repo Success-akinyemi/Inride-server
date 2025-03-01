@@ -6,6 +6,7 @@ import NotificationModel from "../model/Notifications.js";
 import PassengerModel from "../model/Passenger.js";
 import cron from 'node-cron';
 import { sendNotificationById } from "./pushNotification.controllers.js";
+import EmailSubscriberModel from "../model/EmailSubscribers.js";
 
 // Function to check for scheduled emails and send them
 async function checkAndSendScheduledEmails() {
@@ -33,18 +34,18 @@ async function checkAndSendScheduledEmails() {
 
             // Fetch recipients based on accountType
             if (accountType === 'driver') {
-                const drivers = await DriverModel.find({}, 'email firstName lastName'); // Fetch emails and names
+                const drivers = await EmailSubscriberModel.find({}, 'email firstName lastName'); // Fetch emails and names
                 recipients = drivers.map(driver => ({ email: driver.email, name: `${driver.firstName} ${driver.lastName}` || '' }));
             } else if (accountType === 'passenger') {
-                const passenger = await PassengerModel.find({}, 'email firstName lastName'); // Fetch emails and names
+                const passenger = await EmailSubscriberModel.find({}, 'email firstName lastName'); // Fetch emails and names
                 recipients = passenger.map(passenger => ({ email: passenger.email, name: `${passenger.firstName} ${passenger.lastName}` || '' }));
             } else if (accountType === 'admin') {
-                const admin = await AdminUserModel.find({}, 'email firstName lastName'); // Fetch emails and names
+                const admin = await EmailSubscriberModel.find({}, 'email firstName lastName'); // Fetch emails and names
                 recipients = admin.map(admin => ({ email: admin.email, name: `${admin.firstName} ${admin.lastName}` || '' }));
             } else if (!accountType || newCms?.allUsers === true) {
-                const drivers = await DriverModel.find({}, 'email firstName lastName');
-                const passenger = await PassengerModel.find({}, 'email firstName lastName');
-                const admin = await AdminUserModel.find({}, 'email firstName lastName');
+                const drivers = await EmailSubscriberModel.find({}, 'email firstName lastName');
+                const passenger = await EmailSubscriberModel.find({}, 'email firstName lastName');
+                const admin = await EmailSubscriberModel.find({}, 'email firstName lastName');
                 recipients = [
                     ...drivers.map(driver => ({ email: driver.email, name: `${driver.firstName} ${driver.lastName}` || '' })),
                     ...passenger.map(passenger => ({ email: passenger.email, name: `${passenger.firstName} ${passenger.lastName}` || '' })),

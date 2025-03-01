@@ -2,8 +2,9 @@ import { sendResponse } from '../middlewares/utils.js';
 import PushNotificationModel from '../model/PushNotifications.js';
 import CmsModel from '../model/Cms.js';
 import admin from '../middlewares/firebase.js';
+import EmailSubscriberModel from '../model/EmailSubscribers.js';
 
-
+//save data for push notification
 export async function saveSubscription(req, res) {
     const { email, accountId, accountType, data } = req.body;
 
@@ -69,6 +70,34 @@ export async function saveSubscription(req, res) {
     } catch (error) {
         console.error('UNABLE TO SAVE SUBSCRIPTION', error);
         return sendResponse(res, 500, false, 'Unable to save subscription request')
+    }
+}
+
+//save data for email notification
+export async function subscribeEmail(req, res) {
+    const { email } = req.body
+    const { passengerId, firstName: passengerFirstName, lastName: passengerLastName } = req.user
+    const { driverId, firstName: driverFirstName, lastName: driverLastName } = req.user
+    const firstName = passengerFirstName || driverFirstName
+    const lastName = passengerLastName || driverLastName
+    if(!email){
+        sendResponse(res, 400, false, 'Email address is required')
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
+    try {
+        const newSubscriber = EmailSubscriberModel.create({
+            accountId: passengerId || driverId,
+            email,
+            accountType: passengerId ? 'passenger' : 'driver',
+            firstName, 
+            lastName
+        })
+
+        sendResponse(res, 201, true, 'Subscription scuccessful')
+    } catch (error) {
+        console.log('UNABLE TO SUBSCRIBE USER EMAIL', error)
+        sendResponse(res, 500, false, 'Unable to save mail notifications')
     }
 }
 

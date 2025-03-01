@@ -562,11 +562,13 @@ export async function rideComplete({ socket, res, data }) {
       const amount = Number(Number(getAppSetting?.earningCommission) /100) * getRide?.charge
       const finalAmount = Number(getRide?.charge) - amount
       getDriver.earnings += finalAmount
+      getDriver.activeRide = ''
       await getDriver.save()
     } else{
       const amount = Number(Number(getAppSetting?.earningCommission) /100) * getRide?.charge
       const finalAmount = Number(getRide?.charge) - amount
       getDriver.earnings += finalAmount
+      getDriver.activeRide = ''
       await getDriver.save()
     }
 

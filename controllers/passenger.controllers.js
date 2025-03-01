@@ -20,6 +20,7 @@ import RideChatModel from "../model/RideChats.js";
 import NotificationModel from "../model/Notifications.js";
 import AvailableActiveRideModel from "../model/AvailableActiveRide.js";
 import { sendNotificationToAccount } from "./pushNotification.controllers.js";
+import UserRideModel from "../model/UserRides.js";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
@@ -229,6 +230,18 @@ export async function requestRide({ socket, data, res }) {
       scheduleDate,
       scheduleTime,
     });
+
+    //UPDATE USER RIDE ARRAY
+    const getRideUserArray = UserRideModel.findOne({ accountId: passengerId })
+    if(!getRideUserArray){
+      await UserRideModel({
+        accountId: passengerId,
+        rides: [rideId]
+      })
+    } else {
+      getRideUserArray.rides.push(rideId)
+      await getRideUserArray.save()
+    }
 
     //new notification
     await NotificationModel.create({
@@ -520,6 +533,18 @@ export async function requestDriver({ data, socket, res }) {
       findRide.driverId = driverId
       findRide.status = 'Requested'
       await findRide.save()
+
+      //UPDATE USER RIDE ARRAY
+      const getRideUserArray = UserRideModel.findOne({ accountId: driverId })
+      if(!getRideUserArray){
+        await UserRideModel({
+          accountId: driverId,
+          rides: [rideId]
+        })
+      } else {
+        getRideUserArray.rides.push(rideId)
+        await getRideUserArray.save()
+      }
   
       const getDriverPrice = await driverPriceModel.findOne({ rideId  })
       if(!getDriverPrice){
