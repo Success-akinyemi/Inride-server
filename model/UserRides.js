@@ -11,5 +11,5 @@ const UserRidesSchema = new mongoose.Schema({
 { timestamps: true }
 )
 
-const UserRideModel = mongoose.models.userRide || mongoose.model('userRide', UserRidesSchema);
+const UserRideModel = mongoose.model('userRideHistroy', UserRidesSchema);
 export default UserRideModel;

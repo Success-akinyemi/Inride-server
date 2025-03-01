@@ -232,7 +232,7 @@ export async function requestRide({ socket, data, res }) {
     });
 
     //UPDATE USER RIDE ARRAY
-    const getRideUserArray = UserRideModel.findOne({ accountId: passengerId })
+    const getRideUserArray = await UserRideModel.findOne({ accountId: passengerId })
     if(!getRideUserArray){
       await UserRideModel({
         accountId: passengerId,
@@ -535,7 +535,7 @@ export async function requestDriver({ data, socket, res }) {
       await findRide.save()
 
       //UPDATE USER RIDE ARRAY
-      const getRideUserArray = UserRideModel.findOne({ accountId: driverId })
+      const getRideUserArray = await UserRideModel.findOne({ accountId: driverId })
       if(!getRideUserArray){
         await UserRideModel({
           accountId: driverId,

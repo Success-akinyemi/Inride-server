@@ -287,7 +287,7 @@ const RequestRide = () => {
 const AutocompleteInput = ({ label, onSelect, isMapsLoaded }) => {
   const { ready, value, suggestions: { status, data }, setValue, clearSuggestions } = usePlacesAutocomplete({
     debounce: 2000,
-    componentRestrictions: { country: ['NG', 'US'] },
+    componentRestrictions: { country: ['US'] },
   });
 
   if (!isMapsLoaded) {
