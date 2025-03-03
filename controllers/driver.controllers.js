@@ -256,7 +256,7 @@ export async function acceptRideRequest({ data, socket, res }) {
 //ACCEPT EDIT RIDE REQUEST FROM PASSENGER
 export async function acceptEditRideRquest({ data, socket, res }) {
   const { rideId, price } = data
-  const { driverId } = socket.user;
+  const { driverId, firstName, lastName } = socket.user;
   try {
     if(!rideId){
       const message = 'The ride Id is required'
@@ -322,6 +322,16 @@ export async function acceptEditRideRquest({ data, socket, res }) {
       message: `You accepted passenger ride edit request for ride ${rideId}.`
     })
 
+    //push notification to passenger
+    try {
+      sendNotificationToAccount({
+        accountId: getPassenger.passengerId,
+        message : `${firstName} ${lastName} (Driver) has accepted your ride edit request.`
+      })
+    } catch (error) {
+      console.log('UNABLE TO SEND SHARE RIDE WITH FRIENDS PUSH NOTIFICATION', error)
+    }
+
     getEditRideRequest.status = 'Accepted'
     await getEditRideRequest.save()
 
@@ -338,7 +348,7 @@ export async function acceptEditRideRquest({ data, socket, res }) {
             });
           } else {
             // Log if connection is not found, and skip to the next
-            console.log(`No active connection for passenger: ${getRide?.passengerId}`);
+            console.log(`No active connection for passenger: ${getRide.passengerId}`);
           }
 
     const message = 'Your new price bid has been sent to the passenger';
