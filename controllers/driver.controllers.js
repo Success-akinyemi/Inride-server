@@ -521,6 +521,14 @@ export async function startRide({ data, socket, res}) {
     } catch (error) {
       console.log('PASSENGER RIDE STARTED', error)
     }
+    try {
+      sendNotificationToAccount({
+        accountId: getRide.driverId,
+        message:  `Ride: ${getRide.rideId} has been started, heading to destination.`
+      })
+    } catch (error) {
+      console.log('PASSENGER RIDE STARTED', error)
+    }
 
     const message = 'Ride has started'
     if(res) sendResponse(res, 200, true, message)
@@ -637,7 +645,7 @@ export async function cancelRide({ res, data, socket}) {
     const getPassengerId = getRide.passengerId
     const getPassenger = await PassengerModel.findOne({ getPassengerId })
     const appSettings = await AppSettingsModel.findOne()
-    const getDriver = await DriverModel.findOne({ driverId })
+    const getDriver = await DriverModel.findOne({ driverId: socket.user.driverId })
     const driverId = getDriver?.driverId
     const getDriverLocation = await DriverLocationModel.findOne({ driverId })
     const getRideTransaction =  await RideTransactionModel.findOne({ rideId })
