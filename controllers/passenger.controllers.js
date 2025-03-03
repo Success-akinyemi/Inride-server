@@ -1446,7 +1446,7 @@ export async function cancelRide({ data, socket, res}) {
       getRide.cancelReason = reason
       await getRide.save()
 
-      getPassenger += finalAmount
+      getPassenger.wallet += finalAmount
       await getPassenger.save()
 
       const getDriverId = getRide?.driverId
