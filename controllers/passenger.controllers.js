@@ -1533,6 +1533,7 @@ export async function cancelRide({ data, socket, res}) {
     }
   
     } catch (error) {
+      console.log('CANCEL RIDE ERROR PASSENGER', error)
       const message = 'Unable to cancel ride'
       if(res) sendResponse(res, 404, false, message)
         if(socket) socket.emit('cancelRide', { success: false, message })

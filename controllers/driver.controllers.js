@@ -394,7 +394,7 @@ export async function cancelRideRequest({ data, socket, res }) {
     if (res) return sendResponse(res, 200, true, message);
     if (socket) socket.emit('cancelRideRequest', { success: true, message });
   } catch (error) {
-    console.log('ERROR CANCELING RIDE', error);
+    console.log('ERROR CANCELING RIDE DRIVER', error);
     const message = 'Error canceling ride';
     if (res) return sendResponse(res, 500, false, message);
     if (socket) socket.emit('cancelRideRequest', { success: false, message });
