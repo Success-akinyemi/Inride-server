@@ -1306,8 +1306,7 @@ export async function editRide({ data, socket, res}) {
     
     const pendingRideRequest = await PendingEditRideRequestModel.findOne({ rideId })
     if(!pendingRideRequest){      
-      let newDestinations = getRide?.to
-      newDestinations.push(to)
+      let newDestinations = [...(getRide?.to || []), ...(to || [])];
       
       const fromId = getRide?.fromId
       console.log('FROM ID', fromId, 'NEW DESTINATIONS', newDestinations, 'TO', to)

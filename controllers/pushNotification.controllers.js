@@ -56,11 +56,12 @@ export async function saveSubscription(req, res) {
                 body: 'Welcome to RideFuze',
                 image, // Fixed image URL
             },
+            token: data
         };
 
         try {
             // Send the notification using FCM
-            await admin.messaging().sendToDevice(data, notificationPayload);
+            await admin.messaging().send(notificationPayload);
             console.log(`Notification sent to ${email}`);
         } catch (error) {
             console.error(`Failed to send notification to ${email}`, error);
