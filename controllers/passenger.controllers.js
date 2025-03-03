@@ -1584,7 +1584,7 @@ export async function trackRide({ data, res, socket }) {
     if(socket) socket.emit('trackRide', { success: false, message })
     return
   }
-  const getDriverLocation = DriverLocationModel.findOne({ driverId })
+  const getDriverLocation = await DriverLocationModel.findOne({ driverId })
   if(!getDriverLocation){
     const message = 'No Location found'
     if(res) sendResponse(res, 404, false, message)
