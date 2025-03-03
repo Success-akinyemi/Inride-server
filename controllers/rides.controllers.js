@@ -91,7 +91,7 @@ export async function getDriverRide(req, res){
     return
   }
   try {
-    const getRide = RideModel.findOne({ rideId })
+    const getRide = await RideModel.findOne({ rideId })
     if(!getRide){
       const message = 'Ride with this ID does not exist'
       sendResponse(res, 404, false, message)
