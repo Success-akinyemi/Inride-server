@@ -1348,17 +1348,17 @@ export async function editRide({ data, socket, res}) {
       if(socket) socket.emit('editRide', { success: true, message })
       return
     } else {
-      pendingRideRequest?.to.push(to)
-      await pendingRideRequest.save()
       
       const fromId = getRide?.fromId
-      const destination = pendingRideRequest?.to
-      const totalDistanceMiles = await calculateTotalDistance({ fromId, destination });
+      let newDestinations = [...(pendingRideRequest?.to || []), ...(to || [])]
+      
+      const totalDistanceMiles = await calculateTotalDistance({ fromId, to: newDestinations });
       
       console.log('New Total Ride Distance:', totalDistanceMiles, 'miles');
 
       pendingRideRequest.totalDistance = totalDistanceMiles
       pendingRideRequest.status = 'Pending'
+      pendingRideRequest.to = newDestinations
       await pendingRideRequest.save()
 
             //make request to driver
@@ -1391,6 +1391,7 @@ export async function editRide({ data, socket, res}) {
     }
 
   } catch (error) {
+    console.log('UANBLE TO EDIT RIDE', error)
     const message = 'Unable to edit ride'
     if(res) sendResponse(res, 400, false, message)
     if(socket) socket.emit('editRide', { success: false, message})
