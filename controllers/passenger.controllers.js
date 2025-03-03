@@ -1430,6 +1430,10 @@ export async function cancelRide({ data, socket, res}) {
 
     const rideCreatedAt = new Date(getRide.createdAt);
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+   
+    const getDriverId = getRide?.driverId
+    const getDriver = await DriverModel.findOne({ driverId: getDriverId })
+    const getDriverLocation = await DriverLocationModel.findOne({ driverId: getDriverId })
 
     //check that the ride is not more than 5min old based on the createdAt of the getRide
     if(rideCreatedAt < fiveMinutesAgo){
@@ -1449,56 +1453,16 @@ export async function cancelRide({ data, socket, res}) {
       getPassenger.wallet += finalAmount
       await getPassenger.save()
 
-      const getDriverId = getRide?.driverId
-      const getDriver = await DriverModel.findOne({ getDriverId })
-      const getDriverLocation = await DriverLocationModel.findOne({ getDriverId })
-
       //update driver
-      if(getDriver.status) getDriver.status = 'online'
-      if(getDriver.activeRide) getDriver.activeRide = ''
-      await getDriver.save()
-      getDriverLocation.status = 'online'
-      getDriverLocation.isActive = true
-      await getDriverLocation.save()
-      
-      getRideTransaction.status = 'Failed'
-      await getRideTransaction.save()
-
-      //new notification
-      await NotificationModel.create({
-        accountId: passengerId,
-        message: `You cancel you ride. ${getRide?.rideId}`
-      })
-
-      //alreat driver
-      const driverId = getRide.driverId
-      const driverSocketId = driverConnections.get(driverId)
-      if(driverSocketId){
-        const messsage = 'Passenger has canceled the Ride with you'
-        driverNamespace.to(driverSocketId).emit('passengerCancelRide', messsage)
+      if(getDriver){
+        if(getDriver.status) getDriver.status = 'online'
+        if(getDriver.activeRide) getDriver.activeRide = ''
+        await getDriver.save()
+        getDriverLocation.status = 'online'
+        getDriverLocation.isActive = true
+        await getDriverLocation.save() 
       }
-      
-      const message = `Your Ride has been Canceled and ${appSettings?.cancelationRidePercent}% has been deducted as cacelation fee. Your wallet has been funded with the balance`
-      if(res) sendResponse(res, 200, true, message)
-      if(socket) socket.emit('cancelRide', { success: true, message })
-      return
 
-    } else {
-      getRide.status === 'Canceled'
-      getRide.cancelReason = reason
-      await getRide.save()
-
-      getPassenger.wallet += getRide.charge
-      await getPassenger.save()
-
-      //update driver
-      getDriver.status = 'online'
-      getDriver.activeRide = ''
-      await getDriver.save()
-      getDriverLocation.status = 'online'
-      getDriverLocation.isActive = true
-      await getDriverLocation.save()
-      
       getRideTransaction.status = 'Failed'
       await getRideTransaction.save()
 
@@ -1517,13 +1481,67 @@ export async function cancelRide({ data, socket, res}) {
       }
 
       //PUSH NOTIFICATION
-      try {
-        sendNotificationToAccount({
-          accountId: getRide.driverId,
-          message:  'Passenger has canceled the Ride with you'
-        })
-      } catch (error) {
-        console.log('PASSENGER CANCEL RIDE', error)
+      if(getDriver){
+        try {
+          sendNotificationToAccount({
+            accountId: getRide.driverId,
+            message:  'Passenger has canceled the Ride with you'
+          })
+        } catch (error) {
+          console.log('PASSENGER CANCEL RIDE', error)
+        }
+      }
+      
+      const message = `Your Ride has been Canceled and ${appSettings?.cancelationRidePercent}% has been deducted as cacelation fee. Your wallet has been funded with the balance`
+      if(res) sendResponse(res, 200, true, message)
+      if(socket) socket.emit('cancelRide', { success: true, message })
+      return
+
+    } else {
+      getRide.status === 'Canceled'
+      getRide.cancelReason = reason
+      await getRide.save()
+
+      getPassenger.wallet += getRide.charge
+      await getPassenger.save()
+
+      //update driver
+      if(getDriver){
+        getDriver.status = 'online'
+        getDriver.activeRide = ''
+        await getDriver.save()
+        getDriverLocation.status = 'online'
+        getDriverLocation.isActive = true
+        await getDriverLocation.save()
+      }
+
+      getRideTransaction.status = 'Failed'
+      await getRideTransaction.save()
+
+      //new notification
+      await NotificationModel.create({
+        accountId: passengerId,
+        message: `You cancel you ride. ${getRide?.rideId}`
+      })
+
+      //alreat driver
+      const driverId = getRide.driverId
+      const driverSocketId = driverConnections.get(driverId)
+      if(driverSocketId){
+        const messsage = 'Passenger has canceled the Ride with you'
+        driverNamespace.to(driverSocketId).emit('passengerCancelRide', messsage)
+      }
+
+      //PUSH NOTIFICATION
+      if(getDriver){
+        try {
+          sendNotificationToAccount({
+            accountId: getRide.driverId,
+            message:  'Passenger has canceled the Ride with you'
+          })
+        } catch (error) {
+          console.log('PASSENGER CANCEL RIDE', error)
+        }
       }
 
       const message = 'Your Ride has been Canceled. Your wallet has been funded with the balance'

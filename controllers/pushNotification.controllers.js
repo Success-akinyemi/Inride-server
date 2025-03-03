@@ -56,7 +56,7 @@ export async function saveSubscription(req, res) {
                 body: 'Welcome to RideFuze',
                 image, // Fixed image URL
             },
-            token: data
+            token: data.deviceToken
         };
 
         try {
@@ -148,7 +148,7 @@ export async function sendNotificationById(cmsId) {
 
         // Collect all device tokens
         const deviceTokens = pushSubscribers
-            .map(subscriber => subscriber.data) // Extract device tokens
+            .map(subscriber => subscriber.data.deviceToken) // Extract device tokens
             .filter(token => token); // Filter out invalid or empty tokens
 
         if (deviceTokens.length === 0) {
@@ -335,7 +335,7 @@ export async function sendNotificationById(cmsId) {
             data: {
                 url: url || '',
             },
-            token: data, // Use the device token directly
+            token: data.deviceToken, // Use the device token directly
         };
 
         try {
