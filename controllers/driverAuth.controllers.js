@@ -15,6 +15,9 @@ import RefreshTokenModel from "../model/RefreshToken.js";
 export async function registerWithPassengerAccount(req, res) {
     const { mobileNumber } = req.body
 
+    //ensure it is a us number and start with +1
+
+
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Please provide your passenger mobile number to perform this action')
     }
@@ -44,7 +47,7 @@ export async function registerWithPassengerAccount(req, res) {
             /**
              * REMOVE LATTER AFTER WORK DONE
             const sendOtpCode = await twilioClient.messages.create({
-                body: `Your RideFuzz Otp code is: ${otpCode}`,
+                body: `Your RideFuze Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
                 to: `${mobileNumber}`,
             })
@@ -596,7 +599,7 @@ export async function signin(req, res) {
         if(otpCode){
             /**
              const sendOtpCode = await twilioClient.messages.create({
-                 body: `Your RideFuzz login Otp code is: ${otpCode}`,
+                 body: `Your RideFuze login Otp code is: ${otpCode}`,
                  from: `${process.env.TWILIO_PHONE_NUMBER}`,
                  to: `${mobileNumber}`,
              })

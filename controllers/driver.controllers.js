@@ -309,7 +309,7 @@ export async function acceptEditRideRquest({ data, socket, res }) {
 
     //update ride price
     if(getRide.paid){
-      Number(getEditRideRequest.price) -= Number(getRide?.charge)
+      Number(getEditRideRequest.price) -= Number(getRide.charge)
       await getEditRideRequest.save()
     } else {
       getRide.charge = getEditRideRequest.price
@@ -326,7 +326,7 @@ export async function acceptEditRideRquest({ data, socket, res }) {
     await getEditRideRequest.save()
 
     //send response back to passenger
-    const passengerSocketId = passengerConnections.get(getRide?.passengerId); // Fetch socket ID
+    const passengerSocketId = passengerConnections.get(getRide.passengerId); // Fetch socket ID
           if (passengerSocketId) {
     
             // Emit to passenger if socket ID is found
@@ -334,7 +334,7 @@ export async function acceptEditRideRquest({ data, socket, res }) {
               success: true, 
               message: `Driver has agreed to your ride update reqeuest. proceed to make payment`,
               price: getEditRideRequest.price,
-              rideId: getRide?.rideId
+              rideId: getRide.rideId
             });
           } else {
             // Log if connection is not found, and skip to the next

@@ -35,7 +35,7 @@ export async function registerNumber(req, res) {
             /**
              * //REMOVE LATER AFTER WORK DONE
             const sendOtpCode = await twilioClient.messages.create({
-                body: `Your RideFuzz Otp code is: ${otpCode}`,
+                body: `Your RideFuze Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
                 to: `${mobileNumber}`,
             })
@@ -297,7 +297,7 @@ export async function signin(req, res) {
         if(otpCode){
             /**
              const sendOtpCode = await twilioClient.messages.create({
-                 body: `Your RideFuzz login Otp code is: ${otpCode}`,
+                 body: `Your RideFuze login Otp code is: ${otpCode}`,
                  from: `${process.env.TWILIO_PHONE_NUMBER}`,
                  to: `${mobileNumber}`,
              })
