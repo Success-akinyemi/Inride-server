@@ -784,7 +784,7 @@ export async function chatWithPassenger({ socket, data, res}) {
     //alert passenger
     const passengerSocketId = passengerConnections.get(getRide.passengerId)
     if(passengerSocketId){
-      const message = getChats.chats
+      const message = getChats?.chats
       passengerNamespace.to(passengerSocketId).emit('chatWithDriver', { success: true, message })
     } else {
       console.log('PASSENGER SOCKET FOR CHATS NOT FOUND> PASSENGER NOT ONLINE')

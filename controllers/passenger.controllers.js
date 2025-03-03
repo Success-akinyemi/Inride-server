@@ -1454,14 +1454,14 @@ export async function cancelRide({ data, socket, res}) {
       const getDriverLocation = await DriverLocationModel.findOne({ getDriverId })
 
       //update driver
-      getDriver.status = 'online'
-      getDriver.activeRide = ''
+      getDriver?.status = 'online'
+      getDriver?.activeRide = ''
       await getDriver.save()
-      getDriverLocation.status = 'online'
-      getDriverLocation.isActive = true
+      getDriverLocation?.status = 'online'
+      getDriverLocation?.isActive = true
       await getDriverLocation.save()
       
-      getRideTransaction.status = 'Failed'
+      getRideTransaction?.status = 'Failed'
       await getRideTransaction.save()
 
       //new notification
