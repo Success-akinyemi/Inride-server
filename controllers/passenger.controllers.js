@@ -1310,7 +1310,7 @@ export async function editRide({ data, socket, res}) {
       
       const fromId = getRide?.fromId
       console.log('FROM ID', fromId, 'NEW DESTINATIONS', newDestinations, 'TO', to)
-      const totalDistanceMiles = await calculateTotalDistance({ fromId, newDestinations });
+      const totalDistanceMiles = await calculateTotalDistance({ fromId, to: newDestinations });
       
       console.log('New Total Ride Distance:', totalDistanceMiles, 'miles');
 
