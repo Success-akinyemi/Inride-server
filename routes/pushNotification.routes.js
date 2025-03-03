@@ -11,6 +11,8 @@ router.post('/subscribeEmail', AuthenticateUser, VerifyAccount, controllers.subs
 
 //GET ROUTES
 //router.get('/sendNotification', controllers.sendNotification)
+router.get('/getNotification', controllers.getNotification)
+
 
 //PUT ROUTES
 

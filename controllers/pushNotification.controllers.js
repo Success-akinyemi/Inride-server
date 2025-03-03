@@ -351,3 +351,12 @@ export async function sendNotificationById(cmsId) {
         return { success: false, message: 'Unable to send notification.' };
     }
 }
+
+export async function getNotification(req, res){
+    try {
+        const noti = await PushNotificationModel.find();
+        res.status(200).json(noti)
+    } catch (error) {
+        console.log('ERROR', error)
+    }
+}
