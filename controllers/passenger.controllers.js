@@ -1282,7 +1282,7 @@ export async function editRide({ data, socket, res}) {
     return;
   }
   try {
-    const getRide = RideModel.findOne({ rideId })
+    const getRide = await RideModel.findOne({ rideId })
     if(!getRide){
       const message = 'No ride with this Id found'
       if(res) sendResponse(res, 404, false, message)
