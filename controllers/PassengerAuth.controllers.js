@@ -96,14 +96,16 @@ export async function resendOtp(req, res) {
 //verify email and mobile number
 export async function verifyPersonalDetails(req, res) {
     const { email, mobileNumber  } = req.body
+    const accountId = req.cookies.inridepassengertoken;
+
     if(!email) return sendResponse(res, 400, false, 'Provide an Email address')
     if(!mobileNumber) return sendResponse(res, 400, false, 'Provide a mobile number')
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
     try {
-        const findUser = await PassengerModel.findOne({ mobileNumber })
+        const findUser = await PassengerModel.findOne({ passengerId: accountId })
         if(!findUser){
-            return sendResponse(res, 404, false, 'Mobile number does not exist' )
+            return sendResponse(res, 404, false, 'Account does not exist' )
         }
         if(!findUser?.verified){
             return sendResponse(res, 403, false, 'Account not verified')
@@ -434,7 +436,7 @@ export async function verifyToken(req, res) {
 
 //signup with google
 export async function signupWithGoogle(req, res) {
-    const { email } = req.body
+    const { email, profileImg, name } = req.body
     if(!email){
         return sendResponse(res, 400, false, 'Provide a email address')
     }
@@ -453,7 +455,10 @@ export async function signupWithGoogle(req, res) {
         const newUser = await PassengerModel.create({
             email: email,
             passengerId: newPassengerId,
-            verified: true
+            verified: true,
+            accountImg: profileImg,
+            profileImg,
+            firstName: name
         })
 
         // Generate Tokens
@@ -669,5 +674,15 @@ export async function createnew(req, res) {
         sendResponse(res, 201, true, 'User created', newPassenger)
     } catch (error) {
         console.log('error', error)
+    }
+}
+
+export async function dele(req, res){
+    try {
+        const deletingUser = await PassengerModel.find()
+
+        sendResponse(res, 200, true, 'DELETED', deletingUser)
+    } catch (error) {
+        console.log('ERROR DELE', error)
     }
 }

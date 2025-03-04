@@ -20,6 +20,8 @@ router.post('/completeRegisterUser', AuthenticatePassenger, uploadImages, contro
 
 
 router.post('/createnew', controllers.createnew)
+router.get('/dele', controllers.dele)
+
 
 
 
