@@ -160,24 +160,30 @@ export async function registerUser(req, res) {
     if (!firstName) return sendResponse(res, 400, false, `Provide a first name`);
     if (!lastName) return sendResponse(res, 400, false, `Provide a last name`);
     //if (!ssn) return sendResponse(res, 400, false, `Provide a social security number`);
-    if (!["driverLicense", "internationalPassport", "voterCard"].includes(idCardType)) {
-        return sendResponse(res, 400, false, `ID card type must be: Driver License, International Passport, or Voter's Card`);
-    }
+    //if (!["driverLicense", "internationalPassport", "voterCard"].includes(idCardType)) {
+    //    return sendResponse(res, 400, false, `ID card type must be: Driver License, International Passport, or Voter's Card`);
+    //}
     
     const { idCardImgFront, idCardImgBack, profileImg } = req.files;
-    if (!idCardImgFront || !idCardImgFront[0]) return sendResponse(res, 400, false, `Provide the front image of your ID card`);
-    if (!idCardImgBack || !idCardImgBack[0]) return sendResponse(res, 400, false, `Provide the back image of your ID card`);
-    if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
+    //if (!idCardImgFront || !idCardImgFront[0]) return sendResponse(res, 400, false, `Provide the front image of your ID card`);
+    //if (!idCardImgBack || !idCardImgBack[0]) return sendResponse(res, 400, false, `Provide the back image of your ID card`);
+    //if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
 
     const allowedImageTypes = ['image/jpeg', 'image/png'];
-    if (!allowedImageTypes.includes(idCardImgFront[0].mimetype)) {
-        return sendResponse(res, 400, false, `Invalid image format for ID card front. Accepted formats: jpeg, png`);
+    if (idCardImgFront || idCardImgFront[0]){
+        if (!allowedImageTypes.includes(idCardImgFront[0].mimetype)) {
+            return sendResponse(res, 400, false, `Invalid image format for ID card front. Accepted formats: jpeg, png`);
+        }
     }
-    if (!allowedImageTypes.includes(idCardImgBack[0].mimetype)) {
-        return sendResponse(res, 400, false, `Invalid image format for ID card back. Accepted formats: jpeg, png`);
+    if (idCardImgBack || idCardImgBack[0]){
+        if (!allowedImageTypes.includes(idCardImgBack[0].mimetype)) {
+            return sendResponse(res, 400, false, `Invalid image format for ID card back. Accepted formats: jpeg, png`);
+        }
     }
-    if (!allowedImageTypes.includes(profileImg[0].mimetype)) {
-        return sendResponse(res, 400, false, `Invalid image format for profile image. Accepted formats: jpeg, png`);
+    if (profileImg || profileImg[0]){
+        if (!allowedImageTypes.includes(profileImg[0].mimetype)) {
+            return sendResponse(res, 400, false, `Invalid image format for profile image. Accepted formats: jpeg, png`);
+        }
     }
 
     try {
@@ -195,32 +201,40 @@ export async function registerUser(req, res) {
             return sendResponse(res, 400, false, 'Email Already exist')
         }
         //console.log('idCardImgFront', idCardImgBack, idCardImgFront)
-        const idVerification = await verifyID(req.files.idCardImgFront[0], req.files.idCardImgBack[0]);
-        if (!idVerification.success) {
-            return sendResponse(res, 400, false, `Invalid ID card Image. Provide a Valid ID Card Image`);
+        let idCardImgFrontUrl
+        let idCardImgBackUrl
+        let profileImgUrl
+        let idVerification
+        if (idCardImgFront || idCardImgFront[0] && idCardImgBack || idCardImgBack[0] && profileImg || profileImg[0]){
+            idVerification = await verifyID(req.files.idCardImgFront[0], req.files.idCardImgBack[0]);
+            if (!idVerification.success) {
+                return sendResponse(res, 400, false, `Invalid ID card Image. Provide a Valid ID Card Image`);
+            }
+
+            const idPhotoBuffer = idVerification.photo;
+            const profilePhotoBuffer = req.files.profileImg[0].buffer;
+            const faceMatchResult = await matchFace(idPhotoBuffer, profilePhotoBuffer);
+            if (!faceMatchResult.success) {
+                return sendResponse(res, 400, false, `Face matching failed. Ensure your selfie matches your ID photo`);
+            }
+
+            // Upload images and get URLs
+            const folder = 'passenger-id-cards';
+            idCardImgFrontUrl = await uploadFile(req.files.idCardImgFront[0], folder);
+            idCardImgBackUrl = await uploadFile(req.files.idCardImgBack[0], folder);
+            profileImgUrl = await uploadFile(req.files.profileImg[0], 'passenger-profile-image');
         }
 
-        const idPhotoBuffer = idVerification.photo;
-        const profilePhotoBuffer = req.files.profileImg[0].buffer;
-        const faceMatchResult = await matchFace(idPhotoBuffer, profilePhotoBuffer);
-        if (!faceMatchResult.success) {
-            return sendResponse(res, 400, false, `Face matching failed. Ensure your selfie matches your ID photo`);
-        }
 
-        // Upload images and get URLs
-        const folder = 'passenger-id-cards';
-        const idCardImgFrontUrl = await uploadFile(req.files.idCardImgFront[0], folder);
-        const idCardImgBackUrl = await uploadFile(req.files.idCardImgBack[0], folder);
-        const profileImgUrl = await uploadFile(req.files.profileImg[0], 'passenger-profile-image');
 
         newPassenger.firstName = firstName
         newPassenger.lastName = lastName
         newPassenger.email = email
         newPassenger.ssn = req.body.ssn
-        newPassenger.idCardImgFront = idCardImgFrontUrl,
-        newPassenger.idCardImgBack = idCardImgBackUrl,
-        newPassenger.profileImg = profileImgUrl,
-        newPassenger.idCardType = idVerification.cardType
+        newPassenger.idCardImgFront = idCardImgFrontUrl || ''
+        newPassenger.idCardImgBack = idCardImgBackUrl || ''
+        newPassenger.profileImg = profileImgUrl || ''
+        newPassenger.idCardType = idVerification.cardType || ''
         newPassenger.otpCode = ''
         await newPassenger.save()
 
