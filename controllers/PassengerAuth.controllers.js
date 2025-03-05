@@ -658,6 +658,15 @@ export async function completeRegisterUser(req, res) {
 }
 
 /** 
+ * export async function dele(req, res){
+    try {
+        const deletingUser = await PassengerModel.deleteMany()
+
+        sendResponse(res, 200, true, 'DELETED', deletingUser)
+    } catch (error) {
+        console.log('ERROR DELE', error)
+    }
+}
  */
 export async function createnew(req, res) {
     try {
@@ -691,12 +700,3 @@ export async function createnew(req, res) {
     }
 }
 
-export async function dele(req, res){
-    try {
-        const deletingUser = await PassengerModel.find()
-
-        sendResponse(res, 200, true, 'DELETED', deletingUser)
-    } catch (error) {
-        console.log('ERROR DELE', error)
-    }
-}
