@@ -521,6 +521,7 @@ export async function signinWithGoogle(req, res) {
     if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
     try { 
         const emailExist = await PassengerModel.findOne({ email: email })
+        console.log('emailExist', emailExist)
         if(!emailExist){
             return sendResponse(res, 404, false, 'this email does not exist exist')
         }
@@ -528,10 +529,14 @@ export async function signinWithGoogle(req, res) {
         // Generate Tokens
         const accessToken = emailExist.getAccessToken()
         const refreshToken = emailExist.getRefreshToken()
-        const newRefreshToken = await RefreshTokenModel.create({
-            accountId: emailExist.passengerId,
-            refreshToken: refreshToken
-        })
+
+        const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: emailExist.passengerId }) 
+        if(!refreshTokenExist){
+            const newRefreshToken = await RefreshTokenModel.create({
+                accountId: emailExist.passengerId,
+                refreshToken: refreshToken
+            })
+        }
    
 
         // Set cookies
