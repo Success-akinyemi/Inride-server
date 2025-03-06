@@ -148,6 +148,8 @@ export async function verifySSN(req, res) {
 }
 
 //REGISTER DETAILS
+/**
+ * 
 export async function registerUser(req, res) {
     const { email, firstName, lastName, ssn, idCardType, mobileNumber } = req.body;
     const accountId = req.cookies.inridepassengertoken;
@@ -164,7 +166,7 @@ export async function registerUser(req, res) {
     //    return sendResponse(res, 400, false, `ID card type must be: Driver License, International Passport, or Voter's Card`);
     //}
     
-    const { idCardImgFront, idCardImgBack, profileImg } = req.files;
+    const { idCardImgFront, idCardImgBack, profileImg } = req.files || {};
     //if (!idCardImgFront || !idCardImgFront[0]) return sendResponse(res, 400, false, `Provide the front image of your ID card`);
     //if (!idCardImgBack || !idCardImgBack[0]) return sendResponse(res, 400, false, `Provide the back image of your ID card`);
     //if (!profileImg || !profileImg[0]) return sendResponse(res, 400, false, `Provide a photo of your face`);
@@ -258,6 +260,130 @@ export async function registerUser(req, res) {
         
 
         res.clearCookie(`inridepassengertoken`)
+
+        // Set cookies
+        res.cookie('inrideaccesstoken', accessToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 15 * 60 * 1000, // 15 minutes
+        });
+        res.cookie('inrideaccessid', newPassenger?.passengerId, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        });
+
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, _id, ...userData } = newPassenger._doc;
+        return sendResponse(res, 200, true, userData, accessToken);
+    } catch (error) {
+        console.error('UNABLE TO REGISTER USER:', error);
+        return sendResponse(res, 500, false, `Unable to register user. Please try again.`);
+    }
+}
+ */
+
+export async function registerUser(req, res) {
+    const { email, firstName, lastName, ssn, idCardType, mobileNumber } = req.body;
+    const accountId = req.cookies.inridepassengertoken;
+
+    // Validate required fields
+    if (!email) return sendResponse(res, 400, false, `Provide an email address`);
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
+    if (!firstName) return sendResponse(res, 400, false, `Provide a first name`);
+    if (!lastName) return sendResponse(res, 400, false, `Provide a last name`);
+
+    // Ensure req.files is defined before destructuring
+    const files = req.files || {};
+    console.log('Uploaded Files:', files);  // Debugging line
+    const idCardImgFront = files.idCardImgFront && files.idCardImgFront.length > 0 ? files.idCardImgFront : null;
+    const idCardImgBack = files.idCardImgBack && files.idCardImgBack.length > 0 ? files.idCardImgBack : null;
+    const profileImg = files.profileImg && files.profileImg.length > 0 ? files.profileImg : null;
+    
+    const allowedImageTypes = ['image/jpeg', 'image/png'];
+    if (idCardImgFront[0]) {
+        if (!allowedImageTypes.includes(idCardImgFront[0].mimetype)) {
+            return sendResponse(res, 400, false, `Invalid image format for ID card front. Accepted formats: jpeg, png`);
+        }
+    }
+    if (idCardImgBack[0]) {
+        if (!allowedImageTypes.includes(idCardImgBack[0].mimetype)) {
+            return sendResponse(res, 400, false, `Invalid image format for ID card back. Accepted formats: jpeg, png`);
+        }
+    }
+    if (profileImg[0]) {
+        if (!allowedImageTypes.includes(profileImg[0].mimetype)) {
+            return sendResponse(res, 400, false, `Invalid image format for profile image. Accepted formats: jpeg, png`);
+        }
+    }
+
+    try {
+        const newPassenger = await PassengerModel.findOne({ passengerId: accountId });
+        if (!newPassenger) {
+            return sendResponse(res, 403, false, 'No Account found');
+        }
+        if (!newPassenger?.verified) {
+            return sendResponse(res, 403, false, 'Mobile number not verified');
+        }
+
+        const emailExist = await PassengerModel.findOne({ email });
+        if (emailExist) {
+            return sendResponse(res, 400, false, 'Email Already exist');
+        }
+
+        let idCardImgFrontUrl;
+        let idCardImgBackUrl;
+        let profileImgUrl;
+        let idVerification;
+
+        if (req.files.idCardImgFront && req.files.idCardImgBack && req.files.profileImg) {
+            idVerification = await verifyID(req.files.idCardImgFront[0], req.files.idCardImgBack[0]);
+            if (!idVerification.success) {
+                return sendResponse(res, 400, false, `Invalid ID card Image. Provide a Valid ID Card Image`);
+            }
+
+            const idPhotoBuffer = idVerification.photo;
+            const profilePhotoBuffer = req.files.profileImg[0].buffer;
+            const faceMatchResult = await matchFace(idPhotoBuffer, profilePhotoBuffer);
+            if (!faceMatchResult.success) {
+                return sendResponse(res, 400, false, `Face matching failed. Ensure your selfie matches your ID photo`);
+            }
+
+            // Upload images and get URLs
+            const folder = 'passenger-id-cards';
+            idCardImgFrontUrl = await uploadFile(req.files.idCardImgFront[0], folder);
+            idCardImgBackUrl = await uploadFile(req.files.idCardImgBack[0], folder);
+            profileImgUrl = await uploadFile(req.files.profileImg[0], 'passenger-profile-image');
+        }
+
+        newPassenger.firstName = firstName;
+        newPassenger.lastName = lastName;
+        newPassenger.email = email;
+        newPassenger.ssn = req.body.ssn;
+        newPassenger.idCardImgFront = idCardImgFrontUrl || '';
+        newPassenger.idCardImgBack = idCardImgBackUrl || '';
+        newPassenger.profileImg = profileImgUrl || '';
+        newPassenger.idCardType = idVerification?.cardType || '';
+        newPassenger.otpCode = '';
+        await newPassenger.save();
+
+        // Generate Tokens
+        const accessToken = newPassenger.getAccessToken();
+        const refreshToken = newPassenger.getRefreshToken();
+        const newRefreshToken = await RefreshTokenModel.create({
+            accountId: newPassenger.passengerId,
+            refreshToken: refreshToken
+        });
+
+        // Send welcome email to user
+        sendWelcomeEmail({
+            email: newPassenger.email,
+            name: newPassenger.firstName
+        });
+
+        res.clearCookie(`inridepassengertoken`);
 
         // Set cookies
         res.cookie('inrideaccesstoken', accessToken, {
