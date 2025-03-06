@@ -205,7 +205,11 @@ export async function registerUser(req, res) {
         let idCardImgBackUrl
         let profileImgUrl
         let idVerification
-        if (idCardImgFront || idCardImgFront[0] && idCardImgBack || idCardImgBack[0] && profileImg || profileImg[0]){
+        if (
+            (idCardImgFront && idCardImgFront[0]) &&
+            (idCardImgBack && idCardImgBack[0]) &&
+            (profileImg && profileImg[0])
+        ) {
             idVerification = await verifyID(req.files.idCardImgFront[0], req.files.idCardImgBack[0]);
             if (!idVerification.success) {
                 return sendResponse(res, 400, false, `Invalid ID card Image. Provide a Valid ID Card Image`);
