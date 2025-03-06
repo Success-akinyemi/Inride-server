@@ -19,7 +19,7 @@ router.post('/signinWithGoogle', controllers.signinWithGoogle)
 router.post('/completeRegisterUser', AuthenticatePassenger, uploadImages, controllers.completeRegisterUser)
 
 
-router.post('/createnew', controllers.createnew)
+//router.post('/createnew', controllers.createnew)
 //router.get('/dele', controllers.dele)
 
 
