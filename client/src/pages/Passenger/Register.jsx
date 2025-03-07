@@ -76,7 +76,6 @@ function Register() {
           name="firstName"
           value={formData.firstName}
           onChange={handleInputChange}
-          required
         />
       </div>
       <div>
@@ -86,7 +85,6 @@ function Register() {
           name="lastName"
           value={formData.lastName}
           onChange={handleInputChange}
-          required
         />
       </div>
       <div>
@@ -96,7 +94,6 @@ function Register() {
           name="email"
           value={formData.email}
           onChange={handleInputChange}
-          required
         />
       </div>
       <div>
@@ -106,7 +103,6 @@ function Register() {
           name="ssn"
           value={formData.ssn}
           onChange={handleInputChange}
-          required
         />
       </div>
       <div>
@@ -115,7 +111,6 @@ function Register() {
           name="idCardType"
           value={formData.idCardType}
           onChange={handleInputChange}
-          required
         >
           <option value="">SELECT ID CARD TYPE</option>
           <option value="driverLicense">Driver License</option>

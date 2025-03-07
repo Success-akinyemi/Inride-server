@@ -304,17 +304,17 @@ export async function registerUser(req, res) {
     const profileImg = files.profileImg && files.profileImg.length > 0 ? files.profileImg : null;
     
     const allowedImageTypes = ['image/jpeg', 'image/png'];
-    if (idCardImgFront[0]) {
+    if (req?.files?.idCardImgFront) {
         if (!allowedImageTypes.includes(idCardImgFront[0].mimetype)) {
             return sendResponse(res, 400, false, `Invalid image format for ID card front. Accepted formats: jpeg, png`);
         }
     }
-    if (idCardImgBack[0]) {
+    if (req?.files?.idCardImgBack) {
         if (!allowedImageTypes.includes(idCardImgBack[0].mimetype)) {
             return sendResponse(res, 400, false, `Invalid image format for ID card back. Accepted formats: jpeg, png`);
         }
     }
-    if (profileImg[0]) {
+    if (req?.files?.profileImg) {
         if (!allowedImageTypes.includes(profileImg[0].mimetype)) {
             return sendResponse(res, 400, false, `Invalid image format for profile image. Accepted formats: jpeg, png`);
         }
@@ -356,6 +356,8 @@ export async function registerUser(req, res) {
             const folder = 'passenger-id-cards';
             idCardImgFrontUrl = await uploadFile(req.files.idCardImgFront[0], folder);
             idCardImgBackUrl = await uploadFile(req.files.idCardImgBack[0], folder);
+        }
+        if (req?.files?.profileImg) {
             profileImgUrl = await uploadFile(req.files.profileImg[0], 'passenger-profile-image');
         }
 
