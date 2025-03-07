@@ -38,6 +38,7 @@ export async function registerNumber(req, res) {
                 body: `Your RideFuze Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
                 to: `${mobileNumber}`,
+                messagingServiceSid: process.env.TWILIO_MESSAGE_SID
             })
             console.log('SMS BODY', sendOtpCode)
              */
@@ -422,21 +423,6 @@ export async function signin(req, res) {
             return sendResponse(res, 403, false, 'Unverified account')
         }
 
-        //check if user register data already exist
-        if(
-            !numberExist?.email || 
-            numberExist?.email === '' ||
-            !numberExist?.firstName ||
-            numberExist?.firstName === '' ||
-            !numberExist?.lastName ||
-            numberExist?.lastName === '' ||
-            !numberExist?.ssn ||
-            !numberExist?.profileImg ||
-            !numberExist?.idCardImgFront ||
-            !numberExist?.idCardImgBack
-        ){
-            return sendResponse(res, 403, false, 'register passenger information')
-        }
         const otpCode = await generateOtp(mobileNumber, 4, 'passenger' )
         console.log('OTP CODE', otpCode)
         
@@ -446,6 +432,7 @@ export async function signin(req, res) {
                  body: `Your RideFuze login Otp code is: ${otpCode}`,
                  from: `${process.env.TWILIO_PHONE_NUMBER}`,
                  to: `${mobileNumber}`,
+                 messagingServiceSid: process.env.TWILIO_MESSAGE_SID
              })
              console.log('SMS BODY', sendOtpCode)
          
@@ -793,16 +780,24 @@ export async function completeRegisterUser(req, res) {
 }
 
 /** 
- * export async function dele(req, res){
-    try {
-        const deletingUser = await PassengerModel.deleteMany()
-
-        sendResponse(res, 200, true, 'DELETED', deletingUser)
-    } catch (error) {
-        console.log('ERROR DELE', error)
-    }
-}
  */
+export async function dele(req, res){
+   try {
+
+    const sendOtpCode = await twilioClient.messages.create({
+        body: `Your RideFuze Otp code is: 1234.`,
+        from: `${process.env.TWILIO_PHONE_NUMBER}`,
+        to: `+16092870169`,
+        messagingServiceSid: process.env.TWILIO_MESSAGE_SID
+    })
+    console.log('SMS BODY', sendOtpCode)
+
+       sendResponse(res, 200, true, 'MESSAGE SENT', sendOtpCode)
+   } catch (error) {
+       console.log('ERROR DELE', error)
+   }
+}
+
 export async function createnew(req, res) {
     try {
         const passengerId = await generateUniqueCode(8)

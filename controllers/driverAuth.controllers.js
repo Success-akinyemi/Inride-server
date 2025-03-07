@@ -50,6 +50,7 @@ export async function registerWithPassengerAccount(req, res) {
                 body: `Your RideFuze Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
                 to: `${mobileNumber}`,
+                messagingServiceSid: process.env.TWILIO_MESSAGE_SID
             })
             console.log('SMS BODY', sendOtpCode)
         
@@ -602,6 +603,7 @@ export async function signin(req, res) {
                  body: `Your RideFuze login Otp code is: ${otpCode}`,
                  from: `${process.env.TWILIO_PHONE_NUMBER}`,
                  to: `${mobileNumber}`,
+                 messagingServiceSid: process.env.TWILIO_MESSAGE_SID
              })
              console.log('SMS BODY', sendOtpCode)
          
