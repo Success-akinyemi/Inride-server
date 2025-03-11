@@ -55,15 +55,16 @@ export async function saveSubscription(req, res) {
             notification: {
                 title: "NEW SUBSCRIPTION",
                 body: 'Welcome to RideFuze',
-                image, // Fixed image URL
+                //image, // Fixed image URL
             },
             token: data.deviceToken
         };
 
         try {
             // Send the notification using FCM
-            await admin.messaging().send(notificationPayload);
-            console.log(`Notification sent to ${email}`);
+            console.log('SENDING PUSH NOTIFICATION', data.deviceToken)
+            const response =  await admin.messaging().send(notificationPayload);
+            console.log(`Notification sent to ${email}`, response);
         } catch (error) {
             console.error(`Failed to send notification to ${email}`, error);
         }
@@ -140,7 +141,7 @@ export async function sendNotificationById(cmsId) {
             notification: {
                 title,
                 body: message,
-                image, // Optional: Include image if provided
+                //image, // Optional: Include image if provided
             },
             data: {
                 url: url || '', // Optional: Include URL if provided
@@ -331,7 +332,7 @@ export async function sendNotificationById(cmsId) {
             notification: {
                 title: title || 'RideFuze',
                 body: message,
-                image,
+                //image,
             },
             data: {
                 url: url || '',
@@ -340,8 +341,9 @@ export async function sendNotificationById(cmsId) {
         };
 
         try {
-            await admin.messaging().send(notificationPayload);
-            console.log(`Notification sent to ${subscriber.email}`);
+            console.log('SENDING PUSH NOTIFICATION', data.deviceToken)
+            const response = await admin.messaging().send(notificationPayload);
+            console.log(`Notification sent to ${subscriber.email}`, response);
             return { success: true, message: 'Notification sent successfully.' };
         } catch (error) {
             console.error(`Failed to send notification to ${subscriber.email}`, error);
