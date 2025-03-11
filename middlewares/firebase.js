@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
-
+import { config } from 'dotenv';
+config()
 console.log("Firebase Private Key:", process.env.FIREBASE_PRIVATE_KEY ? "Loaded" : "Not Loaded");
 
 const serviceAccount = {
@@ -57,5 +58,32 @@ const testNotification = async () => {
 };
 
 testNotification();
+
+
+import axios from 'axios';
+
+const testFirebaseConnectivity = async () => {
+  try {
+    console.log('Testing connectivity to Firebase FCM servers...');
+    const response = await axios.head('https://fcm.googleapis.com');
+    console.log('Connection successful!');
+    console.log('Status:', response.status);
+    console.log('Headers:', response.headers);
+  } catch (error) {
+    console.error('Failed to connect to Firebase FCM servers:', error.message);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('No response received. Request details:', error.request);
+    } else {
+      console.error('Error details:', error.message);
+    }
+  }
+};
+
+testFirebaseConnectivity();
+
+
 
 export default admin;
