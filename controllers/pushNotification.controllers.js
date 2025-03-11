@@ -7,6 +7,7 @@ import EmailSubscriberModel from '../model/EmailSubscribers.js';
 //save data for push notification
 export async function saveSubscription(req, res) {
     const { email, accountId, accountType, data } = req.body;
+    console.log('PUSH NOTIFICATION DATA', req.body)
 
     // Validate required fields
     if (!email) {
