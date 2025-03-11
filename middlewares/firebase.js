@@ -35,6 +35,7 @@ try {
 
 /**
  * 
+*/
 const testNotification = async () => {
   const testToken = "c_uOlwGDQ4OLbu7qXR3aJv:APA91bFFqzCQoTnpv9cifvy8PbVJp4TWR1jxzbyr22uuMY3-wetgK6qhR8hFodyXOvrL9mUsuUDLmw6QejIwXeRjozugc3FlS3qKDz--FckCRVvDC0Nnc18";
   
@@ -56,6 +57,5 @@ const testNotification = async () => {
 };
 
 testNotification();
- */
 
 export default admin;
