@@ -72,7 +72,7 @@ function calculateDistanceInMiles(coord1, coord2) {
   return R * c;
 }
 
-async function filterDriverIdsByRideType(driverIdForType, rideType) {
+async function filterDriverIdsByRideType(driverIdForType, rideType, noOffPassengers) {
   try {
     let query = { driverId: { $in: driverIdForType } };
 
@@ -92,13 +92,33 @@ async function filterDriverIdsByRideType(driverIdForType, rideType) {
     const filteredDrivers = await DriverModel.find(query, 'driverId').lean();
 
     // Log the results of the query
-    console.log('Filtered Drivers:', filteredDrivers);
+    //console.log('Filtered Drivers:', filteredDrivers);
 
     // Extract and return only driverIds from the filtered drivers
-    const filteredDriverIds = filteredDrivers.map(driver => driver.driverId);
+    let filteredDriverIds = filteredDrivers.map(driver => driver.driverId);
 
     // Log the filtered driver IDs
-    console.log('Filtered Driver IDs:', filteredDriverIds);
+    //console.log('Filtered Driver IDs:', filteredDriverIds);
+
+    //for rideType of group ride get driver whose active car or car noOfSeat is greater than or equal to noOfPassenger. return it and assign to finalFilteredDrivers
+    if (rideType === 'group ride' && noOffPassengers) {
+      const eligibleDrivers = [];
+
+      for (const driverId of filteredDriverIds) {
+        // Fetch car details, select active car or the first one if only one car exists
+        const carDetails = await CarDetailModel.findOne({ driverId }).lean();
+        if (!carDetails || !carDetails.cars.length) continue;
+
+        const activeCar = carDetails.cars.find(car => car.active) || carDetails.cars[0];
+
+        // Ensure the car has enough seats
+        if (activeCar.noOfSeats >= noOffPassengers) {
+          eligibleDrivers.push(driverId);
+        }
+      }
+
+      filteredDriverIds = eligibleDrivers;
+    }
 
     return filteredDriverIds;
   } catch (error) {
@@ -138,7 +158,7 @@ export async function getNearByDrivers({ data, socket }) {
 // REQUEST RIDE
 export async function requestRide({ socket, data, res }) {
   const { from, fromId, fromCoordinates, to, personnalRide, noOffPassengers, pickupPoint, rideType, scheduleRide, scheduleTime, scheduleDate } = data;
-
+  
   if (!from) {
     const message = 'Ride starting point is required';
     if (res) return sendResponse(res, 400, false, message);
@@ -163,7 +183,7 @@ export async function requestRide({ socket, data, res }) {
     if (socket) socket.emit('rideRequested', { success: false, message })
     return
   }
-  if(!['personal', 'delivery', 'schedule'].includes(rideType)){
+  if(!['personal', 'delivery', 'schedule', 'group'].includes(rideType)){
     const message = 'Ride Type is invalid: available ride type: ["personal", "delivery", "schedule"] '
     if(res) sendResponse(res, 400, false, message)
     if (socket) socket.emit('rideRequested', { success: false, message })
@@ -270,7 +290,7 @@ export async function requestRide({ socket, data, res }) {
       const driverIdForType = nearbyDrivers.map(driver => driver.driverId);
       console.log('driverIdForType', driverIdForType, rideType)
       
-      const dirverArray = await filterDriverIdsByRideType(driverIdForType, rideType)
+      const dirverArray = await filterDriverIdsByRideType(driverIdForType, rideType, noOffPassengers)
       
       // Get driver details
       //const driverIds = dirverArray.map(driver => driver.driverId);
