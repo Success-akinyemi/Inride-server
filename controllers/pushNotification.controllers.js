@@ -57,7 +57,7 @@ export async function saveSubscription(req, res) {
                 body: 'Welcome to RideFuze',
                 //image, // Fixed image URL
             },
-            token: 'c_uOlwGDQ4OLbu7qXR3aJv:APA91bFFqzCQoTnpv9cifvy8PbVJp4TWR1jxzbyr22uuMY3-wetgK6qhR8hFodyXOvrL9mUsuUDLmw6QejIwXeRjozugc3FlS3qKDz--FckCRVvDC0Nnc18'// data.deviceToken
+            token: data.deviceToken
         };
 
         try {
