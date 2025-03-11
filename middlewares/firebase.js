@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 
+console.log("Firebase Private Key:", process.env.FIREBASE_PRIVATE_KEY ? "Loaded" : "Not Loaded");
 
 const serviceAccount = {
   type: process.env.FIREBASE_TYPE,
@@ -18,12 +19,43 @@ const serviceAccount = {
 
 // Initialize Firebase Admin SDK
 try {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  }
+  
+  //admin.initializeApp({
+  //  credential: admin.credential.cert(serviceAccount),
+  //});
   console.log('Firebase Admin SDK initialized successfully.');
 } catch (error) {
   console.error('Error initializing Firebase Admin SDK:', error);
 }
+
+/**
+ * 
+const testNotification = async () => {
+  const testToken = "c_uOlwGDQ4OLbu7qXR3aJv:APA91bFFqzCQoTnpv9cifvy8PbVJp4TWR1jxzbyr22uuMY3-wetgK6qhR8hFodyXOvrL9mUsuUDLmw6QejIwXeRjozugc3FlS3qKDz--FckCRVvDC0Nnc18";
+  
+  const payload = {
+      notification: {
+          title: "Test Notification RideFuze",
+          body: "If you receive this, FCM works!",
+      },
+      token: testToken
+  };
+
+  try {
+      console.log('SENDING PUSH NOTIFICATION')
+      const response = await admin.messaging().send(payload);
+      console.log("Test notification sent:", response);
+  } catch (error) {
+      console.error("Failed to send test notification:", error);
+  }
+};
+
+testNotification();
+ */
 
 export default admin;
