@@ -57,7 +57,7 @@ export async function saveSubscription(req, res) {
                 body: 'Welcome to RideFuze',
                 //image, // Fixed image URL
             },
-            token: data.deviceToken
+            token: 'c_uOlwGDQ4OLbu7qXR3aJv:APA91bFFqzCQoTnpv9cifvy8PbVJp4TWR1jxzbyr22uuMY3-wetgK6qhR8hFodyXOvrL9mUsuUDLmw6QejIwXeRjozugc3FlS3qKDz--FckCRVvDC0Nnc18'// data.deviceToken
         };
 
         try {
@@ -143,9 +143,9 @@ export async function sendNotificationById(cmsId) {
                 body: message,
                 //image, // Optional: Include image if provided
             },
-            data: {
-                url: url || '', // Optional: Include URL if provided
-            },
+            //data: {
+            //    url: url || '', // Optional: Include URL if provided
+            //},
         };
 
         // Collect all device tokens
@@ -334,9 +334,9 @@ export async function sendNotificationById(cmsId) {
                 body: message,
                 //image,
             },
-            data: {
-                url: url || '',
-            },
+            //data: {
+            //    url: url || '',
+            //},
             token: data.deviceToken, // Use the device token directly
         };
 
