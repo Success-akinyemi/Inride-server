@@ -26,7 +26,7 @@ export async function newCms(req, res) {
         return sendResponse(res, 400, false, 'Provide a CMS status')
     }
     if(!['draft', 'scheduled', 'published'].includes(status.toLowerCase())){
-        sendResponse(res, 400, false, 'CMS status must be either "draft" or "scheduled" or "published"')
+        return sendResponse(res, 400, false, 'CMS status must be either "draft" or "scheduled" or "published"')
     }
     if(!type){
         return sendResponse(res, 400, false, 'Provide a CMS type')
