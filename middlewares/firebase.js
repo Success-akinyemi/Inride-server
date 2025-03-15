@@ -34,68 +34,6 @@ try {
   console.error('Error initializing Firebase Admin SDK:', error);
 }
 
-/**
- * 
-*/
-const testNotification = async () => {
-  // Use a fresh token from your target device if possible
-  const testToken = "cN0NGB5zQTSzj7kOLM5D-0:APA91bEQJCxWSN-jJW0X-RgwPZDODhaEqorvloDkuVb0wwP0JhWyno-8sOhjAadKi66KJJ2vei7txIzpMC26aMsBp9AGma3izsX0eEaGqZbjmw39CEREJl0";
-  
-  const payload = {
-    notification: {
-      title: "Test Notification RideFuze",
-      body: "If you receive this, FCM works!",
-    },
-    data: {
-      // Adding some data might help in some cases
-      test: "true",
-      timestamp: Date.now().toString()
-    },
-    token: testToken
-  };
-  
-  try {
-    console.log('SENDING PUSH NOTIFICATION');
-    // Add a timeout to see if the operation is hanging
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("FCM request timed out")), 60000)
-    );
-    
-    const response = await Promise.race([
-      admin.messaging().send(payload),
-      timeoutPromise
-    ]);
-    
-    console.log("Test notification sent:", response);
-    return response;
-  } catch (error) {
-    console.error("Failed to send test notification. Error code:", error.code || "No code");
-    console.error("Error message:", error.message || "No message");
-    console.error("Stack trace:", error.stack || "No stack trace");
-    throw error;
-  }
-};
-
-testNotification();
-
-const testNotification2 = async () => {
-  try {
-    const message = {
-      notification: {
-        title: 'Test',
-        body: 'Test message'
-      },
-      topic: 'test' // Specify the topic here
-    };
-    
-    const response = await admin.messaging().send(message);
-    console.log('Successfully sent message testNotification2:', response);
-  } catch (error) {
-    console.error('Error sending message testNotification2:', error);
-  }
-};
-
-testNotification2();
 
 const testNotification3 = async () => {
   const testToken = "c_uOlwGDQ4OLbu7qXR3aJv:APA91bFFqzCQoTnpv9cifvy8PbVJp4TWR1jxzbyr22uuMY3-wetgK6qhR8hFodyXOvrL9mUsuUDLmw6QejIwXeRjozugc3FlS3qKDz--FckCRVvDC0Nnc18";
