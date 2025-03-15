@@ -6,13 +6,19 @@ import OtpModel from "../model/Otp.js";
 import PassengerModel from "../model/Passenger.js";
 import RefreshTokenModel from "../model/RefreshToken.js";
 
+const usNumberRegex = /^\+1\d{10}$/;
+
 //REGISTER MOBILE NUMBER
 export async function registerNumber(req, res) {
     const { mobileNumber } = req.body
-    console.log('PASSENGER REGISTER', req.body)
+    //console.log('PASSENGER REGISTER', req.body)
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Provide a mobile number')
     }
+    //ensure it is a us number and start with +1
+    if (!usNumberRegex.test(mobileNumber)) {
+        return sendResponse(res, 400, false, 'Invalid US mobile number. It must start with +1 and have 10 digits after.');
+    } 
     try { 
         const numberExist = await PassengerModel.findOne({ mobileNumber: mobileNumber })
         if(numberExist){

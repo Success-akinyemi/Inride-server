@@ -74,7 +74,7 @@ export const AuthenticatePassenger = async (req, res, next) => {
 export const AuthenticateDriver = async (req, res, next) => {
     const accessToken = req.cookies.inrideaccesstoken;
     const accountId = req.cookies.inrideaccessid;
-    console.log('DRIVER','accessToken', accessToken, 'accountId', accountId)
+    //console.log('DRIVER','accessToken', accessToken, 'accountId', accountId)
     try {
         if (accessToken) {
             try {
@@ -92,6 +92,9 @@ export const AuthenticateDriver = async (req, res, next) => {
                     return sendResponse(res, 403, false, 'UnAuthenicated');
                 }
                 req.user = user;
+                if(!user.approved){
+                    return sendResponse(res, 403, false, 'Account is not approved complete verification')
+                }
                 return next();
             } catch (error) {
                 if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
@@ -107,6 +110,9 @@ export const AuthenticateDriver = async (req, res, next) => {
                                 maxAge: 15 * 60 * 1000, // 15 minutes
                             });
                             req.user = user;
+                            if(!user.approved){
+                                return sendResponse(res, 403, false, 'Account is not approved complete verification')
+                            }
                             return next();
                         }
                     }
@@ -126,6 +132,9 @@ export const AuthenticateDriver = async (req, res, next) => {
                     maxAge: 15 * 60 * 1000, // 15 minutes
                 });
                 req.user = user;
+                if(!user.approved){
+                    return sendResponse(res, 403, false, 'Account is not approved complete verification')
+                }
                 return next();
             }
         }
@@ -137,7 +146,7 @@ export const AuthenticateDriver = async (req, res, next) => {
 };
 
 export const VerifyAccount = async (req, res, next) => {
-    const { verified, isBlocked } = req.user
+    const { verified, isBlocked, approved, accountType } = req.user
     try {
         if(!verified){
             sendResponse(res, 401, false, 'You acount is not verified')
@@ -146,6 +155,11 @@ export const VerifyAccount = async (req, res, next) => {
         if(isBlocked){
             sendResponse(res, 401, false, 'You acount has been blocked. contact admin for support')
             return
+        }
+        if(accountType === 'driver'){
+            if(!approved){
+                return sendResponse(res, 403, false, 'Account is not approved complete verification')
+            }
         }
         return next();
     } catch (error) {
@@ -296,7 +310,7 @@ export const AuthenticatePassengerSocket = async (socket, next) => {
 };
 
 export const AuthenticateDriverSocket = async (socket, next) => {
-    console.log('Authenticating driver socket:', socket.id)
+    //console.log('Authenticating driver socket:', socket.id)
     try {
         const cookies = socket.handshake.headers.cookie || '';  // Safeguard for missing cookies
         if (!cookies) {
@@ -317,18 +331,21 @@ export const AuthenticateDriverSocket = async (socket, next) => {
         const accountId = cookieObj['inrideaccessid'];
 
         //console.log('Cookies:', cookies);
-        console.log('DRIVER','AccessToken:', accessToken, 'AccountId:', accountId);
+        //console.log('DRIVER','AccessToken:', accessToken, 'AccountId:', accountId);
 
         if (accessToken) {
             try {
                 const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN_SECRET);
-                console.log('Decoded token:', decoded);
+                //console.log('Decoded token:', decoded);
 
                 if (decoded.accountType === 'driver') {
                     const user = await DriverModel.findOne({ driverId: decoded.id });
                     const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: decoded.id });
                     if (user && refreshTokenExist) {
                         socket.user = user;
+                        if(!socket.user.approved){
+                            return next(new Error('Account is not approved complete verification'));
+                        }
                         return next();
                     }
                 }
@@ -344,6 +361,9 @@ export const AuthenticateDriverSocket = async (socket, next) => {
             const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
             if (user && refreshTokenExist) {
                 socket.user = user;
+                if(!socket.user.approved){
+                    return next(new Error('Account is not approved complete verification'));
+                }
                 socket.emit('tokenRefreshed', { accessToken: user.getAccessToken() });
                 return next();
             }
@@ -357,7 +377,7 @@ export const AuthenticateDriverSocket = async (socket, next) => {
 };
 
 export const AuthenticateUserSocket = async (socket, next) => {
-    console.log('Authenticating user socket:', socket.id);
+    //console.log('Authenticating user socket:', socket.id);
 
     try {
         const cookies = socket.handshake.headers.cookie || ''; // Safeguard for missing cookies
@@ -378,7 +398,7 @@ export const AuthenticateUserSocket = async (socket, next) => {
         const accessToken = cookieObj['inrideaccesstoken'];
         const accountId = cookieObj['inrideaccessid'];
 
-        console.log('AccessToken:', accessToken, 'AccountId:', accountId);
+        //console.log('AccessToken:', accessToken, 'AccountId:', accountId);
 
         let user = null;
         let userType = null;
@@ -404,6 +424,9 @@ export const AuthenticateUserSocket = async (socket, next) => {
                         accountId: decoded.id,  // Add accountId to socket.user
                         userType
                     };
+                    if(socket.userType === 'driver' && !socket.user.approved){
+                        return next(new Error('Account is not approved complete verification'));
+                    }
                     return next();
                 }
 
@@ -431,6 +454,9 @@ export const AuthenticateUserSocket = async (socket, next) => {
                     accountId,  // Add accountId to socket.user
                     userType
                 };
+                if(socket.userType === 'driver' && !socket.user.approved){
+                    return next(new Error('Account is not approved complete verification'));
+                }
                 socket.emit('tokenRefreshed', { accessToken: user.getAccessToken() });
                 return next();
             }

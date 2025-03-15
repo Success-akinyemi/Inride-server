@@ -59,6 +59,9 @@ const AdminUserSchema = new mongoose.Schema({
         },
         location: {
             type: String
+        },
+        deviceType: {
+            type: String
         }
     }],
     accountType:{

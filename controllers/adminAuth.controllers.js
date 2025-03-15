@@ -7,6 +7,7 @@ import RefreshTokenModel from "../model/RefreshToken.js";
 import crypto from 'crypto'
 import useragent from 'useragent';
 import axios from 'axios';
+import jwt from "jsonwebtoken";
 
 function stringToNumberArray(code) {
     return code.split('').map(Number);

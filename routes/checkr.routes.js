@@ -4,8 +4,10 @@ import * as controllers from '../controllers/checkr.controllers.js'
 
 const router = express.Router()
 
-//GET
+//POST
 router.post('/checkrWebHook', controllers.checkrWebHook)
+router.post('/authenticateCheckr', controllers.authenticateCheckr)
+
 
 
 

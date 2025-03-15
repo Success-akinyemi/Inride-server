@@ -1,7 +1,8 @@
-import { sendWelcomeEmail } from "../middlewares/mailTemplate.js.js";
+import { sendCheckrInvitationEmail, sendWelcomeEmail } from "../middlewares/mailTemplate.js.js";
 import twilioClient from "../middlewares/twilioConfig.js"
-import { generateOtp, generateUniqueCode, sendResponse, uploadFile } from "../middlewares/utils.js";
+import { formatSSN, generateOtp, generateUniqueCode, isValidDOB, sendResponse, uploadFile } from "../middlewares/utils.js";
 import { matchFace, verifyDriverLicense } from "../middlewares/verificationService.js";
+import CandidateSignatureModel from "../model/CandidateSignature.js";
 import CarDetailModel from "../model/CarDetails.js";
 import DriverModel from "../model/Driver.js"
 import DriverLocationModel from "../model/DriverLocation.js";
@@ -9,18 +10,23 @@ import NotificationModel from "../model/Notifications.js";
 import OtpModel from "../model/Otp.js";
 import PassengerModel from "../model/Passenger.js";
 import RefreshTokenModel from "../model/RefreshToken.js";
+import { createCandidate, inviteCandidate } from "./checkr.controllers.js";
 
+const usNumberRegex = /^\+1\d{10}$/;
 
 //Register user passenger account - use id from cookie to get user
 export async function registerWithPassengerAccount(req, res) {
     const { mobileNumber } = req.body
-
-    //ensure it is a us number and start with +1
-
-
+    
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Please provide your passenger mobile number to perform this action')
     }
+
+    //ensure it is a us number and start with +1
+    if (!usNumberRegex.test(mobileNumber)) {
+        return sendResponse(res, 400, false, 'Invalid US mobile number. It must start with +1 and have 10 digits after.');
+    } 
+       
     try {
         const getPassenger = await PassengerModel.findOne({ mobileNumber: mobileNumber })
         if(!getPassenger){
@@ -92,7 +98,7 @@ export async function verifyPassengerToDriverAccountOtp(req, res) {
                 firstName: getUser?.firstName,
                 lastName: getUser?.lastName,
                 email: getUser?.email,
-                driverId: `RF${driverId}DR`,
+                //driverId: `RF${driverId}DR`,
                 idCardImgFront: getUser?.idCardImgFront,
                 idCardImgBack: getUser?.idCardImgBack,
                 profileImg: getUser?.profileImg,
@@ -113,17 +119,52 @@ export async function verifyPassengerToDriverAccountOtp(req, res) {
 
 //Complete registration for driver who created account with passenger account
 export async function completeDriverRegistration(req, res) {
-    const {ssn, opreatingCity, carDetails, firstName, lastName, pricePerKm, coordinates, email } = req.body
+    const {ssn, opreatingCity, carDetails, firstName, middleName, lastName, pricePerKm, coordinates, email, state, dob, zipcode, driverLincenseNumber, driverLincenseState, userConsent, signature } = req.body
     const accountId = req.cookies.inridedrivertoken;
 
     if(!ssn){
         return sendResponse(res, 400, false, 'SSN is required')
     }
+    const formatSsn = await formatSSN(ssn)
+    if(!formatSsn.success){
+        return sendResponse(res, 400, false, formatSsn.data)
+    }
     if(!email){
         return sendResponse(res, 400, false, 'email is required')
     }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
     if(!opreatingCity){
         return sendResponse(res, 400, false, 'Opreating city is required')
+    }
+    if(!driverLincenseNumber){
+        return sendResponse(res, 400, false, 'Driver linsence number is required')
+    }
+    if(!driverLincenseState){
+        return sendResponse(res, 400, false, 'Please provide driver lincense state')
+    }
+    if(!zipcode){
+        return sendResponse(res, 400, false, 'Please provide zipcode')
+    }
+    if(!dob){
+        return sendResponse(res, 400, false, 'Please provide date of birth')
+    }
+    const checkDob = isValidDOB(dob)
+    if(!checkDob){
+        return sendResponse(res, 400, false, 'Date of birth format is: YYYY-MM-DD')
+    }
+    if(!state){
+        return sendResponse(res, 400, false, 'Please provide state of residence')
+    }
+    if(!userConsent){
+        return sendResponse(res, 400, false, 'Please agree to background check/screen consent')
+    }
+    if(!signature){
+        return sendResponse(res, 400, false, 'Your digital signature is required')
+    }
+    const expectedSignature = middleName ? `${firstName} ${middleName} ${lastName}` : `${firstName} ${lastName}`;
+    if(signature !== expectedSignature){
+        return sendResponse(res, 400, false, 'Invalid Signature - does not match name')
     }
     if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
     //if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
@@ -197,14 +238,19 @@ export async function completeDriverRegistration(req, res) {
         
         driver.firstName = getPassenger?.firstName || firstName
         driver.lastName = getPassenger?.lastName || lastName
+        driver.middleName = getPassenger?.middleName || middleName
         driver.opreatingCity = opreatingCity
-        driver.ssn = req.body.ssn ? req.body.ssn : '',
+        driver.ssn = formatSsn.data,
         driver.driverLincenseImgFront = driverLincenseImgFrontUrl
         driver.driverLincenseImgBack = driverLicenseImgBackUrl
         driver.profileImg = profileImgUrl
         driver.pricePerKm = pricePerKm || '',
         driver.email = getPassenger?.email || email
         driver.status = 'online'
+        driver.dob = dob
+        driver.state = state
+        driver.driverLincenseNumber = driverLincenseNumber
+        driver.driverLincenseState = driverLincenseState
         driver.otpCode = ''
 
         await driver.save()
@@ -225,7 +271,85 @@ export async function completeDriverRegistration(req, res) {
             status: 'online'
         })
 
-        //const deleteOtp = await OtpModel.findByIdAndDelete({ _id: verifyOtp._id })
+        //new notification
+        await NotificationModel.create({
+            accountId: `${driver.driverId}`,
+            message: `${driver.firstName} ${driver.lastName}, welcome to your new driver account. Its time to earn more money`
+        })
+        
+        //send welcome email to user
+        sendWelcomeEmail({
+            email: driver.email,
+            name: driver.firstName
+        })
+
+        //get device info
+        // Extract device information
+        const agent = useragent.parse(req.headers['user-agent']);
+        const deviceInfo = agent.toString(); // e.g., "Chrome 110.0.0 on Windows 10"
+        const deviceType = deviceInfo.split('/')[1]
+
+        // Get user IP
+        const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress;
+
+        // Fetch location details
+        let locationInfo = 'Unknown';
+        try {
+            const { data } = await axios.get(`https://ipinfo.io/${ip}/json`);
+            locationInfo = `${data.city}, ${data.region}, ${data.country}`;
+        } catch (err) {
+            console.log('Error fetching location:', err.message);
+        }
+
+        const userDeviceData = {
+            device: deviceInfo,
+            location: locationInfo,
+            deviceType: deviceType
+        }
+
+        //CREATE NEW CANDIDATE
+        const candidate = await createCandidate({
+            first_name: driver?.firstName,
+            middle_name: driver?.middleName,
+            last_name: driver?.lastName,
+            email: driver?.email,
+            phone: driver?.mobileNumber,
+            zipcode: driver?.zipcode,
+            dob: driver?.dob,
+            ssn: driver?.ssn,
+            driver_license_number: driver?.driverLincenseNumber,
+            driver_license_state: driver?.driverLincenseState,
+            copy_requested: true
+        })
+
+        driver.candidateId = candidate?.data?.id
+        await driver.save()
+        await CandidateSignatureModel.create({
+            name: `${driver.firstName} ${driver.middleName || ''} ${driver.lastName}`,
+            signature: signature,
+            candidateId: candidate?.data?.id,
+            email: driver.email,
+            mobileNumber: driver.mobileNumber,
+            userConsent: userConsent,
+            userDeviceData
+        })
+        //INVITE CANDIDATE
+        let sendInviteToCandidate
+        if(candidate.success){
+            sendInviteToCandidate = await inviteCandidate({
+                candidate_id: candidate?.data?.id,
+                package_name: process.env.CHECKR_PACKAGE_NAME,
+                state: driver?.state
+            })
+        }
+
+        //send invitation email to complete verification
+        sendCheckrInvitationEmail({
+            email: driver?.email,
+            name: `${driver?.firstName} ${driver?.middleName || ''} ${driver?.lastName}`,
+            buttonLink: sendInviteToCandidate.data.invitation_url
+        })
+        
 
         // Generate Tokens
         const accessToken = driver.getAccessToken()
@@ -237,19 +361,6 @@ export async function completeDriverRegistration(req, res) {
                 refreshToken: refreshToken
             })
         }
-
-        //new notification
-        await NotificationModel.create({
-            accountId: `${driver.driverId}`,
-            message: `${driver.firstName} ${driver.lastName}, welcome to your new driver account. Its time to earn more money`
-        })
-
-        //send welcome email to user
-        sendWelcomeEmail({
-            email: driver.email,
-            name: driver.firstName
-        })
-
         res.clearCookie(`inridedrivertoken`)
 
         // Set cookies
@@ -266,7 +377,7 @@ export async function completeDriverRegistration(req, res) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
 
-        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = driver._doc;
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, approved, active, isBlocked, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = driver._doc;
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.log('UNABLE TO COMPLETE PASSENGER TO DRIVER REGISTRATION', error)
@@ -283,6 +394,11 @@ export async function registerNewDriver(req, res) {
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Provide a mobile number')
     }
+
+    if (!usNumberRegex.test(mobileNumber)) {
+        return sendResponse(res, 400, false, 'Invalid US mobile number. It must start with +1 and have 10 digits after.');
+    }  
+
     try { 
         const numberExist = await DriverModel.findOne({ mobileNumber: mobileNumber })
         if(numberExist){
@@ -400,6 +516,10 @@ export async function verifySSN(req, res) {
     if (!checkItisANumber) {
         return sendResponse(res, 400, false, 'Invalid ssn type');
     }
+    const formatSsn = await formatSSN(ssn)
+    if(!formatSsn.success){
+        return sendResponse(res, 400, false, formatSsn.data)
+    }
     try {
         const findSSN = await DriverModel.findOne({ ssn })
         if(findSSN){
@@ -415,7 +535,7 @@ export async function verifySSN(req, res) {
 
 //Complete new driver registration
 export async function completeNewDriverRegistration(req, res) {
-    const { mobileNumber, email, firstName, lastName, opreatingCity, ssn, carDetails, pricePerKm, coordinates} = req.body
+    const { mobileNumber, email, firstName, middleName, lastName, opreatingCity, ssn, carDetails, pricePerKm, coordinates, state, dob, zipcode, driverLincenseNumber, driverLincenseState, userConsent, signature } = req.body
     const accountId = req.cookies.inridedrivertoken;
     
     // Validate required fields
@@ -425,8 +545,41 @@ export async function completeNewDriverRegistration(req, res) {
     if (!firstName) return sendResponse(res, 400, false, `Provide a first name`);
     if (!lastName) return sendResponse(res, 400, false, `Provide a last name`);
     if (!ssn) return sendResponse(res, 400, false, `Provide a social security number`);
+    const formatSsn = await formatSSN(ssn)
+    if(!formatSsn.success){
+        return sendResponse(res, 400, false, formatSsn.data)
+    }
     if(!opreatingCity){
         return sendResponse(res, 400, false, 'Opreating city is required')
+    }
+    if(!driverLincenseNumber){
+        return sendResponse(res, 400, false, 'Driver linsence number is required')
+    }
+    if(!driverLincenseState){
+        return sendResponse(res, 400, false, 'Please provide driver lincense state')
+    }
+    if(!zipcode){
+        return sendResponse(res, 400, false, 'Please provide zipcode')
+    }
+    if(!dob){
+        return sendResponse(res, 400, false, 'Please provide date of birth')
+    }
+    const checkDob = isValidDOB(dob)
+    if(!checkDob){
+        return sendResponse(res, 400, false, 'Date of birth format is: YYYY-MM-DD')
+    }
+    if(!state){
+        return sendResponse(res, 400, false, 'Please provide state of residence')
+    }
+    if(!userConsent){
+        return sendResponse(res, 400, false, 'Please agree to background check/screen consent')
+    }
+    if(!signature){
+        return sendResponse(res, 400, false, 'Your digital signature is required')
+    }
+    const expectedSignature = middleName ? `${firstName} ${middleName} ${lastName}` : `${firstName} ${lastName}`;
+    if(signature !== expectedSignature){
+        return sendResponse(res, 400, false, 'Invalid Signature - does not match name')
     }
     if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
     //if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
@@ -495,8 +648,9 @@ export async function completeNewDriverRegistration(req, res) {
                 
         newDriver.firstName = firstName
         newDriver.lastName = lastName
+        newDriver.middleName = middleName
         newDriver.email = email
-        newDriver.ssn = req.body.ssn
+        newDriver.ssn = formatSsn.data
         newDriver.opreatingCity = opreatingCity
         newDriver.driverLincenseImgFront = driverLincenseImgFrontUrl
         newDriver.driverLincenseImgBack = driverLicenseImgBackUrl,
@@ -506,7 +660,11 @@ export async function completeNewDriverRegistration(req, res) {
         //newDriver.driverId = `RF${driverId}DR`,
         newDriver.idCardType = 'Driver\'s License',
         newDriver.pricePerKm = pricePerKm,
-        newDriver.status = 'online'
+        newDriver.status = 'online',
+        newDriver.dob = dob
+        newDriver.state = state
+        newDriver.driverLincenseNumber = driverLincenseNumber
+        newDriver.driverLincenseState = driverLincenseState
         newDriver.otpCode = ''
 
         await newDriver.save()
@@ -541,6 +699,73 @@ export async function completeNewDriverRegistration(req, res) {
             name: newDriver.firstName
         })
 
+                //get device info
+        // Extract device information
+        const agent = useragent.parse(req.headers['user-agent']);
+        const deviceInfo = agent.toString(); // e.g., "Chrome 110.0.0 on Windows 10"
+        const deviceType = deviceInfo.split('/')[1]
+
+        // Get user IP
+        const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress;
+
+        // Fetch location details
+        let locationInfo = 'Unknown';
+        try {
+            const { data } = await axios.get(`https://ipinfo.io/${ip}/json`);
+            locationInfo = `${data.city}, ${data.region}, ${data.country}`;
+        } catch (err) {
+            console.log('Error fetching location:', err.message);
+        }
+
+        const userDeviceData = {
+            device: deviceInfo,
+            location: locationInfo,
+            deviceType: deviceType
+        }
+
+        //CREATE NEW CANDIDATE
+        const candidate = await createCandidate({
+            first_name: newDriver?.firstName,
+            middle_name: newDriver?.middleName,
+            last_name: newDriver?.lastName,
+            email: newDriver?.email,
+            phone: newDriver?.mobileNumber,
+            zipcode: newDriver?.zipcode,
+            dob: newDriver?.dob,
+            ssn: newDriver?.ssn,
+            driver_license_number: newDriver?.driverLincenseNumber,
+            driver_license_state: newDriver?.driverLincenseState,
+            copy_requested: true
+        })
+        
+        newDriver.candidateId = candidate?.data?.id
+        await newDriver.save()
+        await CandidateSignatureModel.create({
+            name: `${newDriver.firstName} ${newDriver.middleName || ''} ${newDriver.lastName}`,
+            signature: signature,
+            candidateId: candidate?.data?.id,
+            email: newDriver.email,
+            mobileNumber: newDriver.mobileNumber,
+            userConsent: userConsent,
+            userDeviceData
+        })
+        //INVITE CANDIDATE
+        let sendInviteToCandidate
+        if(candidate.success){
+            sendInviteToCandidate = await inviteCandidate({
+                candidate_id: candidate?.data?.id,
+                package_name: process.env.CHECKR_PACKAGE_NAME,
+                state: newDriver?.state
+            })
+        }
+
+        //send invitation email to complete verification
+        sendCheckrInvitationEmail({
+            email: newDriver?.email,
+            name: `${newDriver?.firstName} ${newDriver?.middleName || ''} ${newDriver?.lastName}`,
+            buttonLink: sendInviteToCandidate.data.invitation_url
+        })
+
         // Generate Tokens
         const accessToken = newDriver.getAccessToken()
         const refreshToken = newDriver.getRefreshToken()
@@ -568,7 +793,7 @@ export async function completeNewDriverRegistration(req, res) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
 
-        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, active, isBlocked, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = newDriver._doc;
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, approved, active, isBlocked, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = newDriver._doc;
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.log('UNABLE TO COMPLETE NEW DRIVER REGISTRATION', error)
@@ -634,25 +859,6 @@ export async function signinWithGoogle(req, res) {
             return sendResponse(res, 403, false, 'Unverified account')
         }
 
-        //check
-        if(
-            !numberExist?.email || 
-            numberExist?.email === '' ||
-            !numberExist?.firstName ||
-            numberExist?.firstName === '' ||
-            !numberExist?.lastName ||
-            numberExist?.lastName === '' ||
-            !numberExist?.ssn ||
-            !numberExist?.profileImg ||
-            !numberExist?.idCardImgFront ||
-            !numberExist?.idCardImgBack ||
-            !numberExist?.opreatingCity ||
-            !numberExist?.driverLincenseImgFront ||
-            !numberExist?.driverLincenseImgBack
-        ){
-            return sendResponse(res, 403, false, 'register driver information')
-        }
-
         numberExist.status = 'online'
         numberExist.otpCode = ''
         await numberExist.save()
@@ -687,7 +893,7 @@ export async function signinWithGoogle(req, res) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
 
-        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = numberExist._doc;
+        const { password, ssn, idCardImgFront, idCardImgBack, idCardType, verified, approved, resetPasswordToken, resetPasswordExpire, driverLincenseImgFront, driverLincenseImgBack, _id, ...userData } = numberExist._doc;
         return sendResponse(res, 200, true, userData, accessToken);
     } catch (error) {
         console.log('UNABLE TO SIGNIN DRIVER', error)
@@ -825,30 +1031,71 @@ export async function createnew(req, res) {
         console.log('DRIVER ID', `RF${driverId}DR`)
 
         const data = {
-            mobileNumber: '+2347059309831',
-            firstName: 'Test',
+            mobileNumber: '12240898879',
+            firstName: 'john',
+            middleName: 'doe',
             lastName: 'Man',
-            email: 'testman@gmail.com',
+            zipcode: '95814',
+            email: 'successakin321@gmail.com',
             opreatingCity: 'Lagos',
             pricePerKm: 100,
-            ssn: '123456789',
+            ssn: '111-11-2003',
             idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             idCardType: 'Driver Lincense',
             driverLincenseImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             driverLincenseImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+            driver_license_number: '981736076',
+            driver_license_state: 'CT',
+            dob: '1964-03-15',
+            state: 'CA',
             verified: true,
             driverId: `RF${driverId}DR`,
             status: 'online'
         }
 
+        const candidate = await createCandidate({
+            first_name: data?.firstName,
+            middle_name: data?.middleName,
+            last_name: data?.lastName,
+            email: data?.email,
+            phone: data?.mobileNumber,
+            zipcode: data?.zipcode,
+            dob: data?.dob,
+            ssn: data?.ssn,
+            driver_license_number: data?.driver_license_number,
+            driver_license_state: data?.driver_license_state,
+            copy_requested: true
+        })
+        //console.log('NEW CANDIDATE', candidate)
+        
+        //INVITE CANDIDATE
+        let sendInviteToCandidate
+        if(candidate.success){
+            sendInviteToCandidate = await inviteCandidate({
+                candidate_id: candidate?.data?.id,
+                package_name: process.env.CHECKR_PACKAGE_NAME,
+                state: data?.state
+            })
+        }
+        console.log('CANDIDATE INVITESS', sendInviteToCandidate.data)
+
+        //send invitation email to complete verification
+        sendCheckrInvitationEmail({
+            email: data?.email,
+            name: `${data?.firstName} ${data?.middleName || ''} ${data?.lastName}`,
+            buttonLink: sendInviteToCandidate.data.invitation_url
+        })
+
         const newUser = await DriverModel.create(data)
+        newUser.candidateId = candidate?.data?.id
+        await newUser.save()
         const carDetails = {
             driverId: newUser?.driverId,
             cars: [
                 {
-                    registrationNumber: '4325',
+                    registrationNumber: '345667',
                     year: '2025',
                     model: 'Hyundai',
                     color: 'Black',
@@ -857,7 +1104,7 @@ export async function createnew(req, res) {
                     active: false
                 },
                 {
-                    registrationNumber: '9816',
+                    registrationNumber: '1284792',
                     year: '2025',
                     model: 'Benz',
                     color: 'Black',

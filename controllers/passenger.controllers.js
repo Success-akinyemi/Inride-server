@@ -236,7 +236,7 @@ export async function requestRide({ socket, data, res }) {
     const newRideRequest = await RideModel.create({
       passengerId: passenger.passengerId || passengersArray[0],
       rideId,
-      noOffPassengers,
+      noOffPassengers: noOffPassengers || 1,
       personnalRide,
       from,
       fromId,
@@ -345,7 +345,7 @@ export async function requestRide({ socket, data, res }) {
           // Emit to driver if socket ID is found
           driverNamespace.to(driverSocketId).emit('newRideRequest', {
             success: true,
-            message: `You have a new ${rideType === 'personal' ? 'Personal' : rideType === 'delivery' ? 'Delivery' : 'Schedule'} ride request`,
+            message: `You have a new ${rideType === 'personal' ? 'Personal' : rideType === 'delivery' ? 'Delivery' : rideType === 'group' ? 'Group' : 'Schedule'} ride request. passengers: ${newRideRequest?.noOffPassengers}`,
             ride: driverRideRequest,
           });
         } else {

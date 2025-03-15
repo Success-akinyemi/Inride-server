@@ -39,7 +39,7 @@ try {
 */
 const testNotification = async () => {
   // Use a fresh token from your target device if possible
-  const testToken = "c_uOlwGDQ4OLbu7qXR3aJv:APA91bFFqzCQoTnpv9cifvy8PbVJp4TWR1jxzbyr22uuMY3-wetgK6qhR8hFodyXOvrL9mUsuUDLmw6QejIwXeRjozugc3FlS3qKDz--FckCRVvDC0Nnc18";
+  const testToken = "cN0NGB5zQTSzj7kOLM5D-0:APA91bEQJCxWSN-jJW0X-RgwPZDODhaEqorvloDkuVb0wwP0JhWyno-8sOhjAadKi66KJJ2vei7txIzpMC26aMsBp9AGma3izsX0eEaGqZbjmw39CEREJl0";
   
   const payload = {
     notification: {
@@ -96,5 +96,27 @@ const testNotification2 = async () => {
 };
 
 testNotification2();
+
+const testNotification3 = async () => {
+  const testToken = "c_uOlwGDQ4OLbu7qXR3aJv:APA91bFFqzCQoTnpv9cifvy8PbVJp4TWR1jxzbyr22uuMY3-wetgK6qhR8hFodyXOvrL9mUsuUDLmw6QejIwXeRjozugc3FlS3qKDz--FckCRVvDC0Nnc18";
+  
+  const payload = {
+      notification: {
+          title: "Test Notification from RideFuze",
+          body: "If you receive this, FCM works!",
+      },
+      token: testToken
+  };
+
+  try {
+      console.log('SENDING PUSH NOTIFICATION')
+      const response = await admin.messaging().send(payload);
+      console.log("Test notification sent:", response);
+  } catch (error) {
+      console.error("Failed to send test notification:", error);
+  }
+};
+
+testNotification3();
 
 export default admin;

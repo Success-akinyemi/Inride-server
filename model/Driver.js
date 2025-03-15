@@ -12,6 +12,9 @@ const DriverSchema = new mongoose.Schema({
     firstName: {
         type: String,
     },
+    middleName: {
+        type: String
+    },
     lastName: {
         type: String
     },
@@ -102,6 +105,27 @@ const DriverSchema = new mongoose.Schema({
         type: Number,
         default: 0 //max 3
     },
+    candidateId: {
+        type: String
+    },
+    zipcode: {
+        type: String
+    },
+    state: {
+        type: String
+    },
+    driverLincenseState: {
+        type: String
+    },
+    driverLincenseNumber: {
+        type: String
+    },
+    dob: {
+        type: String //format 1964-03-15 YYYY-MM-DD
+    },
+
+
+
 
     password: {
         type: String
@@ -129,6 +153,10 @@ const DriverSchema = new mongoose.Schema({
         type: String
     },
     verified: {
+        type: Boolean,
+        default: false
+    },
+    approved: {
         type: Boolean,
         default: false
     },

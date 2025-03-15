@@ -284,3 +284,25 @@ export async function initiatePayment({amount, accountId, paymentfor, paymentMet
     return { success: false, data: 'Unable to initaite stripe payment'}
   }  
 }
+
+export function formatSSN(ssn) {
+  // Remove any hyphens or spaces from the SSN
+  ssn = ssn.replace(/[-\s]/g, '');
+
+  // Check if the SSN length is 9
+  if (ssn.length !== 9) {
+    return {  success: false, data: "Invalid SSN length. SSN must be 9 digits."};
+  }
+  
+  // Insert dashes into the SSN
+  const formattedSSN = ssn.slice(0, 3) + "-" + ssn.slice(3, 5) + "-" + ssn.slice(5);
+  
+  return { success: true, data: formattedSSN};
+}
+
+export function isValidDOB(dob) {
+  // Regex pattern to check if DOB is in the format YYYY-MM-DD
+  const dobPattern = /^\d{4}-\d{2}-\d{2}$/;
+
+  return dobPattern.test(dob);
+}
