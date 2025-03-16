@@ -170,7 +170,7 @@ export async function completeDriverRegistration(req, res) {
     //if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
     
 
-    const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg } = req.files;
+    const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg } = req.files || {};
     //console.log('COMPLETE RETURNING DRIVER REG', req.body, req?.files)
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
     if (!driverLincenseImgBack || !driverLincenseImgBack[0]) return sendResponse(res, 400, false, `Provide a valid photo of the back image of driver lincense`);
@@ -196,9 +196,10 @@ export async function completeDriverRegistration(req, res) {
     }
     try {
         let driver
-        if(accountId){
-            driver = await DriverModel.findOne({ driverId: accountId })
+        if(!accountId){
+            return sendResponse(res, 403, false, 'Not Allowed')
         }
+        driver = await DriverModel.findOne({ driverId: accountId })
         if(!driver){
             return sendResponse(res, 404, false, 'Account not found')
         }
@@ -584,7 +585,7 @@ export async function completeNewDriverRegistration(req, res) {
     if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
     //if(coordinates?.length < 2 || coordinates?.length > 2) return sendResponse(res, 400, false, 'Content of the coordinates is only: [longitude, latitude]')
 
-    const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg, } = req.files;
+    const { driverLincenseImgFront, driverLincenseImgBack, profileImg, carImg, } = req.files || {};
     //console.log('COMPLETE NEW DRIVER REG',req.body, req?.files)
 
     if (!driverLincenseImgFront || !driverLincenseImgFront[0]) return sendResponse(res, 400, false, `Provide a valid photo of the front image of driver lincense`);
