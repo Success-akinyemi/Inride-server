@@ -11,6 +11,8 @@ import OtpModel from "../model/Otp.js";
 import PassengerModel from "../model/Passenger.js";
 import RefreshTokenModel from "../model/RefreshToken.js";
 import { createCandidate, inviteCandidate } from "./checkr.controllers.js";
+import useragent from 'useragent';
+import axios from 'axios';
 
 const usNumberRegex = /^\+1\d{10}$/;
 
