@@ -257,17 +257,24 @@ export async function completeDriverRegistration(req, res) {
         await driver.save()
 
         const carData = {registrationNumber, year, model, color, noOfSeats, carImgUrl, active: true }
-        let newCarDetails
-        const carDataExist = await CarDetailModel.findOne({ driverId: driver?.driverId })
-        if(carDataExist){
-            newCarDetails = carDataExist
-        } else {
-            newCarDetails = await CarDetailModel.create({
-                driverId: driver?.driverId
-            })
-        }
-        newCarDetails.cars.push(carData)
-        await newCarDetails.save()
+        //let newCarDetails
+        //const carDataExist = await CarDetailModel.findOne({ driverId: driver?.driverId })
+        //if(carDataExist){
+        //    newCarDetails = carDataExist
+        //} else {
+        //    newCarDetails = await CarDetailModel.create({
+        //        driverId: driver?.driverId
+        //    })
+        //}
+        //newCarDetails.cars.push(carData)
+        //await newCarDetails.save()
+        // Ensure a driver can only have one car data by updating if it exists
+        const updatedCarDetail = await CarDetailModel.findOneAndUpdate(
+            { driverId: driver?.driverId }, // Search by driver ID
+            { $set: { cars: [carData] } }, // Update cars array with the new data
+            { new: true, upsert: true } // Return updated document, create if it doesn't exist
+        );
+        
 
         //const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
         const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
@@ -679,17 +686,23 @@ export async function completeNewDriverRegistration(req, res) {
         await newDriver.save()
 
         const carData = {registrationNumber, year, model, color, noOfSeats, carImgUrl, active: true }
-        let newCarDetails
-        const carDataExist = await CarDetailModel.findOne({ driverId: driver?.driverId })
-        if(carDataExist){
-            newCarDetails = carDataExist
-        } else {
-            newCarDetails = await CarDetailModel.create({
-                driverId: newDriver?.driverId
-            })
-        }
-        newCarDetails.cars.push(carData)
-        await newCarDetails.save()
+        //let newCarDetails
+        //const carDataExist = await CarDetailModel.findOne({ driverId: driver?.driverId })
+        //if(carDataExist){
+        //    newCarDetails = carDataExist
+        //} else {
+        //    newCarDetails = await CarDetailModel.create({
+        //        driverId: newDriver?.driverId
+        //    })
+        //}
+        //newCarDetails.cars.push(carData)
+        //await newCarDetails.save()
+        // Ensure a driver can only have one car data by updating if it exists
+        const updatedCarDetail = await CarDetailModel.findOneAndUpdate(
+            { driverId: driver?.driverId }, // Search by driver ID
+            { $set: { cars: [carData] } }, // Update cars array with the new data
+            { new: true, upsert: true } // Return updated document, create if it doesn't exist
+        );
 
         //const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
         const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
@@ -1162,6 +1175,6 @@ export async function createnew(req, res){
         
         sendResponse(res, 200, true, { allDrivers, allDriverCars, allDriverLocations }, 'All Drivers')
     } catch (error) {
-        console.log('ERROR', errror)
+        console.log('ERROR', error)
     }
 }
