@@ -346,7 +346,7 @@ export async function completeDriverRegistration(req, res) {
 
         driver.candidateId = candidate?.data?.id
         await driver.save()
-        await CandidateSignatureModel.create({
+        const candidateSignature = await CandidateSignatureModel.create({
             name: `${driver.firstName} ${driver.middleName || ''} ${driver.lastName}`,
             signature: signature,
             candidateId: candidate?.data?.id,
@@ -355,6 +355,7 @@ export async function completeDriverRegistration(req, res) {
             userConsent: userConsent,
             userDeviceData
         })
+        console.log('candidateSignature', candidateSignature, 'candidateSignature device', candidateSignature.userDeviceData)
         //INVITE CANDIDATE
         let sendInviteToCandidate
         if(candidate.success){
