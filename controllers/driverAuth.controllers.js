@@ -334,7 +334,7 @@ export async function completeDriverRegistration(req, res) {
             phone: driver?.mobileNumber,
             zipcode: driver?.zipcode,
             dob: driver?.dob,
-            ssn: req.body?.ssn,
+            ssn: formatSsn.data,
             driver_license_number: driver?.driverLincenseNumber,
             driver_license_state: driver?.driverLincenseState,
             copy_requested: true
@@ -766,7 +766,7 @@ export async function completeNewDriverRegistration(req, res) {
             phone: newDriver?.mobileNumber,
             zipcode: newDriver?.zipcode,
             dob: newDriver?.dob,
-            ssn: req.body?.ssn,
+            ssn: formatSsn.data,
             driver_license_number: newDriver?.driverLincenseNumber,
             driver_license_state: newDriver?.driverLincenseState,
             copy_requested: true
