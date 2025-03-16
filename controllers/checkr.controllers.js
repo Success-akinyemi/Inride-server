@@ -58,7 +58,8 @@ export async function createCandidate({ first_name, last_name, middle_name, emai
           //console.log("Candidate created successfully:", newCandidate.data);
           return { success: true, data: newCandidate.data };
     } catch (error) {
-        console.log('UNABLE TO CREATE CHECKR CANDIDATE', error)
+        console.log('UNABLE TO CREATE CHECKR CANDIDATE', error.response.data)
+        console.log('DATA',{ success: false, data: error.response.data })
         return { success: false, data: error.response.data };
     }
 }

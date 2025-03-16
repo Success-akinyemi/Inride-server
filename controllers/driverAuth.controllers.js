@@ -340,6 +340,9 @@ export async function completeDriverRegistration(req, res) {
             copy_requested: true
         })
         console.log('checkr candidate',candidate)
+        if(!candidate.success){
+            return sendResponse(res, 400, false, `${candidate.data}`)
+        }
 
         driver.candidateId = candidate?.data?.id
         await driver.save()
@@ -363,6 +366,9 @@ export async function completeDriverRegistration(req, res) {
         }
 
         console.log('sendInviteToCandidate', sendInviteToCandidate)
+        if(!sendInviteToCandidate.success){
+            return sendResponse(res, 400, false, `${sendInviteToCandidate.data}`)
+        }
         //send invitation email to complete verification
         sendCheckrInvitationEmail({
             email: driver?.email,
@@ -771,6 +777,10 @@ export async function completeNewDriverRegistration(req, res) {
             driver_license_state: newDriver?.driverLincenseState,
             copy_requested: true
         })
+        console.log('checkr candidate',candidate)
+        if(!candidate.success){
+            return sendResponse(res, 400, false, `${candidate.data}`)
+        }
         
         newDriver.candidateId = candidate?.data?.id
         await newDriver.save()
@@ -791,6 +801,10 @@ export async function completeNewDriverRegistration(req, res) {
                 package_name: process.env.CHECKR_PACKAGE_NAME,
                 state: newDriver?.state
             })
+        }
+        console.log('sendInviteToCandidate',sendInviteToCandidate)
+        if(!sendInviteToCandidate.success){
+            return sendResponse(res, 400, false, `${sendInviteToCandidate.data}`)
         }
 
         //send invitation email to complete verification
@@ -1058,8 +1072,7 @@ export async function verifyToken(req, res) {
     }
 }
 
-/**
- * 
+
 export async function createnew(req, res) {
     try {
         const driverId = await generateUniqueCode(8)
@@ -1071,17 +1084,17 @@ export async function createnew(req, res) {
             middleName: 'doe',
             lastName: 'Man',
             zipcode: '95814',
-            email: 'successakin321@gmail.com',
+            email: 'successakin3214@gmail.com',
             opreatingCity: 'Lagos',
             pricePerKm: 100,
-            ssn: '111-11-2003',
+            ssn: '998-22-1992', //'111-11-2003',
             idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             idCardType: 'Driver Lincense',
             driverLincenseImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             driverLincenseImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            driver_license_number: '981736076',
+            driver_license_number: '1234555', //'981736076',
             driver_license_state: 'CT',
             dob: '1964-03-15',
             state: 'CA',
@@ -1103,7 +1116,8 @@ export async function createnew(req, res) {
             driver_license_state: data?.driver_license_state,
             copy_requested: true
         })
-        //console.log('NEW CANDIDATE', candidate)
+        console.log('NEW CANDIDATE', candidate)
+        return
         
         //INVITE CANDIDATE
         let sendInviteToCandidate
@@ -1130,7 +1144,7 @@ export async function createnew(req, res) {
             driverId: newUser?.driverId,
             cars: [
                 {
-                    registrationNumber: '345667',
+                    registrationNumber: '00349',
                     year: '2025',
                     model: 'Hyundai',
                     color: 'Black',
@@ -1139,7 +1153,7 @@ export async function createnew(req, res) {
                     active: false
                 },
                 {
-                    registrationNumber: '1284792',
+                    registrationNumber: '0099938',
                     year: '2025',
                     model: 'Benz',
                     color: 'Black',
@@ -1169,7 +1183,9 @@ export async function createnew(req, res) {
         console.log('ERROR', error)
     }
 }
- */
+
+
+/**
 
 export async function createnew(req, res){
     try {
@@ -1182,3 +1198,4 @@ export async function createnew(req, res){
         console.log('ERROR', error)
     }
 }
+ */
