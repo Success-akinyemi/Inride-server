@@ -257,17 +257,25 @@ export async function completeDriverRegistration(req, res) {
         await driver.save()
 
         const carData = {registrationNumber, year, model, color, noOfSeats, carImgUrl, active: true }
-        const newCarDetails = await CarDetailModel.create({
-            driverId: driver?.driverId
-        })
+        let newCarDetails
+        const carDataExist = await CarDetailModel.findOne({ driverId: driver?.driverId })
+        if(carDataExist){
+            newCarDetails = carDataExist
+        } else {
+            newCarDetails = await CarDetailModel.create({
+                driverId: driver?.driverId
+            })
+        }
         newCarDetails.cars.push(carData)
         await newCarDetails.save()
 
+        //const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
         const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
+        const coordinatesArray = [parsedCoordinates.lng, parsedCoordinates.lat]; // [longitude, latitude]
         const newDriverLocation = await DriverLocationModel.create({
             driverId: driver?.driverId,
             name: `${driver?.firstName} ${driver?.lastName}`,
-            location: { type: 'Point', coordinates: parsedCoordinates },  //longitude first for GeoJSON
+            location: { type: 'Point', coordinates: coordinatesArray },  //longitude first for GeoJSON
             isActive: true,
             status: 'online'
         })
@@ -671,17 +679,25 @@ export async function completeNewDriverRegistration(req, res) {
         await newDriver.save()
 
         const carData = {registrationNumber, year, model, color, noOfSeats, carImgUrl, active: true }
-        const newCarDetails = await CarDetailModel.create({
-            driverId: newDriver?.driverId
-        })
+        let newCarDetails
+        const carDataExist = await CarDetailModel.findOne({ driverId: driver?.driverId })
+        if(carDataExist){
+            newCarDetails = carDataExist
+        } else {
+            newCarDetails = await CarDetailModel.create({
+                driverId: newDriver?.driverId
+            })
+        }
         newCarDetails.cars.push(carData)
         await newCarDetails.save()
 
+        //const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
         const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
+        const coordinatesArray = [parsedCoordinates.lng, parsedCoordinates.lat]; // [longitude, latitude]
         const newDriverLocation = await DriverLocationModel.create({
             driverId: newDriver?.driverId,
             name: `${newDriver?.firstName} ${newDriver?.lastName}`,
-            location: { type: 'Point', coordinates: parsedCoordinates },  //longitude first for GeoJSON
+            location: { type: 'Point', coordinates: coordinatesArray },  //longitude first for GeoJSON
             isActive: true,
             status: 'online'
         })
@@ -1025,7 +1041,8 @@ export async function verifyToken(req, res) {
     }
 }
 
-/** */
+/**
+ * 
 export async function createnew(req, res) {
     try {
         const driverId = await generateUniqueCode(8)
@@ -1133,5 +1150,18 @@ export async function createnew(req, res) {
         return sendResponse(res, 201, true, newUser, 'DRIVER CREATED')
     } catch (error) {
         console.log('ERROR', error)
+    }
+}
+ */
+
+export async function createnew(req, res){
+    try {
+        const allDrivers = await DriverModel.deleteMany()
+        const allDriverCars = await CarDetailModel.deleteMany()
+        const allDriverLocations = await DriverLocationModel.deleteMany()
+        
+        sendResponse(res, 200, true, { allDrivers, allDriverCars, allDriverLocations }, 'All Drivers')
+    } catch (error) {
+        console.log('ERROR', errror)
     }
 }
