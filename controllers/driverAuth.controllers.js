@@ -1072,7 +1072,8 @@ export async function verifyToken(req, res) {
     }
 }
 
-
+/**
+ *  
 export async function createnew(req, res) {
     try {
         const driverId = await generateUniqueCode(8)
@@ -1087,7 +1088,7 @@ export async function createnew(req, res) {
             email: 'successakin3214@gmail.com',
             opreatingCity: 'Lagos',
             pricePerKm: 100,
-            ssn: '998-22-1992', //'111-11-2003',
+            ssn: '111-11-2003', //'111-11-2003',
             idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
@@ -1183,9 +1184,7 @@ export async function createnew(req, res) {
         console.log('ERROR', error)
     }
 }
-
-
-/**
+ */
 
 export async function createnew(req, res){
     try {
@@ -1198,4 +1197,3 @@ export async function createnew(req, res){
         console.log('ERROR', error)
     }
 }
- */
