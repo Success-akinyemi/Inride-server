@@ -341,7 +341,7 @@ export async function completeDriverRegistration(req, res) {
         })
         console.log('checkr candidate',candidate)
         if(!candidate.success){
-            return sendResponse(res, 400, false, `${candidate.data}`)
+            return sendResponse(res, 400, false, `${candidate.data.error}`)
         }
 
         driver.candidateId = candidate?.data?.id
@@ -367,7 +367,7 @@ export async function completeDriverRegistration(req, res) {
 
         console.log('sendInviteToCandidate', sendInviteToCandidate)
         if(!sendInviteToCandidate.success){
-            return sendResponse(res, 400, false, `${sendInviteToCandidate.data}`)
+            return sendResponse(res, 400, false, `${sendInviteToCandidate.data.error}`)
         }
         //send invitation email to complete verification
         sendCheckrInvitationEmail({
@@ -779,7 +779,7 @@ export async function completeNewDriverRegistration(req, res) {
         })
         console.log('checkr candidate',candidate)
         if(!candidate.success){
-            return sendResponse(res, 400, false, `${candidate.data}`)
+            return sendResponse(res, 400, false, `${candidate.data.error}`)
         }
         
         newDriver.candidateId = candidate?.data?.id
@@ -804,7 +804,7 @@ export async function completeNewDriverRegistration(req, res) {
         }
         console.log('sendInviteToCandidate',sendInviteToCandidate)
         if(!sendInviteToCandidate.success){
-            return sendResponse(res, 400, false, `${sendInviteToCandidate.data}`)
+            return sendResponse(res, 400, false, `${sendInviteToCandidate.data.error}`)
         }
 
         //send invitation email to complete verification
@@ -1073,119 +1073,123 @@ export async function verifyToken(req, res) {
 }
 
 /**
- *  
-export async function createnew(req, res) {
-    try {
-        const driverId = await generateUniqueCode(8)
-        console.log('DRIVER ID', `RF${driverId}DR`)
+ export async function createnew(req, res) {
+     try {
+         const driverId = await generateUniqueCode(8)
+         console.log('DRIVER ID', `RF${driverId}DR`)
+ 
+         const data = {
+             mobileNumber: '12240898879',
+             firstName: 'john',
+             middleName: 'doe',
+             lastName: 'Man',
+             zipcode: '95814',
+             email: 'successakin3214@gmail.com',
+             opreatingCity: 'Lagos',
+             pricePerKm: 100,
+             ssn: '111-11-2003', //'111-11-2003',
+             idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+             idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+             profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+             idCardType: 'Driver Lincense',
+             driverLincenseImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+             driverLincenseImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+             driver_license_number: '1234555', //'981736076',
+             driver_license_state: 'CT',
+             dob: '1964-03-15',
+             state: 'CA',
+             verified: true,
+             driverId: `RF${driverId}DR`,
+             status: 'online'
+         }
+ 
+         const candidate = await createCandidate({
+             first_name: data?.firstName,
+             middle_name: data?.middleName,
+             last_name: data?.lastName,
+             email: data?.email,
+             phone: data?.mobileNumber,
+             zipcode: data?.zipcode,
+             dob: data?.dob,
+             ssn: data?.ssn,
+             driver_license_number: data?.driver_license_number,
+             driver_license_state: data?.driver_license_state,
+             copy_requested: true
+         })
+         console.log('NEW CANDIDATE', candidate)
+         console.log('candidate.data', candidate.data.error)
+         return
+         
+         //INVITE CANDIDATE
+         let sendInviteToCandidate
+         if(candidate.success){
+             sendInviteToCandidate = await inviteCandidate({
+                 candidate_id: candidate?.data?.id,
+                 package_name: process.env.CHECKR_PACKAGE_NAME,
+                 state: data?.state
+             })
+         }
+         console.log('CANDIDATE INVITESS', sendInviteToCandidate.data)
+ 
+         //send invitation email to complete verification
+         sendCheckrInvitationEmail({
+             email: data?.email,
+             name: `${data?.firstName} ${data?.middleName || ''} ${data?.lastName}`,
+             buttonLink: sendInviteToCandidate.data.invitation_url
+         })
+ 
+         const newUser = await DriverModel.create(data)
+         newUser.candidateId = candidate?.data?.id
+         await newUser.save()
+         const carDetails = {
+             driverId: newUser?.driverId,
+             cars: [
+                 {
+                     registrationNumber: '00349',
+                     year: '2025',
+                     model: 'Hyundai',
+                     color: 'Black',
+                     noOfSeats: '6',
+                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
+                     active: false
+                 },
+                 {
+                     registrationNumber: '0099938',
+                     year: '2025',
+                     model: 'Benz',
+                     color: 'Black',
+                     noOfSeats: '4',
+                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
+                     active: true
+                 }
+             ]
+         }
+         const newCar = await CarDetailModel.create(carDetails)
+         const newDriverLocation = await DriverLocationModel.create({
+             driverId: newUser?.driverId,
+             name: `${newUser?.firstName} ${newUser?.lastName}`,
+             location: {
+                 "type": "Point",
+                 "coordinates": [
+                     3.3792057,
+                     6.5243793
+                 ]
+             },
+             isActive: true,
+             status: 'online'
+         })
+         console.log('NEW DRIVER LOCATION', newDriverLocation)
+         return sendResponse(res, 201, true, newUser, 'DRIVER CREATED')
+     } catch (error) {
+         console.log('ERROR', error)
+     }
+ }
 
-        const data = {
-            mobileNumber: '12240898879',
-            firstName: 'john',
-            middleName: 'doe',
-            lastName: 'Man',
-            zipcode: '95814',
-            email: 'successakin3214@gmail.com',
-            opreatingCity: 'Lagos',
-            pricePerKm: 100,
-            ssn: '111-11-2003', //'111-11-2003',
-            idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            idCardType: 'Driver Lincense',
-            driverLincenseImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            driverLincenseImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            driver_license_number: '1234555', //'981736076',
-            driver_license_state: 'CT',
-            dob: '1964-03-15',
-            state: 'CA',
-            verified: true,
-            driverId: `RF${driverId}DR`,
-            status: 'online'
-        }
-
-        const candidate = await createCandidate({
-            first_name: data?.firstName,
-            middle_name: data?.middleName,
-            last_name: data?.lastName,
-            email: data?.email,
-            phone: data?.mobileNumber,
-            zipcode: data?.zipcode,
-            dob: data?.dob,
-            ssn: data?.ssn,
-            driver_license_number: data?.driver_license_number,
-            driver_license_state: data?.driver_license_state,
-            copy_requested: true
-        })
-        console.log('NEW CANDIDATE', candidate)
-        return
-        
-        //INVITE CANDIDATE
-        let sendInviteToCandidate
-        if(candidate.success){
-            sendInviteToCandidate = await inviteCandidate({
-                candidate_id: candidate?.data?.id,
-                package_name: process.env.CHECKR_PACKAGE_NAME,
-                state: data?.state
-            })
-        }
-        console.log('CANDIDATE INVITESS', sendInviteToCandidate.data)
-
-        //send invitation email to complete verification
-        sendCheckrInvitationEmail({
-            email: data?.email,
-            name: `${data?.firstName} ${data?.middleName || ''} ${data?.lastName}`,
-            buttonLink: sendInviteToCandidate.data.invitation_url
-        })
-
-        const newUser = await DriverModel.create(data)
-        newUser.candidateId = candidate?.data?.id
-        await newUser.save()
-        const carDetails = {
-            driverId: newUser?.driverId,
-            cars: [
-                {
-                    registrationNumber: '00349',
-                    year: '2025',
-                    model: 'Hyundai',
-                    color: 'Black',
-                    noOfSeats: '6',
-                    carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
-                    active: false
-                },
-                {
-                    registrationNumber: '0099938',
-                    year: '2025',
-                    model: 'Benz',
-                    color: 'Black',
-                    noOfSeats: '4',
-                    carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
-                    active: true
-                }
-            ]
-        }
-        const newCar = await CarDetailModel.create(carDetails)
-        const newDriverLocation = await DriverLocationModel.create({
-            driverId: newUser?.driverId,
-            name: `${newUser?.firstName} ${newUser?.lastName}`,
-            location: {
-                "type": "Point",
-                "coordinates": [
-                    3.3792057,
-                    6.5243793
-                ]
-            },
-            isActive: true,
-            status: 'online'
-        })
-        console.log('NEW DRIVER LOCATION', newDriverLocation)
-        return sendResponse(res, 201, true, newUser, 'DRIVER CREATED')
-    } catch (error) {
-        console.log('ERROR', error)
-    }
-}
  */
 
+/**
+ 
+*/
 export async function createnew(req, res){
     try {
         const allDrivers = await DriverModel.deleteMany()
