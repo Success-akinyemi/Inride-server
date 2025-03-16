@@ -339,6 +339,7 @@ export async function completeDriverRegistration(req, res) {
             driver_license_state: driver?.driverLincenseState,
             copy_requested: true
         })
+        console.log('checkr candidate',candidate)
 
         driver.candidateId = candidate?.data?.id
         await driver.save()
@@ -361,11 +362,12 @@ export async function completeDriverRegistration(req, res) {
             })
         }
 
+        console.log('sendInviteToCandidate', sendInviteToCandidate)
         //send invitation email to complete verification
         sendCheckrInvitationEmail({
             email: driver?.email,
             name: `${driver?.firstName} ${driver?.middleName || ''} ${driver?.lastName}`,
-            buttonLink: sendInviteToCandidate.data.invitation_url
+            buttonLink: sendInviteToCandidate?.data?.invitation_url
         })
         
 
@@ -795,7 +797,7 @@ export async function completeNewDriverRegistration(req, res) {
         sendCheckrInvitationEmail({
             email: newDriver?.email,
             name: `${newDriver?.firstName} ${newDriver?.middleName || ''} ${newDriver?.lastName}`,
-            buttonLink: sendInviteToCandidate.data.invitation_url
+            buttonLink: sendInviteToCandidate?.data?.invitation_url
         })
 
         // Generate Tokens
