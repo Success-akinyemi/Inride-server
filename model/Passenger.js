@@ -41,6 +41,14 @@ const PassengerSchema = new mongoose.Schema({
         type: Number,
         default: 0 //max 3
     },
+    pushNotification: {
+        type: Boolean,
+        default: false
+    },
+    emailNotification: {
+        type: Boolean,
+        default: false
+    },
 
     password: {
         type: String

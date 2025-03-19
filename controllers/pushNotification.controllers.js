@@ -3,6 +3,8 @@ import PushNotificationModel from '../model/PushNotifications.js';
 import CmsModel from '../model/Cms.js';
 import admin from '../middlewares/firebase.js';
 import EmailSubscriberModel from '../model/EmailSubscribers.js';
+import PassengerModel from '../model/Passenger.js';
+import DriverModel from '../model/Driver.js';
 
 //save data for push notification
 export async function saveSubscription(req, res) {
@@ -27,18 +29,22 @@ export async function saveSubscription(req, res) {
     }
 
     try {
+        let user
+        if(accountType === 'passenger'){
+            user = await PassengerModel.findOne({ passengerId: accountId })
+        } else {
+            user = await DriverModel.findOne({ driverId: accountId })
+        }
         // Find or create the document
         let pushNotificationDoc = await PushNotificationModel.findOne({ accountId });
         if (pushNotificationDoc) {
-            await PushNotificationModel.findOneAndUpdate(
-                {accountId},
-                {
-                    email,
-                    data,
-                    accountType
-                }
-            )
-            return sendResponse(res, 201, true, 'Subscription saved')
+            await PushNotificationModel.findOneAndDelete({ accountId })
+
+            if(user){
+                user.pushNotification = false
+                await user.save()
+            }
+            return sendResponse(res, 201, true, 'Successfully UnSubscribe')
         }
 
         // Save the updated document
@@ -48,6 +54,10 @@ export async function saveSubscription(req, res) {
             accountId,
             accountType
         });
+        if(user){
+            user.pushNotification = true
+            await user.save()
+        }
 
         //TEST NOTIFICATION
         const image = 'https://i.ibb.co/HtNmMC5/Group-625936.png'; 
@@ -89,7 +99,23 @@ export async function subscribeEmail(req, res) {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) return sendResponse(res, 400, false, `Invalid Email Address`);
     try {
-        const newSubscriber = EmailSubscriberModel.create({
+        let user
+        let accountId = passengerId ? passengerId : driverId
+        if(passengerId){
+            user = await PassengerModel.findOne({ passengerId })
+        } else {
+            user = await DriverModel.findOne({ driverId })
+        }
+        const subscriberExist = await EmailSubscriberModel.findOne({ accountId })
+        if(subscriberExist){
+            await EmailSubscriberModel.findOneAndDelete({ accountId })
+            if(user){
+                user.emailNotification = false
+                await user.save()
+            }
+            return sendResponse(res, 201, true, 'Successfully UnSubscribe')
+        }
+        const newSubscriber = await EmailSubscriberModel.create({
             accountId: passengerId || driverId,
             email,
             accountType: passengerId ? 'passenger' : 'driver',
@@ -97,6 +123,10 @@ export async function subscribeEmail(req, res) {
             lastName
         })
 
+        if(user){
+            user.emailNotification = true
+            await user.save()
+        }
         sendResponse(res, 201, true, 'Subscription scuccessful')
     } catch (error) {
         console.log('UNABLE TO SUBSCRIBE USER EMAIL', error)

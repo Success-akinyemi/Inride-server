@@ -123,6 +123,14 @@ const DriverSchema = new mongoose.Schema({
     dob: {
         type: String //format 1964-03-15 YYYY-MM-DD
     },
+    pushNotification: {
+        type: Boolean,
+        default: false
+    },
+    emailNotification: {
+        type: Boolean,
+        default: false
+    },
 
 
 
