@@ -1,10 +1,11 @@
 import { sendCMSEmail } from "../middlewares/mailTemplate.js.js"
-import { sendNotificationById, sendResponse, uploadFile } from "../middlewares/utils.js"
+import { sendResponse, uploadFile } from "../middlewares/utils.js"
 import AdminUserModel from "../model/Admin.js"
 import CmsModel from "../model/Cms.js"
 import DriverModel from "../model/Driver.js"
 import NotificationModel from "../model/Notifications.js"
 import PassengerModel from "../model/Passenger.js"
+import { sendNotificationById } from "./pushNotification.controllers.js"
 
 //CREATE NEW CMS
 export async function newCms(req, res) {
