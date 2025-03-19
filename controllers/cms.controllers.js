@@ -3,6 +3,7 @@ import { sendNotificationById, sendResponse, uploadFile } from "../middlewares/u
 import AdminUserModel from "../model/Admin.js"
 import CmsModel from "../model/Cms.js"
 import DriverModel from "../model/Driver.js"
+import NotificationModel from "../model/Notifications.js"
 import PassengerModel from "../model/Passenger.js"
 
 //CREATE NEW CMS
@@ -175,11 +176,44 @@ export async function newCms(req, res) {
             }
         }
 
-        //send push notificatio
+        //send push notification
         if(status === 'published' && type === 'pushnotification' || type === 'inappandpushnotification' ){
             const cmsId = newCms._id; // CMS ID
             const sendPushNotification = await sendNotificationById(cmsId);
             console.log(sendPushNotification);
+        }
+
+        //send in app notification
+        if(status === 'published' && type === 'inapp' || type === 'inappandpushnotification'){
+            //send mail notifications
+            let recipients = [];
+            if (accountType === 'driver') {
+                const drivers = await DriverModel.find({}, 'email firstName lastName driverId'); // Fetch emails and names
+                recipients = drivers.map(driver => ({ email: driver.email, name: `${driver.firstName} ${driver.lastName}`, accountId: driver.driverId || '' }));
+            } else if (accountType === 'passenger') {
+                const passenger = await PassengerModel.find({}, 'email firstName lastName passengerId'); // Fetch emails and names
+                recipients = passenger.map(passenger => ({ email: passenger.email, name: `${passenger.firstName} ${passenger.lastName}`, accountId: passenger.passengerId || '' }));
+            } else if (accountType === 'admin') {
+                const admin = await AdminUserModel.find({}, 'email firstName lastName adminId'); // Fetch emails and names
+                recipients = admin.map(admin => ({ email: admin.email, name: `${admin.firstName} ${admin.lastName}`, accountId: admin.adminId || '' }));
+            } else if (!accountType || newCms?.allUsers === true) {
+                const drivers = await DriverModel.find({}, 'email firstName lastName driverId');
+                const passenger = await PassengerModel.find({}, 'email firstName lastName passengerId');
+                const admin = await AdminUserModel.find({}, 'email firstName lastName adminId');
+                recipients = [
+                    ...drivers.map(driver => ({ email: driver.email, name: `${driver.firstName} ${driver.lastName}`, accountId: driver.driverId || '' })),
+                    ...passenger.map(passenger => ({ email: passenger.email, name: `${passenger.firstName} ${passenger.lastName}`, accountId: passenger.passengerId || '' })),
+                    ...admin.map(admin => ({ email: admin.email, name: `${admin.firstName} ${organization.lastName}`, accountId: admin.adminId || '' })),
+                ];
+            }
+
+            // Send emails
+            for (const recipient of recipients) {
+                await NotificationModel.create({
+                    accountId: `${recipient.accountId}`,
+                    message: `${newCms?.message}`
+                })
+            }
         }
 
         sendResponse(res, 201, true, 'CMS message created successfully')
@@ -369,6 +403,39 @@ export async function updateCms(req, res) {
             const sendPushNotification = await sendNotificationById(cmsId);
             console.log(sendPushNotification);
         }
+
+                //send mail notifications
+                if(status === 'published' && type === 'inapp' || type === 'inappandpushnotification'){
+                    //send mail notifications
+                    let recipients = [];
+                    if (accountType === 'driver') {
+                        const drivers = await DriverModel.find({}, 'email firstName lastName driverId'); // Fetch emails and names
+                        recipients = drivers.map(driver => ({ email: driver.email, name: `${driver.firstName} ${driver.lastName}`, accountId: driver?.driverId || '' }));
+                    } else if (accountType === 'passenger') {
+                        const passenger = await PassengerModel.find({}, 'email firstName lastName passengerId'); // Fetch emails and names
+                        recipients = passenger.map(passenger => ({ email: passenger.email, name: `${passenger.firstName} ${passenger.lastName}`, accountId: passenger.passengerId || '' }));
+                    } else if (accountType === 'admin') {
+                        const admin = await AdminUserModel.find({}, 'email firstName lastName adminId'); // Fetch emails and names
+                        recipients = admin.map(admin => ({ email: admin.email, name: `${admin.firstName} ${admin.lastName}`, accountId: admin?.adminId || '' }));
+                    } else if (!accountType || newCms?.allUsers === true) {
+                        const drivers = await DriverModel.find({}, 'email firstName lastName driverId');
+                        const passenger = await PassengerModel.find({}, 'email firstName lastName passengerId');
+                        const admin = await AdminUserModel.find({}, 'email firstName lastName adminId');
+                        recipients = [
+                            ...drivers.map(driver => ({ email: driver.email, name: `${driver.firstName} ${driver.lastName}`, accountId: driver.driverId || '' })),
+                            ...passenger.map(passenger => ({ email: passenger.email, name: `${passenger.firstName} ${passenger.lastName}`, accountId: passenger.passengerId || '' })),
+                            ...admin.map(admin => ({ email: admin.email, name: `${admin.firstName} ${organization.lastName}`, accountId: admin.adminId || '' })),
+                        ];
+                    }
+        
+                    // Send emails
+                    for (const recipient of recipients) {
+                        await NotificationModel.create({
+                            accountId: `${recipient.accountId}`,
+                            message: `${editCms.message}`
+                        })
+                    }
+                }
         
         sendResponse(res, 201, false, 'CMS message updated successfully')
     } catch (error) {

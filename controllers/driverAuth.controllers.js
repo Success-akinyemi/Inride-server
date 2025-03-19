@@ -1193,11 +1193,17 @@ export async function verifyToken(req, res) {
 */
 export async function createnew(req, res){
     try {
-        const allDrivers = await DriverModel.deleteMany()
-        const allDriverCars = await CarDetailModel.deleteMany()
-        const allDriverLocations = await DriverLocationModel.deleteMany()
-        
-        sendResponse(res, 200, true, { allDrivers, allDriverCars, allDriverLocations }, 'All Drivers')
+        //const allDrivers = await DriverModel.deleteMany()
+        //const allDriverCars = await CarDetailModel.deleteMany()
+        //const allDriverLocations = await DriverLocationModel.deleteMany()
+        const driver = await DriverModel.findOne({ email: 'aremu.moses2022@gmail.com' })
+        driver.approved = true
+        driver.active = true
+        driver.verified = true
+        await driver.save()
+        sendResponse(res, 200, true, driver, 'Driver Approved')
+
+        //sendResponse(res, 200, true, { allDrivers, allDriverCars, allDriverLocations }, 'All Drivers')
     } catch (error) {
         console.log('ERROR', error)
     }

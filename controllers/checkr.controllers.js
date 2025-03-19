@@ -207,6 +207,13 @@ export async function checkrWebHook(req, res) {
                   })
                 } 
               }
+              if(bodyData?.result?.toLowerCase() === 'consider '){
+                const candidateId = getCandidateReport.candidateId
+                const getDriver = await DriverModel.findOne({ candidateId: candidateId })
+                if(getDriver){
+
+                } 
+              }
             }
 
             res.json(200).end()

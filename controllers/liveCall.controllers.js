@@ -144,6 +144,10 @@ export async function endCall({ data, socket, res }) {
             return handleInvalidCall(socket, res);
         }
 
+        // End the call in Stream API
+        const callInstance = client.video.call("default", rideId);
+        await callInstance.end();
+
         // Notify both parties that the call has ended
         generalNamespace.to(call.caller).emit("callEnded");
         generalNamespace.to(call.receiver).emit("callEnded");
