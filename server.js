@@ -6,6 +6,7 @@ import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 import ngrok from '@ngrok/ngrok'
+import morgan from 'morgan';
 
 config();
 import PassengerAuthRoute from './routes/PassengerAuth.routes.js';
@@ -75,6 +76,8 @@ app.use(cors({
 import * as controllers from './controllers/stripeWebhook.controllers.js';
 app.post('/api/webhook/stripeWebHook', express.raw({ type: 'application/json' }), controllers.stripeWebHook);
 
+// Add Morgan middleware to log HTTP requests
+app.use(morgan('dev'));
 
 app.use(cookieParser());
 app.use(express.json());
