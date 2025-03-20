@@ -419,6 +419,8 @@ export async function registerUser(req, res) {
 //SIGNIN PASSENGER
 export async function signin(req, res) {
     const { mobileNumber } = req.body
+    console.log('PASSENGER LOGIN', req.body)
+
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Provide a mobile number')
     }
