@@ -19,7 +19,7 @@ const usNumberRegex = /^\+1\d{10}$/;
 //Register user passenger account - use id from cookie to get user
 export async function registerWithPassengerAccount(req, res) {
     const { mobileNumber } = req.body
-    
+    console.log('NEW DRIVER TO PASSENGER NUMBER', mobileNumber)
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Please provide your passenger mobile number to perform this action')
     }
@@ -418,6 +418,7 @@ export async function completeDriverRegistration(req, res) {
 //New driver register
 export async function registerNewDriver(req, res) {
     const { mobileNumber } = req.body
+    console.log('NEW DRIVER NUMBER', mobileNumber)
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Provide a mobile number')
     }
