@@ -11,7 +11,7 @@ const usNumberRegex = /^\+1\d{10}$/;
 //REGISTER MOBILE NUMBER
 export async function registerNumber(req, res) {
     const { mobileNumber } = req.body
-    //console.log('PASSENGER REGISTER', req.body)
+    console.log('PASSENGER REGISTER', req.body)
     if(!mobileNumber){
         return sendResponse(res, 400, false, 'Provide a mobile number')
     }
@@ -812,10 +812,10 @@ export async function createnew(req, res) {
         console.log('PASSENGER ID', `RF${passengerId}PA`)
 
         const data = {
-            mobileNumber: "+2349059309836",
+            mobileNumber: "1234567890",
             firstName: "Inride",
             lastName: "User",
-            email: "user@gmail.com",
+            email: "peace@gmail.com",
             passengerId: `RF${passengerId}PA`,
             ssn: '123456789',
             idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
