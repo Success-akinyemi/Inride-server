@@ -1,8 +1,12 @@
 import { sendResponse, uploadFile } from "../middlewares/utils.js"
+import CandidateReportModel from "../model/CandidateReport.js";
 import DriverModel from "../model/Driver.js"
 import DriverBankDetailModel from "../model/DriverBankDetails.js";
 import NotificationModel from "../model/Notifications.js";
 import PayoutModel from "../model/Payout.js";
+
+const checkrApiKey = process.env.CHECKR_SECRET
+const checkrBaseUrl = process.env.CHECKR_URL
 
 export async function updateProfile(req, res) {
 
@@ -175,13 +179,43 @@ export async function getDrivers(req, res) {
       const payoutRequest = await PayoutModel.findOne({ driverId })
       .sort({ creacreatedAt: -1 })
       .limit(1)
+
+      let reportData
+      if(getDriver.candidateId){
+        const candidateId = getDriver.candidateId
+        const getReport = await CandidateReportModel.findOne({ candidateId })
+        if(getReport){
+            const reportUrl = getReport.uri
+            try {
+                const authReq = await axios.get(`${checkrBaseUrl}${reportUrl}`, {
+                    auth: {
+                        username: checkrApiKey,
+                        password: "", 
+                      },
+                    })
+                reportData = authReq    
+            } catch (error) {
+                console.log('UNABLE TO GET USER REPORT FROM CHECKR')
+                reportData = 'Unable to get user report data from checkr'
+            }
+        }
+      }
   
       // Construct response object
       const driverData = {
         ...getDriver.toObject(), 
         payoutDetails: getDriverPayoutDetails || null, 
         latestPayout: payoutRequest?.amount,
-        latestPayoutStatus: payoutRequest?.status
+        latestPayoutStatus: payoutRequest?.status,
+        driverCheckrReport: typeof reportData === 'string' ? reportData : {
+            status: reportData?.status,
+            result: reportData?.result,
+            dueTime: reportData?.due_time,
+            package: reportData?.package,
+            uri: reportData?.uri,
+            motorReport: reportData?.motor_vehicle_report_id,
+            workLocation: reportData?.work_locations
+        }
       };
   
       sendResponse(res, 200, true, driverData);
@@ -231,6 +265,7 @@ export async function getDrivers(req, res) {
       getDriver.isBlocked = false
       getDriver.verified = true
       getDriver.active = true
+      getDriver.approved = true
       getDriver.warningCount = 0
       await getDriver.save()
   

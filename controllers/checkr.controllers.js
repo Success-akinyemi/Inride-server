@@ -4,7 +4,7 @@ import NewCandidatemodel from "../model/NewCandidiate.js"
 import CandidateInvitationModel from "../model/CandidateInvitation.js"
 import CandidateReportModel from "../model/CandidateReport.js"
 import DriverModel from "../model/Driver.js"
-import { sendWelcomeEmail } from "../middlewares/mailTemplate.js.js"
+import { sendDriverNotClearedEmail, sendWelcomeEmail } from "../middlewares/mailTemplate.js.js"
 
 const apiKey = process.env.CHECKR_SECRET
 
@@ -29,7 +29,7 @@ export async function authenticateCheckr(req, res){
 export async function createCandidate({ first_name, last_name, middle_name, email, phone, zipcode, dob, ssn, driver_license_number, driver_license_state, copy_requested  }) {
     try {
         const newCandidate = await axios.post(
-            `${process.env.CHECKR_URL}/candidates`,
+            `${process.env.CHECKR_URL}/v1/candidates`,
             {
               first_name,
               middle_name,
@@ -67,7 +67,7 @@ export async function createCandidate({ first_name, last_name, middle_name, emai
 export async function inviteCandidate({ candidate_id, package_name, state }) {
     try {
         const invitationToCandidate = await axios.post(
-            `${process.env.CHECKR_URL}/invitations`,
+            `${process.env.CHECKR_URL}/v1/invitations`,
             {
               candidate_id,
               package: package_name,
@@ -192,11 +192,12 @@ export async function checkrWebHook(req, res) {
               getCandidateReport.package = bodyData.package
               getCandidateReport.assessment = bodyData.assessment
               await getCandidateReport.save()
+              const candidateId = getCandidateReport.candidateId
+              const getDriver = await DriverModel.findOne({ candidateId: candidateId })
               if(bodyData?.result?.toLowerCase() === 'clear'){
-                const candidateId = getCandidateReport.candidateId
-                const getDriver = await DriverModel.findOne({ candidateId: candidateId })
                 if(getDriver){
                   getDriver.approved = true
+                  getDriver.backgroundCheckStatus = bodyData?.result?.toLowerCase()
                   await getDriver.save()
 
                   //send welcome email to user
@@ -208,10 +209,21 @@ export async function checkrWebHook(req, res) {
                 } 
               }
               if(bodyData?.result?.toLowerCase() === 'consider '){
-                const candidateId = getCandidateReport.candidateId
-                const getDriver = await DriverModel.findOne({ candidateId: candidateId })
+                //const candidateId = getCandidateReport.candidateId
+                //const getDriver = await DriverModel.findOne({ candidateId: candidateId })
                 if(getDriver){
-
+                    getDriver.backgroundCheckStatus = bodyData?.result?.toLowerCase()
+                    await getDriver.save()
+                    //send email to management
+                    sendDriverNotClearedEmail({
+                        email: 'ridefuze@gmail.com',
+                        name: 'RideFuuze',
+                        driverName: `${getDriver.firstName} ${getDriver.lastName}`,
+                        driverId: getDriver.driverId,
+                        driverMobile: getDriver.mobileNumber,
+                        driverEmail: getDriver.email,
+                        driverReportStatus: bodyData?.result?.toLowerCase()
+                    })
                 } 
               }
             }

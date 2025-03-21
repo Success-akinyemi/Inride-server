@@ -814,7 +814,7 @@ export async function createnew(req, res) {
         console.log('PASSENGER ID', `RF${passengerId}PA`)
 
         const data = {
-            mobileNumber: "1234567890",
+            mobileNumber: "+11234567892",
             firstName: "Inride",
             lastName: "User",
             email: "peace@gmail.com",
@@ -825,6 +825,7 @@ export async function createnew(req, res) {
             profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             accountImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
             verified: true,
+            wallet: 100000
         }
 
         const newPassenger = await PassengerModel.create(data)

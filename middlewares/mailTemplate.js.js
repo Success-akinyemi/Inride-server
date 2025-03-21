@@ -1079,3 +1079,85 @@ export async function sendNewUserEmail({
     throw error;
   }
 }
+
+export async function sendDriverNotClearedEmail({
+    email,
+    name = "",
+    driverName = "",
+    driverId = "",
+    driverMobile = "",
+    driverEmail = "",
+    driverReportStatus = "",
+    time = Date.now(),
+    title = "Checkr Driver Report (Not cleared)",
+  }) {
+    if (!email) {
+      throw new Error("Email is required to send a welcome email.");
+    }
+  
+    const emailContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+          <div style="display: flex; align-items: left; margin-bottom: 20px;">
+              <img src="${logourl}" alt="Logo" style="width: 100px; height: auto; margin-right: 20px;">
+          </div>
+          <br />
+          <br />
+          <p style="color: #344054; font-size: 16px; font-weight: 400;">Hi ${name},</p>
+          <p style="color: #344054; font-size: 16px; font-weight: 400;">
+              Checkr verification report for Driver <strong>${driverName}</strong> is not cleared, status report is <strong>${driverReportStatus}</strong>. To proceed with manual verification login to checkr dashboard to see details. and also to verify (approve) driver on dashboard if need be.
+          </p>
+          <br />
+          <strong>Details:</strong>
+          <p style="color: #344054; font-size: 16px; font-weight: 400;">
+              <strong>- Driver Name</strong>: ${driverName}
+          </p>
+          <p style="color: #344054; font-size: 16px; font-weight: 400;">
+              <strong>- Email</strong>: ${driverEmail}
+          </p>
+          <p style="color: #344054; font-size: 16px; font-weight: 400;">
+              <strong>- Driver ID</strong>: ${driverId}
+          </p>
+          <p style="color: #344054; font-size: 16px; font-weight: 400;">
+              <strong>- Driver Mobile</strong>: ${driverMobile}
+          </p>
+          <p style="color: #344054; font-size: 16px; font-weight: 400;">
+              <strong>- Report Status</strong>: ${driverReportStatus}
+          </p>
+  
+          <br />
+          <br />
+          <p style="color: #344054; font-size: 16px; font-weight: 400;">Best regards,<br /> <b>Team RideFuze</b></p>
+          <footer style="margin-top: 20px; font-size: 12px; color: #475467;">
+              <p>This email was sent to <span style="color: #007BFF;">${email}</span>. If you prefer not to receive similar notifications, you can <a href="#" style="color: #007BFF;">unsubscribe</a> or <a href="#" style="color: #007BFF;">manage your email preferences</a>.</p>
+              <p style="text-align: center;">© ${currentYear} RideFuze</p>
+              <br />
+              <div style="display: flex; gap: 40px; align-items: center; justify-content: space-between;">
+                <img src="${logourl}" alt="Logo" style="width: 80px; height: auto; margin-right: 20px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <a href="${twUrl}" style="text-decoration: none; color: inherit;">
+                    <img src=${twImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                  </a>
+                  <a href="${fbUrl}" style="text-decoration: none; color: inherit;">
+                    <img src=${fbImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                  </a>
+                  <a href="${igUrl}" style="text-decoration: none; color: inherit;">
+                    <img src=${igImg} style="width: 20px; height: auto; margin-left: 5px; margin-right: 5px;" />
+                  </a>
+                </div>
+              </div>
+          </footer>
+      </div>
+    `;
+  
+    try {
+      await sendEmail({
+        to: email,
+        subject: title,
+        html: emailContent,
+      });
+      console.log(`Driver verification status email sent to ${email}`);
+    } catch (error) {
+      console.error(`Failed to send email to ${email}:`, error.message);
+      throw error;
+    }
+  }

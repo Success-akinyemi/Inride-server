@@ -131,6 +131,9 @@ const DriverSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    backgroundCheckStatus: {
+        type: String
+    },
 
 
 
