@@ -259,6 +259,55 @@ import { scheduleRideAlerts } from './controllers/passenger.controllers.js'
 scheduleRideAlerts()
 import './controllers/scheduleCms.controllers.js'
 
+import axios from "axios";
+import cron from "node-cron";
+import { sendResponse } from './middlewares/utils.js';
+
+app.get('/', (req, res) => {
+    try {
+       return sendResponse(res, 200, true, 'Home get req')
+    } catch (error) {
+        console.log('BASE ENDPOINT ERROR', error)
+        return sendResponse(res, 500, false, 'Home get error')
+    }
+})
+/**  JOB TO KEEP ALIVE */
+const SERVER_URL = "https://golden-epics-server.onrender.com";
+const intervals = Array.from({ length: 11 }, (_, i) => i + 2); // [2, 3, ..., 12]
+
+async function fetchData() {
+    try {
+        const response = await axios.get(SERVER_URL);
+        console.log("✅ Server Response:", response.data);
+    } catch (error) {
+        console.error("❌ Error fetching data:", error.message);
+    }
+}
+
+// Function to schedule the next API request
+function scheduleNextRequest() {
+    const randomMinutes = intervals[Math.floor(Math.random() * intervals.length)];
+    console.log(`⏳ Next API request scheduled in ${randomMinutes} minutes`);
+
+    // Schedule cron job
+    cron.schedule(`*/${randomMinutes} * * * *`, async () => {
+        console.log(`🚀 Making API request at interval of ${randomMinutes} minutes`);
+        await fetchData();
+
+        // Reschedule with a new random interval
+        scheduleNextRequest();
+    }, {
+        scheduled: true,
+        timezone: "UTC"
+    });
+}
+
+// Start the first request scheduling
+scheduleNextRequest();
+
+/***END OF JOB */
+
+
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
