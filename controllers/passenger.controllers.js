@@ -254,7 +254,7 @@ export async function requestRide({ socket, data, res }) {
     //UPDATE USER RIDE ARRAY
     const getRideUserArray = await UserRideModel.findOne({ accountId: passengerId })
     if(!getRideUserArray){
-      await UserRideModel({
+      await UserRideModel.create({
         accountId: passengerId,
         rides: [rideId]
       })
@@ -557,7 +557,7 @@ export async function requestDriver({ data, socket, res }) {
       //UPDATE USER RIDE ARRAY
       const getRideUserArray = await UserRideModel.findOne({ accountId: driverId })
       if(!getRideUserArray){
-        await UserRideModel({
+        await UserRideModel.create({
           accountId: driverId,
           rides: [rideId]
         })
@@ -1682,7 +1682,7 @@ export async function chatWithDriver({ socket, data, res}) {
       getChats.chats.push(chatData)
       await getChats.save()
     }
-    console.log('CHATS', getChats.chats )
+    console.log('CHATS', getChats?.chats )
     //alert driver
     const driverSocketId = driverConnections.get(getRide.driverId)
     if(driverSocketId){

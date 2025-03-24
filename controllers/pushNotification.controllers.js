@@ -347,7 +347,8 @@ export async function sendNotificationById(cmsId) {
     try {
         const image = 'https://i.ibb.co/HtNmMC5/Group-625936.png';
 
-        const subscriber = await PushNotificationModel.findOne({ accountId }).exec();
+        const subscriber = await PushNotificationModel.findOne({ accountId });
+        console.log('subscriber', subscriber,accountId )
         if (!subscriber) {
             console.error(`No subscriber found with accountId: ${accountId}`);
             return { success: false, message: 'Subscriber not found.' };
@@ -374,7 +375,7 @@ export async function sendNotificationById(cmsId) {
         try {
             console.log('SENDING PUSH NOTIFICATION', data.deviceToken)
             const response = await admin.messaging().send(notificationPayload);
-            console.log(`Notification sent to ${subscriber.email}`, response);
+            console.log(`Custom Notification sent to ${subscriber.email}`, response);
             return { success: true, message: 'Notification sent successfully.' };
         } catch (error) {
             console.error(`Failed to send notification to ${subscriber.email}`, error);

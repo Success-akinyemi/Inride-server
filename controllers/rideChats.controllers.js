@@ -14,7 +14,7 @@ export async function getCustomerChat(req, res) {
     const { limit = 10, page = 1, startDate, endDate } = req.query;
     const { passengerId, driverId } = req.user || {};
     const accountId = passengerId || driverId;
-    
+    console.log('accountId', accountId)
     try {
         // Find user rides by accountId
         const getUserRides = await UserRideModel.findOne({ accountId });
