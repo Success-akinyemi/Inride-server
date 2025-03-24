@@ -203,7 +203,8 @@ DriverSchema.pre('save', async function(next) {
         next(error)
     }
 })
-
+/**
+ * 
 DriverSchema.pre('save', async function(next) {
     if(!this.isModified('ssn')){
         return next();
@@ -218,6 +219,7 @@ DriverSchema.pre('save', async function(next) {
         next(error)
     }
 })
+ */
 
 DriverSchema.methods.matchAdminPassword = async function(password) {
     return await bcryptjs.compare(password, this.password)

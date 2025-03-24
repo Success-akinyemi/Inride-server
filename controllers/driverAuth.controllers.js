@@ -1,6 +1,6 @@
 import { sendCheckrInvitationEmail, sendWelcomeEmail } from "../middlewares/mailTemplate.js.js";
 import twilioClient from "../middlewares/twilioConfig.js"
-import { formatSSN, generateOtp, generateUniqueCode, isValidDOB, sendResponse, uploadFile } from "../middlewares/utils.js";
+import { encrypt, formatSSN, generateOtp, generateUniqueCode, isValidDOB, sendResponse, uploadFile } from "../middlewares/utils.js";
 import { matchFace, verifyDriverLicense } from "../middlewares/verificationService.js";
 import CandidateSignatureModel from "../model/CandidateSignature.js";
 import CarDetailModel from "../model/CarDetails.js";
@@ -244,7 +244,7 @@ export async function completeDriverRegistration(req, res) {
         driver.lastName = getPassenger?.lastName || lastName
         driver.middleName = getPassenger?.middleName || middleName
         driver.opreatingCity = opreatingCity
-        driver.ssn = formatSsn.data,
+        driver.ssn = encrypt(formatSsn.data),
         driver.driverLincenseImgFront = driverLincenseImgFrontUrl
         driver.driverLincenseImgBack = driverLicenseImgBackUrl
         driver.profileImg = profileImgUrl
@@ -680,7 +680,7 @@ export async function completeNewDriverRegistration(req, res) {
         newDriver.lastName = lastName
         newDriver.middleName = middleName
         newDriver.email = email
-        newDriver.ssn = formatSsn.data
+        newDriver.ssn = encrypt(formatSsn.data)
         newDriver.opreatingCity = opreatingCity
         newDriver.driverLincenseImgFront = driverLincenseImgFrontUrl
         newDriver.driverLincenseImgBack = driverLicenseImgBackUrl,

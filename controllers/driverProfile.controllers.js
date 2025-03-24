@@ -1,4 +1,5 @@
-import { sendResponse, uploadFile } from "../middlewares/utils.js"
+import axios from "axios";
+import { decrypt, sendResponse, uploadFile } from "../middlewares/utils.js"
 import CandidateReportModel from "../model/CandidateReport.js";
 import DriverModel from "../model/Driver.js"
 import DriverBankDetailModel from "../model/DriverBankDetails.js";
@@ -159,72 +160,86 @@ export async function getDrivers(req, res) {
   //GET A DRIVER
   export async function getADriver(req, res) {
     const { driverId } = req.params;
-    
+
     if (!driverId) {
-      sendResponse(res, 400, false, 'Provide an Id');
-      return;
-    }
-  
-    try {
-      const getDriver = await DriverModel.findOne({ driverId });
-      
-      if (!getDriver) {
-        sendResponse(res, 404, false, 'Driver with this Id does not exist');
+        sendResponse(res, 400, false, 'Provide an Id');
         return;
-      }
-  
-      const getDriverPayoutDetails = await DriverBankDetailModel.findOne({ driverId });
+    }
 
-      //get latest payout request
-      const payoutRequest = await PayoutModel.findOne({ driverId })
-      .sort({ creacreatedAt: -1 })
-      .limit(1)
+    try {
+        const getDriver = await DriverModel.findOne({ driverId });
 
-      let reportData
-      if(getDriver.candidateId){
-        const candidateId = getDriver.candidateId
-        const getReport = await CandidateReportModel.findOne({ candidateId })
-        if(getReport){
-            const reportUrl = getReport.uri
-            try {
-                const authReq = await axios.get(`${checkrBaseUrl}${reportUrl}`, {
-                    auth: {
-                        username: checkrApiKey,
-                        password: "", 
-                      },
-                    })
-                reportData = authReq    
-            } catch (error) {
-                console.log('UNABLE TO GET USER REPORT FROM CHECKR')
-                reportData = 'Unable to get user report data from checkr'
+        if (!getDriver) {
+            sendResponse(res, 404, false, 'Driver with this Id does not exist');
+            return;
+        }
+
+        const getDriverPayoutDetails = await DriverBankDetailModel.findOne({ driverId });
+
+        // Get latest payout request
+        const payoutRequest = await PayoutModel.findOne({ driverId })
+            .sort({ createdAt: -1 })
+            .limit(1);
+
+        let reportData;
+        if (getDriver.candidateId) {
+            const candidateId = getDriver.candidateId;
+            const getReport = await CandidateReportModel.findOne({ candidateId });
+            if (getReport) {
+                const reportUrl = getReport.uri;
+                try {
+                    const authReq = await axios.get(`${checkrBaseUrl}${reportUrl}`, {
+                        auth: {
+                            username: checkrApiKey,
+                            password: "",
+                        },
+                    });
+                    reportData = authReq?.data;
+                } catch (error) {
+                    console.log('UNABLE TO GET USER REPORT FROM CHECKR', error);
+                    reportData = 'Unable to get user report data from checkr';
+                }
             }
         }
-      }
-  
-      // Construct response object
-      const driverData = {
-        ...getDriver.toObject(), 
-        payoutDetails: getDriverPayoutDetails || null, 
-        latestPayout: payoutRequest?.amount,
-        latestPayoutStatus: payoutRequest?.status,
-        driverCheckrReport: typeof reportData === 'string' ? reportData : {
-            status: reportData?.status,
-            result: reportData?.result,
-            dueTime: reportData?.due_time,
-            package: reportData?.package,
-            uri: reportData?.uri,
-            motorReport: reportData?.motor_vehicle_report_id,
-            workLocation: reportData?.work_locations
+
+        // Decrypt SSN and mask it
+        let maskedSSNNumber = null;
+        try {
+            if (getDriver.ssn) {
+                const decryptedSSNNumber = decrypt(getDriver.ssn);
+                maskedSSNNumber = `*** ** ${decryptedSSNNumber.slice(-4)}`; // Mask all but the last 4 digits
+            }
+        } catch (error) {
+            maskedSSNNumber = ''
         }
-      };
-  
-      sendResponse(res, 200, true, driverData);
+
+        // Construct response object
+        const driverData = {
+            ...getDriver.toObject(),
+            payoutDetails: getDriverPayoutDetails || null,
+            latestPayout: payoutRequest?.amount,
+            latestPayoutStatus: payoutRequest?.status,
+            driverCheckrReport:
+                typeof reportData === 'string'
+                    ? reportData
+                    : {
+                          status: reportData?.status,
+                          result: reportData?.result,
+                          dueTime: reportData?.due_time,
+                          package: reportData?.package,
+                          uri: reportData?.uri,
+                          motorReport: reportData?.motor_vehicle_report_id,
+                          workLocation: reportData?.work_locations,
+                      },
+            ssn: maskedSSNNumber, // Send only the masked SSN
+        };
+
+        sendResponse(res, 200, true, driverData);
     } catch (error) {
-      console.error('UNABLE TO GET DRIVER', error);
-      sendResponse(res, 500, false, 'Unable to get driver details');
+        console.error('UNABLE TO GET DRIVER', error);
+        sendResponse(res, 500, false, 'Unable to get driver details');
     }
-  }
-  
+}  
   
   //BLOCK A DRIVER
   export async function blockDriver(req, res) {

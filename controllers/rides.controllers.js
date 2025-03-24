@@ -13,8 +13,8 @@ import { sendNotificationToAccount } from "./pushNotification.controllers.js";
 // GET ALL RIDES OF A DRIVER
 export async function getDriverRides(req, res) {
   const { limit = 10, page = 1, startDate, endDate, rideType } = req.query;
-  const { driverId: userID, earnings } = req.user;
-  const { driverId: paramsId } = req.params;
+  const { driverId: userID, earnings } = req.user || {};
+  const { driverId: paramsId } = req.params || {};
 
   let driverId = userID ? userID : paramsId 
 
