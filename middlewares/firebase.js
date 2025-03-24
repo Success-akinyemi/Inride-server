@@ -34,7 +34,8 @@ try {
   console.error('Error initializing Firebase Admin SDK:', error);
 }
 
-
+/**
+ * 
 const testNotification3 = async () => {
   const testToken = "c_uOlwGDQ4OLbu7qXR3aJv:APA91bFFqzCQoTnpv9cifvy8PbVJp4TWR1jxzbyr22uuMY3-wetgK6qhR8hFodyXOvrL9mUsuUDLmw6QejIwXeRjozugc3FlS3qKDz--FckCRVvDC0Nnc18";
   
@@ -56,5 +57,6 @@ const testNotification3 = async () => {
 };
 
 testNotification3();
+ */
 
 export default admin;

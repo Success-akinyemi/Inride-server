@@ -343,6 +343,7 @@ export async function sendNotificationById(cmsId) {
  */
 
  export async function sendNotificationToAccount({ accountId, title, message, url }) {
+    console.log('cUSTOM pUSH NOTIFICATIOn', message)
     try {
         const image = 'https://i.ibb.co/HtNmMC5/Group-625936.png';
 

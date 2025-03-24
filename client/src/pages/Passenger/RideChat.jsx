@@ -76,7 +76,7 @@ const RideChat = () => {
         name: selectedFile.name, // Original file name
       };
     }
-  
+
     const chatData = {
       rideId: 'RFSN8K02Z3RI',
       message: selectedFile ? "" : message.trim(),

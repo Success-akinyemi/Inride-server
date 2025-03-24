@@ -654,10 +654,11 @@ export async function requestDriver({ data, socket, res }) {
       
       return
     } else {
-      const message = 'Driver Already Requested';
-      if (res) return sendResponse(res, 200, false, message);
-      if (socket) socket.emit('requestDriver', { success: false, message });
-      return
+        const message = 'Driver Request. Proceed to payment to start ride';
+        if (res) return sendResponse(res, 200, true, message);
+        if (socket) socket.emit('requestDriver', { success: true, message, rideId: rideId, price: findRide?.charge });
+        
+        return
     }
 
   } catch (error) {
