@@ -37,7 +37,7 @@ try {
 
 const testNotification3 = async () => {
   const testToken = "d_N-qoR6TrOnhx-ZRRGdBq:APA91bEB-vhnNlQtSLRv6HkOL-BaL6xMNRGU6cw7hc29944uPHSbkIh4M7uED-uKPICL63PyVaz4ZvhOlKIOQOCYgvXzJuV-LvqulLHjIx2aqUPGUQ7QkcY";
-  
+
   const payload = {
       notification: {
           title: "Test Notification from RideFuze",

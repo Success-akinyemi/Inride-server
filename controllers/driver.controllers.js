@@ -818,7 +818,7 @@ export async function chatWithPassenger({ socket, data, res}) {
       console.log('UNABLE TO NOTIFY PASSENGER OF DRIVER CHAT', error)
     }
 
-    const message = getChats.chats
+    const message = getChats?.chats
     if(res) sendResponse(res, 200, true, message)
     if(socket) socket.emit('chatWithPassenger', { success: true, message })
 

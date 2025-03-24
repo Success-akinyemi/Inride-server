@@ -38,13 +38,15 @@ export async function saveSubscription(req, res) {
         // Find or create the document
         let pushNotificationDoc = await PushNotificationModel.findOne({ accountId });
         if (pushNotificationDoc) {
-            await PushNotificationModel.findOneAndDelete({ accountId })
-
-            if(user){
-                user.pushNotification = false
-                await user.save()
+            if(user.accountType === accountType){
+                await PushNotificationModel.findOneAndDelete({ accountId })
+    
+                if(user){
+                    user.pushNotification = false
+                    await user.save()
+                }
+                return sendResponse(res, 201, true, 'Successfully UnSubscribe')
             }
-            return sendResponse(res, 201, true, 'Successfully UnSubscribe')
         }
 
         // Save the updated document
