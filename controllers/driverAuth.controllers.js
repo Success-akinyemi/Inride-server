@@ -166,6 +166,7 @@ export async function completeDriverRegistration(req, res) {
     }
     const expectedSignature = middleName ? `${firstName} ${middleName} ${lastName}` : `${firstName} ${lastName}`;
     if(signature !== expectedSignature){
+        console.log('expectedSignature', expectedSignature, 'signature', signature)
         return sendResponse(res, 400, false, 'Invalid Signature - does not match name')
     }
     if(!coordinates) return sendResponse(res, 400, false, 'Coordinates of driver location is required')
