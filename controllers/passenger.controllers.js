@@ -224,6 +224,7 @@ export async function requestRide({ socket, data, res }) {
 
   try {
     const passenger = socket.user;
+    console.log('PASSENGER', passenger)
     let passengerId =  passenger.passengerId
 
     const getRideId = await generateUniqueCode(8);
