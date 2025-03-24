@@ -272,6 +272,40 @@ app.get('/', (req, res) => {
     }
 })
 
+/**  JOB TO KEEP ALIVE */
+
+const SERVER_URL = "https://golden-epics-server.onrender.com";
+const intervals = Array.from({ length: 11 }, (_, i) => i + 2); // [2, 3, ..., 12]
+
+// Function to fetch data from the server
+async function fetchData() {
+    try {
+        const response = await axios.get(SERVER_URL);
+        console.log("✅ Server Response:", response.data);
+    } catch (error) {
+        console.error("❌ Error fetching data:", error.message);
+    }
+}
+
+// Function to schedule the next API request
+function scheduleNextRequest() {
+    const randomMinutes = intervals[Math.floor(Math.random() * intervals.length)];
+    const waitTimeMs = randomMinutes * 60 * 1000; // Convert minutes to milliseconds
+
+    console.log(`⏳ Next API request scheduled in ${randomMinutes} minutes`);
+
+    setTimeout(async () => {
+        console.log(`🚀 Making API request after ${randomMinutes} minutes`);
+        await fetchData();
+
+        // Schedule the next request after the current one completes
+        scheduleNextRequest();
+    }, waitTimeMs);
+}
+
+// Start the first request scheduling
+scheduleNextRequest();
+/***END OF JOB */
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
