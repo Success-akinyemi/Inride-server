@@ -285,6 +285,19 @@ export const AuthenticatePassengerSocket = async (socket, next) => {
                 }
                 return next(new Error('Invalid access token'));
             } catch (error) {
+                if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+                    if (accountId) {
+                        const user = await PassengerModel.findOne({ passengerId: accountId });
+                        const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
+                        //console.log('USER', user, refreshTokenExist)
+                        if (user && refreshTokenExist) {
+                            socket.user = user;
+                            socket.emit('tokenRefreshed', { accessToken: user.getAccessToken() });
+                            return next();
+                        }
+                    }
+                }
+
                 console.error('Token verification error:', error);
                 return next(new Error('Token expired or invalid'));
             }
@@ -351,6 +364,21 @@ export const AuthenticateDriverSocket = async (socket, next) => {
                 }
                 return next(new Error('Invalid access token'));
             } catch (error) {
+                if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+                    if (accountId) {
+                        const user = await DriverModel.findOne({ driverId: accountId });
+                        const refreshTokenExist = await RefreshTokenModel.findOne({ accountId: accountId });
+                        if (user && refreshTokenExist) {
+                            socket.user = user;
+                            if(!socket.user.approved){
+                                return next(new Error('Account is not approved complete verification'));
+                            }
+                            socket.emit('tokenRefreshed', { accessToken: user.getAccessToken() });
+                            return next();
+                        }
+                    }
+                }
+
                 console.error('Token verification error:', error);
                 return next(new Error('Token expired or invalid'));
             }

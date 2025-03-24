@@ -321,7 +321,7 @@ export async function requestRide({ socket, data, res }) {
       const driverRideRequest = {
         from: newRideRequest?.from,
         kmDistance: newRideRequest?.kmDistance,
-        passengerName: `${passenger?.firstName} ${passenger?.lastName}`,
+        passengerName: `${passenger?.firstName || 'Passenger'} ${passenger?.lastName || ''}`,
         to: newRideRequest?.to.map(destination => ({
           place: destination.place
         })),
