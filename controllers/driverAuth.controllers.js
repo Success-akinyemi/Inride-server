@@ -78,7 +78,7 @@ export async function registerWithPassengerAccount(req, res) {
 
     } catch (error) {
         console.log('UNABLE TO REGISTER DRIVER ACCOUNT', error)
-        return sendResponse(res, 500, )
+        return sendResponse(res, 500, false, 'Unable to register driver account')
     }
 }
 

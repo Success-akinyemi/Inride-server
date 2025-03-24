@@ -82,7 +82,8 @@ export async function resendOtp(req, res) {
         console.log('OTP CODE', otpCode)
         
         if(otpCode){
-
+            /***
+             * 
             const sendOtpCode = await twilioClient.messages.create({
                 body: `Your Inride Otp code is: ${otpCode}`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
@@ -90,6 +91,7 @@ export async function resendOtp(req, res) {
             })
             console.log('SMS BODY', sendOtpCode?.body)
         
+             */
             return sendResponse(res, 201, true, `Verification Otp sent to: ${mobileNumber}`, `${mobileNumber} Code: ${otpCode}`)
         }
 
