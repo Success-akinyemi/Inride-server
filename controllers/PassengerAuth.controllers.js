@@ -1,6 +1,6 @@
 import { sendWelcomeEmail } from "../middlewares/mailTemplate.js.js";
 import twilioClient from "../middlewares/twilioConfig.js";
-import { encrypt, generateOtp, generateUniqueCode, sendResponse, uploadFile } from "../middlewares/utils.js";
+import { encrypt, formatSSN, generateOtp, generateUniqueCode, sendResponse, uploadFile } from "../middlewares/utils.js";
 import { matchFace, verifyID } from "../middlewares/verificationService.js";
 import OtpModel from "../model/Otp.js";
 import PassengerModel from "../model/Passenger.js";
@@ -140,19 +140,21 @@ export async function verifySSN(req, res) {
     if (!checkItisANumber) {
         return sendResponse(res, 400, false, 'Invalid ssn type');
     }
-    //convert to a number and check it is a valid number
-    if(ssn?.length < 9 || ssn?.length > 9){
-        return sendResponse(res, 400, false, 'Invalid ssn lenght')
+    const formatSsn = await formatSSN(ssn)
+    if(!formatSsn.success){
+        return sendResponse(res, 400, false, formatSsn.data)
     }
     try {
+        const encryptedSSN = encrypt(formatSsn?.data)
         const findSSN = await PassengerModel.findOne({ ssn })
         if(findSSN){
             return sendResponse(res, 400, false, 'SSN already exist')   
         }
+
         return sendResponse(res, 200, true, 'SSN Verified')
     } catch (error) {
-        console.log('UNABLE TO VERIFY SSN')
-        return sendResponse(res, 500, false, 'Unable to verify SSN')
+        console.log('UNABLE TO VERIFY SSN OF DRIVER')
+        return sendResponse(res, 500, false, 'Unable to verify driver SSN')
     }
 }
 
@@ -368,11 +370,14 @@ export async function registerUser(req, res) {
         if (req?.files?.profileImg) {
             profileImgUrl = await uploadFile(req.files.profileImg[0], 'passenger-profile-image');
         }
-
+        let formatSsn
+        if(req?.body?.ssn){
+            formatSsn = await formatSSN(req?.body?.ssn)
+        }
         newPassenger.firstName = firstName;
         newPassenger.lastName = lastName;
         newPassenger.email = email;
-        newPassenger.ssn = encrypt(req?.body?.ssn);
+        newPassenger.ssn = formatSsn.data ? encrypt(formatSsn.data): '';
         newPassenger.idCardImgFront = idCardImgFrontUrl || '';
         newPassenger.idCardImgBack = idCardImgBackUrl || '';
         newPassenger.profileImg = profileImgUrl || '';

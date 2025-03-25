@@ -105,6 +105,8 @@ PassengerSchema.pre('save', async function(next) {
     }
 })
 
+/**
+ * 
 PassengerSchema.pre('save', async function(next) {
     if(!this.isModified('ssn')){
         return next();
@@ -119,6 +121,7 @@ PassengerSchema.pre('save', async function(next) {
         next(error)
     }
 })
+ */
 
 PassengerSchema.methods.matchAdminPassword = async function(password) {
     return await bcryptjs.compare(password, this.password)

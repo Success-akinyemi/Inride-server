@@ -550,6 +550,7 @@ export async function verifySSN(req, res) {
         return sendResponse(res, 400, false, formatSsn.data)
     }
     try {
+        const encryptedSSN = encrypt(formatSsn?.data)
         const findSSN = await DriverModel.findOne({ ssn })
         if(findSSN){
             return sendResponse(res, 400, false, 'SSN already exist')   
