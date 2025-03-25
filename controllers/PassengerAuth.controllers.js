@@ -1,6 +1,6 @@
 import { sendWelcomeEmail } from "../middlewares/mailTemplate.js.js";
 import twilioClient from "../middlewares/twilioConfig.js";
-import { generateOtp, generateUniqueCode, sendResponse, uploadFile } from "../middlewares/utils.js";
+import { encrypt, generateOtp, generateUniqueCode, sendResponse, uploadFile } from "../middlewares/utils.js";
 import { matchFace, verifyID } from "../middlewares/verificationService.js";
 import OtpModel from "../model/Otp.js";
 import PassengerModel from "../model/Passenger.js";
@@ -372,7 +372,7 @@ export async function registerUser(req, res) {
         newPassenger.firstName = firstName;
         newPassenger.lastName = lastName;
         newPassenger.email = email;
-        newPassenger.ssn = req.body.ssn;
+        newPassenger.ssn = encrypt(req?.body?.ssn);
         newPassenger.idCardImgFront = idCardImgFrontUrl || '';
         newPassenger.idCardImgBack = idCardImgBackUrl || '';
         newPassenger.profileImg = profileImgUrl || '';

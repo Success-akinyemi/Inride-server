@@ -1,4 +1,4 @@
-import { initiatePayment, sendResponse, uploadFile } from "../middlewares/utils.js"
+import { decrypt, initiatePayment, sendResponse, uploadFile } from "../middlewares/utils.js"
 import NotificationModel from "../model/Notifications.js";
 import PassengerModel from "../model/Passenger.js"
 import Stripe from 'stripe';
@@ -316,8 +316,23 @@ export async function getAPassenger(req, res) {
         return
       }
 
-      const { password, ...userData } = getPassenger._doc
-      sendResponse(res, 200, true, userData)
+    // Decrypt SSN and mask it
+    let maskedSSNNumber = null;
+    try {
+        if (getPassenger.ssn) {
+            const decryptedSSNNumber = decrypt(getPassenger.ssn);
+            maskedSSNNumber = `*** ** ${decryptedSSNNumber.slice(-4)}`; // Mask all but the last 4 digits
+        }
+    } catch (error) {
+        maskedSSNNumber = ''
+    }
+
+      const { password, _id, ...userData } = getPassenger._doc
+      const passengerData = {
+        ...userData,
+        ssn: maskedSSNNumber
+      }
+      sendResponse(res, 200, true, passengerData)
     } catch (error) {
       console.log('UNABLE TO GET PASSENGER', error)
       sendResponse(res, 500, false, 'Unable to get passenger details')
