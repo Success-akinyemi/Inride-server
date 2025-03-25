@@ -759,13 +759,13 @@ export async function chatWithPassenger({ socket, data, res}) {
     if(!getRide){
       const message = 'Ride does not exist'
       if(res) sendResponse(res, 404, false, message)
-      if(socket) socket('chatWithPassenger', { success: false, message })
+      if(socket) socket.emit('chatWithPassenger', { success: false, message })
       return
     }
     if(driverId !== getRide.driverId){
       const message = 'Not Allowed'
       if(res) sendResponse(res, 404, false, message)
-      if(socket) socket('chatWithPassenger', { success: false, message })
+      if(socket) socket.emit('chatWithPassenger', { success: false, message })
       return
     }
 
