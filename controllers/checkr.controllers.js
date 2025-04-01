@@ -131,6 +131,11 @@ export async function checkrWebHook(req, res) {
             res.json(200).end()
         }
 
+        //candidate engaged
+        if(req.body.type === 'candidate.engaged'){
+            res.json(200).end()
+        }
+
 
         //INVITE CANDIDATE
         if(req.body.type === 'invitation.created'){
@@ -293,10 +298,16 @@ export async function checkrWebHook(req, res) {
             
                         res.json(200).end()
                       }
+        
+        //report updated
+        if(req.body.type === 'report.updated'){
+          res.json(200).end()
+        }
 
-                      if(req.body.type === 'report.updated'){
-                        res.json(200).end()
-                      }
+        //report engaged
+        if(req.body.type === 'report.engaged'){
+            res.json(200).end()
+        }
 
         
           
