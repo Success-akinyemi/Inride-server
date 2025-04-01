@@ -26,7 +26,7 @@ export async function authenticateCheckr(req, res){
     }
 }
 
-export async function createCandidate({ first_name, last_name, middle_name, email, phone, zipcode, dob, ssn, driver_license_number, driver_license_state, copy_requested  }) {
+export async function createCandidate({ first_name, last_name, middle_name, no_middle_name, email, phone, zipcode, dob, ssn, driver_license_number, driver_license_state, copy_requested  }) {
     try {
         const newCandidate = await axios.post(
             `${process.env.CHECKR_URL}/v1/candidates`,
@@ -34,6 +34,7 @@ export async function createCandidate({ first_name, last_name, middle_name, emai
               first_name,
               middle_name,
               last_name,
+              no_middle_name,
               email,
               phone,
               zipcode,
@@ -42,7 +43,13 @@ export async function createCandidate({ first_name, last_name, middle_name, emai
               driver_license_number,
               driver_license_state,
               copy_requested,
-              work_locations: [{ country: "US" }],
+              work_locations: [
+                { 
+                    country: "US",
+                    state: '',
+                    city: ''
+                },
+            ],
             },
             {
               auth: {
@@ -71,7 +78,12 @@ export async function inviteCandidate({ candidate_id, package_name, state }) {
             {
               candidate_id,
               package: package_name,
-              work_locations: [{ state: state }],
+              work_locations: [
+                { 
+                    state: state,
+                    city: ''
+                }
+            ],
             },
             {
               auth: {

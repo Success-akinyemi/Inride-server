@@ -331,6 +331,7 @@ export async function completeDriverRegistration(req, res) {
             first_name: driver?.firstName,
             middle_name: driver?.middleName,
             last_name: driver?.lastName,
+            no_middle_name: driver?.middleName ? false : true,
             email: driver?.email,
             phone: driver?.mobileNumber,
             zipcode: driver?.zipcode,
@@ -773,6 +774,7 @@ export async function completeNewDriverRegistration(req, res) {
             first_name: newDriver?.firstName,
             middle_name: newDriver?.middleName,
             last_name: newDriver?.lastName,
+            no_middle_name: newDriver?.middleName ? false : true,
             email: newDriver?.email,
             phone: newDriver?.mobileNumber,
             zipcode: newDriver?.zipcode,
@@ -1078,9 +1080,10 @@ export async function verifyToken(req, res) {
 }
 
 /**
- 
-*/
+ */
 export async function createnew(req, res) {
+    const { emailno } = req.query
+    if(!emailno) return sendResponse(res, 400, false, 'Email no is required')
     try {
         const driverId = await generateUniqueCode(8)
         console.log('DRIVER ID', `RF${driverId}DR`)
@@ -1091,8 +1094,8 @@ export async function createnew(req, res) {
             middleName: 'doe',
             lastName: 'Man',
             zipcode: '95814',
-            email: 'successakin123@gmail.com',
-            opreatingCity: 'Lagos',
+            email: Number(emailno) === 1 ? 'successakin123@gmail.com' : Number(emailno) === 2 ? 'jeniferakinyemi445@gmail.com' : 'logisticsolutionaaa@gmail.com',
+            opreatingCity: 'San Francisco',
             pricePerKm: 100,
             ssn: '111-11-2003', //'111-11-2003',
             idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
@@ -1114,6 +1117,7 @@ export async function createnew(req, res) {
             first_name: data?.firstName,
             middle_name: data?.middleName,
             last_name: data?.lastName,
+            no_middle_name: false,
             email: data?.email,
             phone: data?.mobileNumber,
             zipcode: data?.zipcode,
@@ -1152,7 +1156,7 @@ export async function createnew(req, res) {
             driverId: newUser?.driverId,
             cars: [
                 {
-                    registrationNumber: '0034t49',
+                    registrationNumber: Date.now(), //'0034t49',
                     year: '2025',
                     model: 'Hyundai',
                     color: 'Black',
@@ -1160,6 +1164,8 @@ export async function createnew(req, res) {
                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
                     active: false
                 },
+                /**
+                 * 
                 {
                     registrationNumber: '245fr',
                     year: '2025',
@@ -1169,6 +1175,7 @@ export async function createnew(req, res) {
                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
                     active: true
                 }
+                 */
             ]
         }
         const newCar = await CarDetailModel.create(carDetails)
@@ -1192,22 +1199,20 @@ export async function createnew(req, res) {
     }
 }
 
+
 /**
  export async function createnew(req, res){
      try {
          //const allDrivers = await DriverModel.deleteMany()
          //const allDriverCars = await CarDetailModel.deleteMany()
          //const allDriverLocations = await DriverLocationModel.deleteMany()
-         const driver = await DriverModel.findOne({ email: 'aremu.moses2022@gmail.com' })
-         driver.approved = true
-         driver.active = true
-         driver.verified = true
-         await driver.save()
-         sendResponse(res, 200, true, driver, 'Driver Approved')
+         const driver = await DriverModel.findOneAndDelete({ email: 'jeniferakinyemi445@gmail.com' })
+ 
+         sendResponse(res, 200, true, driver, 'Driver DELETED')
  
          //sendResponse(res, 200, true, { allDrivers, allDriverCars, allDriverLocations }, 'All Drivers')
      } catch (error) {
          console.log('ERROR', error)
      }
  }
-*/
+ */
