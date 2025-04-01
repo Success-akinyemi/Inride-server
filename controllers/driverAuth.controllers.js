@@ -1107,7 +1107,7 @@ export async function createnew(req, res) {
         console.log('DRIVER ID', `RF${driverId}DR`)
 
         const data = {
-            mobileNumber: '+12240898878',
+            mobileNumber: Number(emailno) === 1 ? '+12240898878' : Number(emailno) === 2 ? '+12240999999' : '+12240777777',
             firstName: 'john',
             middleName: 'doe',
             lastName: 'Man',
@@ -1225,7 +1225,7 @@ export async function createnew(req, res){
         //const allDrivers = await DriverModel.deleteMany()
         //const allDriverCars = await CarDetailModel.deleteMany()
         //const allDriverLocations = await DriverLocationModel.deleteMany()
-        const driver = await DriverModel.findOneAndDelete({ email: 'successakin123@gmail.com' })
+        const driver = await DriverModel.findOneAndDelete({ email: 'logisticsolutionaaa@gmail.com' })
 
         sendResponse(res, 200, true, driver, 'Driver DELETED')
 
@@ -1234,4 +1234,4 @@ export async function createnew(req, res){
         console.log('ERROR', error)
     }
 }
- */
+*/
