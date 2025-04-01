@@ -1098,6 +1098,7 @@ export async function verifyToken(req, res) {
 
 /**
  
+*/
 export async function createnew(req, res) {
     const { emailno } = req.query
     if(!emailno) return sendResponse(res, 400, false, 'Email no is required')
@@ -1215,21 +1216,22 @@ export async function createnew(req, res) {
         console.log('ERROR', error)
     }
 }
-*/
 
 
+/**
 
- export async function createnew(req, res){
-     try {
-         //const allDrivers = await DriverModel.deleteMany()
-         //const allDriverCars = await CarDetailModel.deleteMany()
-         //const allDriverLocations = await DriverLocationModel.deleteMany()
-         const driver = await DriverModel.findOneAndDelete({ email: 'successakin123@gmail.com' })
- 
-         sendResponse(res, 200, true, driver, 'Driver DELETED')
- 
-         //sendResponse(res, 200, true, { allDrivers, allDriverCars, allDriverLocations }, 'All Drivers')
-     } catch (error) {
-         console.log('ERROR', error)
-     }
- }
+export async function createnew(req, res){
+    try {
+        //const allDrivers = await DriverModel.deleteMany()
+        //const allDriverCars = await CarDetailModel.deleteMany()
+        //const allDriverLocations = await DriverLocationModel.deleteMany()
+        const driver = await DriverModel.findOneAndDelete({ email: 'successakin123@gmail.com' })
+
+        sendResponse(res, 200, true, driver, 'Driver DELETED')
+
+        //sendResponse(res, 200, true, { allDrivers, allDriverCars, allDriverLocations }, 'All Drivers')
+    } catch (error) {
+        console.log('ERROR', error)
+    }
+}
+ */
