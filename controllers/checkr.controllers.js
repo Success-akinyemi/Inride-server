@@ -249,10 +249,10 @@ export async function checkrWebHook(req, res) {
                         const reportId = bodyData?.uri.split('/')[3]
                         const getCandidateReport = await CandidateReportModel.findOne({ reportId: reportId })
                         if(reportId){
-                          getCandidateReport.status = bodyData.status
-                          getCandidateReport.result = bodyData.result
-                          getCandidateReport.package = bodyData.package
-                          getCandidateReport.assessment = bodyData.assessment
+                          getCandidateReport.status = bodyData?.status
+                          getCandidateReport.result = bodyData?.result
+                          getCandidateReport.package = bodyData?.package
+                          getCandidateReport.assessment = bodyData?.assessment
                           getCandidateReport.canceled = true
                           await getCandidateReport.save()
                           const candidateId = getCandidateReport.candidateId
