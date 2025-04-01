@@ -1,6 +1,6 @@
 import { sendCheckrInvitationEmail, sendWelcomeEmail } from "../middlewares/mailTemplate.js.js";
 import twilioClient from "../middlewares/twilioConfig.js"
-import { encrypt, formatSSN, generateOtp, generateUniqueCode, isValidDOB, sendResponse, uploadFile } from "../middlewares/utils.js";
+import { encrypt, formatSSN, generateOtp, generateUniqueCode, isValidDOB, sendResponse, twoLetterStates, uploadFile } from "../middlewares/utils.js";
 import { matchFace, verifyDriverLicense } from "../middlewares/verificationService.js";
 import CandidateSignatureModel from "../model/CandidateSignature.js";
 import CarDetailModel from "../model/CarDetails.js";
@@ -139,6 +139,9 @@ export async function completeDriverRegistration(req, res) {
     if(!opreatingCity){
         return sendResponse(res, 400, false, 'Opreating city is required')
     }
+    if(opreatingCity.length > 255){
+        return sendResponse(res, 400, false, 'Max lenght is 255 for Opreating city')
+    }
     if(!driverLincenseNumber){
         return sendResponse(res, 400, false, 'Driver linsence number is required')
     }
@@ -157,6 +160,9 @@ export async function completeDriverRegistration(req, res) {
     }
     if(!state){
         return sendResponse(res, 400, false, 'Please provide state of residence')
+    }
+    if(!twoLetterStates.includes(state)){
+        return sendResponse(res, 400, false, 'Invalid state of residence. Valid two letter state code is required ')
     }
     if(!userConsent){
         return sendResponse(res, 400, false, 'Please agree to background check/screen consent')
@@ -339,6 +345,8 @@ export async function completeDriverRegistration(req, res) {
             ssn: formatSsn.data,
             driver_license_number: driver?.driverLincenseNumber,
             driver_license_state: driver?.driverLincenseState,
+            state: driver?.state,
+            city: driver?.opreatingCity,
             copy_requested: true
         })
         console.log('checkr candidate',candidate)
@@ -364,7 +372,8 @@ export async function completeDriverRegistration(req, res) {
             sendInviteToCandidate = await inviteCandidate({
                 candidate_id: candidate?.data?.id,
                 package_name: process.env.CHECKR_PACKAGE_NAME,
-                state: driver?.state
+                state: driver?.state,
+                city: driver?.opreatingCity
             })
         }
 
@@ -583,6 +592,9 @@ export async function completeNewDriverRegistration(req, res) {
     if(!opreatingCity){
         return sendResponse(res, 400, false, 'Opreating city is required')
     }
+    if(opreatingCity.length > 255){
+        return sendResponse(res, 400, false, 'Max lenght is 255 for Opreating city')
+    }
     if(!driverLincenseNumber){
         return sendResponse(res, 400, false, 'Driver linsence number is required')
     }
@@ -601,6 +613,9 @@ export async function completeNewDriverRegistration(req, res) {
     }
     if(!state){
         return sendResponse(res, 400, false, 'Please provide state of residence')
+    }
+    if(!twoLetterStates.includes(state)){
+        return sendResponse(res, 400, false, 'Invalid state of residence. Valid two letter state code is required ')
     }
     if(!userConsent){
         return sendResponse(res, 400, false, 'Please agree to background check/screen consent')
@@ -633,7 +648,6 @@ export async function completeNewDriverRegistration(req, res) {
     if (!allowedImageTypes.includes(profileImg[0].mimetype)) {
         return sendResponse(res, 400, false, `Invalid image format for profile image. Accepted formats: jpeg, png`);
     }
-
     if(!carDetails){
         return sendResponse(res, 400, false, 'Car Details is required')
     }
@@ -782,6 +796,8 @@ export async function completeNewDriverRegistration(req, res) {
             ssn: formatSsn.data,
             driver_license_number: newDriver?.driverLincenseNumber,
             driver_license_state: newDriver?.driverLincenseState,
+            state: newDriver?.state,
+            city: newDriver?.opreatingCity,
             copy_requested: true
         })
         console.log('checkr candidate',candidate)
@@ -806,7 +822,8 @@ export async function completeNewDriverRegistration(req, res) {
             sendInviteToCandidate = await inviteCandidate({
                 candidate_id: candidate?.data?.id,
                 package_name: process.env.CHECKR_PACKAGE_NAME,
-                state: newDriver?.state
+                state: newDriver?.state,
+                city: newDriver?.opreatingCity
             })
         }
         console.log('sendInviteToCandidate',sendInviteToCandidate)
@@ -1080,7 +1097,7 @@ export async function verifyToken(req, res) {
 }
 
 /**
- */
+ 
 export async function createnew(req, res) {
     const { emailno } = req.query
     if(!emailno) return sendResponse(res, 400, false, 'Email no is required')
@@ -1125,6 +1142,8 @@ export async function createnew(req, res) {
             ssn: data?.ssn,
             driver_license_number: data?.driver_license_number,
             driver_license_state: data?.driver_license_state,
+            state: data?.state,
+            city: data?.opreatingCity,
             copy_requested: true
         })
         console.log('NEW CANDIDATE', candidate)
@@ -1137,7 +1156,8 @@ export async function createnew(req, res) {
             sendInviteToCandidate = await inviteCandidate({
                 candidate_id: candidate?.data?.id,
                 package_name: process.env.CHECKR_PACKAGE_NAME,
-                state: data?.state
+                state: data?.state,
+                city: data?.opreatingCity
             })
         }
         console.log('CANDIDATE INVITESS', sendInviteToCandidate.data)
@@ -1164,10 +1184,8 @@ export async function createnew(req, res) {
                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
                     active: false
                 },
-                /**
-                 * 
                 {
-                    registrationNumber: '245fr',
+                    registrationNumber: `${Date.now()}-${Date.now()}`,
                     year: '2025',
                     model: 'Benz',
                     color: 'Black',
@@ -1175,7 +1193,6 @@ export async function createnew(req, res) {
                     carImgUrl: 'https://i.ibb.co/5nmWk7p/photo-1536700503339-1e4b06520771.jpg',
                     active: true
                 }
-                 */
             ]
         }
         const newCar = await CarDetailModel.create(carDetails)
@@ -1198,15 +1215,16 @@ export async function createnew(req, res) {
         console.log('ERROR', error)
     }
 }
+*/
 
 
-/**
+
  export async function createnew(req, res){
      try {
          //const allDrivers = await DriverModel.deleteMany()
          //const allDriverCars = await CarDetailModel.deleteMany()
          //const allDriverLocations = await DriverLocationModel.deleteMany()
-         const driver = await DriverModel.findOneAndDelete({ email: 'jeniferakinyemi445@gmail.com' })
+         const driver = await DriverModel.findOneAndDelete({ email: 'successakin123@gmail.com' })
  
          sendResponse(res, 200, true, driver, 'Driver DELETED')
  
@@ -1215,4 +1233,3 @@ export async function createnew(req, res) {
          console.log('ERROR', error)
      }
  }
- */
