@@ -126,6 +126,12 @@ export async function checkrWebHook(req, res) {
             res.json(200).end()
         }
 
+        //update candidate
+        if(req.body.type === 'candidate.updated'){
+            res.json(200).end()
+        }
+
+
         //INVITE CANDIDATE
         if(req.body.type === 'invitation.created'){
             //create new invitation
