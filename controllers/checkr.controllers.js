@@ -4,7 +4,7 @@ import NewCandidatemodel from "../model/NewCandidiate.js"
 import CandidateInvitationModel from "../model/CandidateInvitation.js"
 import CandidateReportModel from "../model/CandidateReport.js"
 import DriverModel from "../model/Driver.js"
-import { sendDriverNotClearedEmail, sendWelcomeEmail } from "../middlewares/mailTemplate.js.js"
+import { sendDriverNotClearedEmail, sendDriverReportCanceledEmail, sendWelcomeEmail } from "../middlewares/mailTemplate.js.js"
 
 const apiKey = process.env.CHECKR_SECRET
 
@@ -242,6 +242,55 @@ export async function checkrWebHook(req, res) {
 
             res.json(200).end()
           }
+
+                    //report canceled
+                    if(req.body.type === 'report.canceled'){
+                        //report canceled - update result and assement
+                        const reportId = bodyData?.uri.split('/')[3]
+                        const getCandidateReport = await CandidateReportModel.findOne({ reportId: reportId })
+                        if(reportId){
+                          getCandidateReport.status = bodyData.status
+                          getCandidateReport.result = bodyData.result
+                          getCandidateReport.package = bodyData.package
+                          getCandidateReport.assessment = bodyData.assessment
+                          getCandidateReport.canceled = true
+                          await getCandidateReport.save()
+                          const candidateId = getCandidateReport.candidateId
+                          const getDriver = await DriverModel.findOne({ candidateId: candidateId })
+                          if(getDriver){
+                            getDriver.approved = true
+                            getDriver.backgroundCheckStatus = bodyData?.result?.toLowerCase()
+                            await getDriver.save()
+          
+                            //send report canceled email to user
+                            sendDriverReportCanceledEmail({
+                              email: getDriver.email,
+                              name: `${getDriver.firstName} ${getDriver.lastName}`,
+                              driverName: `${getDriver.firstName} ${getDriver.lastName}`,
+                              driverId: getDriver?.driverId,
+                              driverMobile: getDriver?.mobileNumber,
+                              driverReportStatus: 'Canceled'
+                            })
+
+                            //send welcome email to admin
+                            sendDriverReportCanceledEmail({
+                                email: 'ridefuze@gmail.com',
+                                name: `RideFuze`,
+                                driverName: `${getDriver.firstName} ${getDriver.lastName}`,
+                                driverId: getDriver?.driverId,
+                                driverMobile: getDriver?.mobileNumber,
+                                driverReportStatus: 'Canceled'
+                              })
+                          } 
+
+                        }
+            
+                        res.json(200).end()
+                      }
+
+                      if(req.body.type === 'report.updated'){
+                        res.json(200).end()
+                      }
 
         
           

@@ -36,6 +36,10 @@ const CandidateReportSchema = new mongoose.Schema({
     },
     package: {
         type: String
+    },
+    canceled: {
+        type: Bolean,
+        default: false
     }
 })
 
