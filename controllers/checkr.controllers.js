@@ -80,6 +80,7 @@ export async function inviteCandidate({ candidate_id, package_name, state, city 
               package: package_name,
               work_locations: [
                 { 
+                    country: "US",
                     state: state,
                     city: city
                 }
