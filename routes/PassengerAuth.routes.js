@@ -14,12 +14,13 @@ router.post('/signin', controllers.signin)
 router.post('/verifyLoginOtp', controllers.verifyLoginOtp)
 router.post('/verifyToken', controllers.verifyToken)
 
-router.post('/signupWithGoogle', controllers.signupWithGoogle)
-router.post('/signinWithGoogle', controllers.signinWithGoogle)
+router.post('/googleAuth', controllers.googleAuth)
+//router.post('/signupWithGoogle', controllers.signupWithGoogle)
+//router.post('/signinWithGoogle', controllers.signinWithGoogle)
 router.post('/completeRegisterUser', AuthenticatePassenger, uploadImages, controllers.completeRegisterUser)
 
 
-router.post('/createnew', controllers.createnew)
+//router.post('/createnew', controllers.createnew)
 //router.post('/dele', controllers.dele)
 
 

@@ -582,6 +582,86 @@ export async function verifyToken(req, res) {
     }
 }
 
+//Google auth
+export async function googleAuth(req, res) {
+    const { email, profileImg, name } = req.body;
+
+    if (!email) {
+        return sendResponse(res, 400, false, 'Provide an email address');
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+        return sendResponse(res, 400, false, 'Invalid Email Address');
+    }
+
+    try {
+        let user = await PassengerModel.findOne({ email });
+
+        // If user doesn't exist, create a new one
+        if (!user) {
+            const passengerId = `RF${await generateUniqueCode(8)}PA`;
+
+            user = await PassengerModel.create({
+                email,
+                passengerId,
+                verified: true,
+                accountImg: profileImg,
+                profileImg,
+                firstName: name,
+            });
+
+            // Send welcome email
+            sendWelcomeEmail({ email });
+        }
+
+        // Generate tokens
+        const accessToken = user.getAccessToken();
+        const refreshToken = user.getRefreshToken();
+
+        // Ensure refresh token is stored
+        let refreshTokenExist = await RefreshTokenModel.findOne({ accountId: user.passengerId });
+        if (!refreshTokenExist) {
+            await RefreshTokenModel.create({
+                accountId: user.passengerId,
+                refreshToken,
+            });
+        }
+
+        // Set cookies
+        res.cookie('inrideaccesstoken', accessToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 15 * 60 * 1000, // 15 minutes
+        });
+
+        res.cookie('inrideaccessid', user.passengerId, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        });
+
+        // Clean sensitive data
+        const {
+            password, ssn, idCardImgFront, idCardImgBack, idCardType,
+            verified, active, isBlocked, resetPasswordToken,
+            resetPasswordExpire, _id, ...userData
+        } = user._doc;
+
+        const message = user.wasNew ? 'Account Created' : 'Login Successful';
+        sendResponse(res, 200, true, userData, message);
+
+    } catch (error) {
+        console.log('GOOGLE AUTH ERROR:', error);
+        return sendResponse(res, 500, false, 'Unable to authenticate with Google');
+    }
+}
+
+/**
+ * 
+
 //signup with google
 export async function signupWithGoogle(req, res) {
     const { email, profileImg, name } = req.body
@@ -694,6 +774,7 @@ export async function signinWithGoogle(req, res) {
         return sendResponse(res, 500, false, 'Unable to signin passenger')
     }
 }
+ */
 
 //complete user registration
 export async function completeRegisterUser(req, res) {
@@ -797,54 +878,54 @@ export async function completeRegisterUser(req, res) {
 }
 
 /** 
- */
-export async function dele(req, res){
-   try {
-
-    const sendOtpCode = await twilioClient.messages.create({
-        body: `Your RideFuze Otp code is: 1234.`,
-        from: `${process.env.TWILIO_PHONE_NUMBER}`,
-        to: `+16092870169`,
-        messagingServiceSid: process.env.TWILIO_MESSAGE_SID
-    })
-    console.log('SMS BODY', sendOtpCode)
-
-       sendResponse(res, 200, true, 'MESSAGE SENT', sendOtpCode)
-   } catch (error) {
-       console.log('ERROR DELE', error)
-   }
-}
-
-export async function createnew(req, res) {
+ export async function dele(req, res){
     try {
-        const passengerId = await generateUniqueCode(8)
-        console.log('PASSENGER ID', `RF${passengerId}PA`)
-
-        const data = {
-            mobileNumber: "+11234567892",
-            firstName: "Inride",
-            lastName: "User",
-            email: "peace@gmail.com",
-            passengerId: `RF${passengerId}PA`,
-            ssn: '123456789',
-            idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            accountImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
-            verified: true,
-            wallet: 100000
-        }
-
-        const newPassenger = await PassengerModel.create(data)
-
-        sendWelcomeEmail({
-            email: 'jeniferakinyemi445@gmail.com',
-            name: 'Brown'
-        })
-
-        sendResponse(res, 201, true, 'User created', newPassenger)
+ 
+     const sendOtpCode = await twilioClient.messages.create({
+         body: `Your RideFuze Otp code is: 1234.`,
+         from: `${process.env.TWILIO_PHONE_NUMBER}`,
+         to: `+16092870169`,
+         messagingServiceSid: process.env.TWILIO_MESSAGE_SID
+     })
+     console.log('SMS BODY', sendOtpCode)
+ 
+        sendResponse(res, 200, true, 'MESSAGE SENT', sendOtpCode)
     } catch (error) {
-        console.log('error', error)
+        console.log('ERROR DELE', error)
     }
-}
+ }
+ 
+ export async function createnew(req, res) {
+     try {
+         const passengerId = await generateUniqueCode(8)
+         console.log('PASSENGER ID', `RF${passengerId}PA`)
+ 
+         const data = {
+             mobileNumber: "+11234567892",
+             firstName: "Inride",
+             lastName: "User",
+             email: "peace@gmail.com",
+             passengerId: `RF${passengerId}PA`,
+             ssn: '123456789',
+             idCardImgFront: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+             idCardImgBack: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+             profileImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+             accountImg: 'https://img.freepik.com/free-vector/business-id-card-with-minimalist-elements_23-2148708734.jpg',
+             verified: true,
+             wallet: 100000
+         }
+ 
+         const newPassenger = await PassengerModel.create(data)
+ 
+         sendWelcomeEmail({
+             email: 'jeniferakinyemi445@gmail.com',
+             name: 'Brown'
+         })
+ 
+         sendResponse(res, 201, true, 'User created', newPassenger)
+     } catch (error) {
+         console.log('error', error)
+     }
+ }
+ */
 
