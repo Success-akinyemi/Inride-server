@@ -20,8 +20,12 @@ export async function verifyID(frontFile, backFile) {
         const backText = await Tesseract.recognize(backImageBuffer, 'eng');
 
         // Function to count matching fields
+        //const countMatches = (text, keywords) => {
+        //    return keywords.filter(keyword => text.includes(keyword)).length;
+        //};
         const countMatches = (text, keywords) => {
-            return keywords.filter(keyword => text.includes(keyword)).length;
+            const lowerText = text.toLowerCase();
+            return keywords.filter(keyword => lowerText.includes(keyword.toLowerCase())).length;
         };
 
         // Check for Voter's Card (Needs at least 2 matches)
@@ -40,15 +44,15 @@ export async function verifyID(frontFile, backFile) {
         }
 
         // Check for National ID (Needs at least 2 matches)
-        const nationalIDMatches = countMatches(frontText.data.text, ["NATIONAL ID", "NIN"]) +
-                                countMatches(backText.data.text, ["SERIAL NO."]);
+        const nationalIDMatches = countMatches(frontText.data.text, ["UNITED STATES DEPARTMENT OF STATE", "UNITED STATES OF AMERICA", "PASSPORT NO", "SURNAME", "GIVEN NAMES"]) +
+                                countMatches(backText.data.text, ["SIGNATURE OF THE BEARER"]);
         console.log('nationalIDMatches', nationalIDMatches)
         if (nationalIDMatches >= 2) {
             return { success: true, cardType: "National ID", photo: frontImageBuffer };
         }
 
         // Check for Driver's License (Needs at least 2 matches)
-        const licenseMatches = countMatches(frontText.data.text, ["DRIVER'S LICENSE", "LICENSE NO.", "EXPIRATION DATE", "EXP", "SEX", "CLASS", "END"]) +
+        const licenseMatches = countMatches(frontText.data.text, ["DRIVER'S LICENSE", "LICENSE NO.", "EXPIRATION DATE", "EXP", "SEX", "CLASS", "END", "DOB", "EYES", "wGT"]) +
                             countMatches(backText.data.text, ["LICENSE HOLDER", "VEHICLE CATEGORIES", "ISSUE", "EXPIRATION"]);
         console.log('licenseMatches', licenseMatches)
         if (licenseMatches >= 2) {
