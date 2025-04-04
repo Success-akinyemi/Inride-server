@@ -377,7 +377,7 @@ export async function registerUser(req, res) {
         newPassenger.firstName = firstName;
         newPassenger.lastName = lastName;
         newPassenger.email = email;
-        newPassenger.ssn = formatSsn.data ? encrypt(formatSsn.data): '';
+        newPassenger.ssn = formatSsn?.data ? encrypt(formatSsn?.data): '';
         newPassenger.idCardImgFront = idCardImgFrontUrl || '';
         newPassenger.idCardImgBack = idCardImgBackUrl || '';
         newPassenger.profileImg = profileImgUrl || '';
