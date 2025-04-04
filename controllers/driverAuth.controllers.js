@@ -889,7 +889,7 @@ export async function signin(req, res) {
             return sendResponse(res, 404, false, 'Mobile number does not exist')
         }
         if(!numberExist.verified){
-            return res.status(403).json({ success: false, data: 'Unverified account', verified: false })
+            return res.status(403).json({ success: false, data: 'Unverified account', mobileNumber: mobileNumber, verified: false })
             //return sendResponse(res, 403, false, 'Unverified account')
         }
 
