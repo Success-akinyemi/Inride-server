@@ -1127,6 +1127,8 @@ export async function createnew(req, res) {
             dob: '1964-03-15',
             state: 'CA',
             verified: true,
+            approved: true,
+            active: true,
             driverId: `RF${driverId}DR`,
             status: 'online'
         }
