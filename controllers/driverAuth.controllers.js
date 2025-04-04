@@ -996,9 +996,9 @@ export async function verifyLoginOtp(req, res) {
         getDriver.otpCode = ''
         await getDriver.save()
         const getDriverLocation = await DriverLocationModel.findOne({ driverId: getDriver?.driverId })
-        getDriverLocation.status = 'online'
-        getDriverLocation.isActive = true
-        getDriverLocation.location = location
+        if(getDriverLocation.status) getDriverLocation.status = 'online'
+        if(getDriverLocation.isActive) getDriverLocation.isActive = true
+        if(getDriverLocation.location) getDriverLocation.location = location
         await getDriverLocation.save()
 
         // Generate Tokens

@@ -36,7 +36,7 @@ try {
 
 
 const testNotification3 = async () => {
-  const testToken = "d_N-qoR6TrOnhx-ZRRGdBq:APA91bEB-vhnNlQtSLRv6HkOL-BaL6xMNRGU6cw7hc29944uPHSbkIh4M7uED-uKPICL63PyVaz4ZvhOlKIOQOCYgvXzJuV-LvqulLHjIx2aqUPGUQ7QkcY";
+  const testToken = "eteUaOnmQG6dyske3fYLJj:APA91bGC1Fwgtj8HublyvFCuu775kbir-GG_-OC6pDK6tX48lVQTY9ZhU342NSHkykBBHx5PO4oYrG9nc63p1QEpOucq0fCDbgp5k3MFZK1pyjj4YPqv250";
 
   const payload = {
       notification: {
