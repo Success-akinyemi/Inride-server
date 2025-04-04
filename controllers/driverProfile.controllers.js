@@ -11,7 +11,7 @@ const checkrBaseUrl = process.env.CHECKR_URL
 
 export async function updateProfile(req, res) {
 
-    const { language, pushNotification, mailNotification, firstName, lastName, email, homeAddress, workAddress } = req.body;
+    const { language, pushNotification, mailNotification, firstName, lastName, middleName, email, homeAddress, workAddress } = req.body;
     const { accountImg } = req.files || {};
     const { driverId } = req.user;
 
@@ -46,6 +46,7 @@ export async function updateProfile(req, res) {
         if (mailNotification) getDriver.mailNotification = mailNotification;
         if (firstName) getDriver.firstName = firstName;
         if (lastName) getDriver.lastName = lastName;
+        if( middleName) getDriver.middleName = middleName;
         if (homeAddress) getDriver.homeAddress = homeAddress;
         if (workAddress) getDriver.workAddress = workAddress;
         if (accountImgUrl) getDriver.accountImg = accountImgUrl;

@@ -831,6 +831,7 @@ export async function completeNewDriverRegistration(req, res) {
             return sendResponse(res, 400, false, `${sendInviteToCandidate.data.error}`)
         }
 
+
         //send invitation email to complete verification
         sendCheckrInvitationEmail({
             email: newDriver?.email,
@@ -888,7 +889,20 @@ export async function signin(req, res) {
             return sendResponse(res, 404, false, 'Mobile number does not exist')
         }
         if(!numberExist.verified){
-            return sendResponse(res, 403, false, 'Unverified account')
+            return res.status(403).json({ success: false, data: 'Unverified account', verified: false })
+            //return sendResponse(res, 403, false, 'Unverified account')
+        }
+
+        //user verifies account but not upload documents
+        if(!numberExist?.driverLincenseImgFront || !numberExist?.driverLincenseImgBack || !numberExist?.profileImg || !numberExist?.ssn || !numberExist?.email){
+            res.cookie('inridedrivertoken', numberExist.driverId, {
+                httpOnly: true,
+                sameSite: 'None',
+                secure: true,
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            });
+            return res.json(403).json({ success: false, data: 'Account not verified. Please upload your documents', kycComplete: false })
+            //return sendResponse(res, 403, false, 'Account not verified. Please upload your documents')
         }
 
         const otpCode = await generateOtp(mobileNumber, 4, 'driver' )
