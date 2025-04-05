@@ -437,7 +437,17 @@ export async function signin(req, res) {
             return sendResponse(res, 400, false, 'Mobile number does not exist')
         }
         if(!numberExist.verified){
-            return sendResponse(res, 403, false, 'Unverified account')
+            return res.status(403).json({ success: false, data: 'Unverified account', mobileNumber: mobileNumber, verified: false })
+            //return sendResponse(res, 403, false, 'Unverified account')
+        }
+        if(!numberExist.email || !numberExist.firstName || !numberExist.lastName){
+            res.cookie('inridepassengertoken', numberExist.passengerId, {
+                httpOnly: true,
+                sameSite: 'None',
+                secure: true,
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            });
+            return res.json(403).json({ success: false, data: 'Account not verified. Fill Your Account', kycComplete: false })
         }
 
         const otpCode = await generateOtp(mobileNumber, 4, 'passenger' )
